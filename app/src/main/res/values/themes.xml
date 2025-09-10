@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.MicLock" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Keep it simple; no special colors needed -->
+    </style>
+</resources>
+
