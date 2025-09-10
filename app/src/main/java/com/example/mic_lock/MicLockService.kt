@@ -45,6 +45,10 @@ class MicLockService : Service() {
     // Silencing state (per run)
     @Volatile private var isSilenced: Boolean = false
     private var recCallback: AudioManager.AudioRecordingCallback? = null
+    
+    // MediaRecorder fallback
+    private var mediaRecorderHolder: MediaRecorderHolder? = null
+    private var currentRecordingMethod: String? = null
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
@@ -59,6 +63,9 @@ class MicLockService : Service() {
         releaseWakeLock()
         try { recCallback?.let { audioManager.unregisterAudioRecordingCallback(it) } } catch (_: Throwable) {}
         recCallback = null
+        mediaRecorderHolder?.stopRecording()
+        mediaRecorderHolder = null
+        currentRecordingMethod = null
         isRunning = false
         isPausedBySilence = false
         currentDeviceAddress = null
