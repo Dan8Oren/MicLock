@@ -19,6 +19,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var startBtn: Button
     private lateinit var stopBtn: Button
     private lateinit var micSpinner: Spinner
+    private lateinit var micSelectionWarningText: TextView
+    private lateinit var detailedStatusText: TextView
+    private lateinit var mediaRecorderToggle: Switch
+    private lateinit var mediaRecorderBatteryWarningText: TextView
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
     private val notifPerms = if (Build.VERSION.SDK_INT >= 33)
@@ -31,7 +35,7 @@ class MainActivity : ComponentActivity() {
         if (hasAllPerms()) {
             populateMics()
         }
-        updateUi()
+        updateAllUi()
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
@@ -43,6 +47,22 @@ class MainActivity : ComponentActivity() {
         startBtn = findViewById(R.id.startBtn)
         stopBtn = findViewById(R.id.stopBtn)
         micSpinner = findViewById(R.id.micSpinner)
+        micSelectionWarningText = findViewById(R.id.micSelectionWarningText)
+        detailedStatusText = findViewById(R.id.detailedStatusText)
+        mediaRecorderToggle = findViewById(R.id.mediaRecorderToggle)
+        mediaRecorderBatteryWarningText = findViewById(R.id.mediaRecorderBatteryWarningText)
+
+        // Initialize compatibility mode toggle
+        mediaRecorderToggle.isChecked = Prefs.getUseMediaRecorder(this)
+        mediaRecorderToggle.setOnCheckedChangeListener { _, isChecked ->
+            Prefs.setUseMediaRecorder(this, isChecked)
+            if (MicLockService.isRunning) {
+                val intent = Intent(this, MicLockService::class.java)
+                intent.action = MicLockService.ACTION_RECONFIGURE
+                ContextCompat.startForegroundService(this, intent)
+            }
+            updateCompatibilityModeUi()
+        }
 
         startBtn.setOnClickListener {
             if (!hasAllPerms()) {
@@ -70,14 +90,14 @@ class MainActivity : ComponentActivity() {
         }
 
         if (hasAllPerms()) populateMics()
-        updateUi()
+        updateAllUi()
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onResume() {
         super.onResume()
         if (hasAllPerms()) populateMics()
-        updateUi()
+        updateAllUi()
     }
 
     private fun hasAllPerms(): Boolean {
@@ -88,19 +108,77 @@ class MainActivity : ComponentActivity() {
     private fun startMicLock() {
         val intent = Intent(this, MicLockService::class.java)
         ContextCompat.startForegroundService(this, intent)
-        updateUi()
+        updateAllUi()
     }
 
     private fun stopMicLock() {
         stopService(Intent(this, MicLockService::class.java))
-        updateUi()
+        updateAllUi()
     }
 
-    private fun updateUi() {
+    private fun updateAllUi() {
+        updateMainStatus()
+        updateMicSelectionUi()
+        updateCompatibilityModeUi()
+        updateDetailedStatus()
+    }
+
+    private fun updateMainStatus() {
         val running = MicLockService.isRunning
-        statusText.text = if (running) "Mic-lock is ON" else "Mic-lock is OFF"
+        val paused = MicLockService.isPausedBySilence
+        
+        statusText.text = when {
+            !running -> "Mic-lock is OFF"
+            paused -> "Paused — mic in use by another app"
+            else -> "Mic-lock is ON"
+        }
+        
         startBtn.isEnabled = !running
         stopBtn.isEnabled = running
+    }
+
+    private fun updateMicSelectionUi() {
+        val selectedAddr = Prefs.getSelectedAddress(this)
+        val isAuto = selectedAddr == Prefs.VALUE_AUTO
+        
+        micSelectionWarningText.visibility = if (isAuto) android.view.View.GONE else android.view.View.VISIBLE
+    }
+
+    private fun updateCompatibilityModeUi() {
+        val useMediaRecorder = Prefs.getUseMediaRecorder(this)
+        val lastMethod = Prefs.getLastRecordingMethod(this)
+        
+        mediaRecorderToggle.isChecked = useMediaRecorder
+        
+        // Auto-suggest MediaRecorder if AudioRecord failed
+        if (lastMethod == "AudioRecord" && !useMediaRecorder) {
+            mediaRecorderBatteryWarningText.text = "AudioRecord mode (optimized battery usage)"
+        } else if (useMediaRecorder) {
+            mediaRecorderBatteryWarningText.text = "MediaRecorder mode (higher battery usage)"
+        } else {
+            mediaRecorderBatteryWarningText.text = "AudioRecord mode (optimized battery usage)"
+        }
+    }
+
+    private fun updateDetailedStatus() {
+        val currentDevice = MicLockService.currentDeviceAddress
+        val lastMethod = Prefs.getLastRecordingMethod(this)
+        
+        val details = mutableListOf<String>()
+        
+        if (currentDevice != null) {
+            details.add("Device: $currentDevice")
+        }
+        
+        if (lastMethod != null) {
+            details.add("Method: $lastMethod")
+        }
+        
+        detailedStatusText.text = if (details.isNotEmpty()) {
+            details.joinToString(" • ")
+        } else {
+            ""
+        }
     }
 
     // ----- mic list UI -----
@@ -115,6 +193,7 @@ class MainActivity : ComponentActivity() {
         val choices = AudioSelector.listBuiltinMicChoices(am)
 
         val items = mutableListOf<MicItem>()
+        // Ensure Auto is always the first item and is the strong default
         items += MicItem("Auto (bottom mic)", Prefs.VALUE_AUTO)
         choices.forEach { ch ->
             val addr = ch.device.address ?: ch.micInfo?.address ?: "(unknown)"
@@ -127,10 +206,10 @@ class MainActivity : ComponentActivity() {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items)
         micSpinner.adapter = adapter
 
-        // Select current pref
-        val selAddr = Prefs.getSelectedAddress(this)
+        // Select current pref - Auto is the strong default for new installs
+        val selAddr = Prefs.getSelectedAddress(this) // This already defaults to VALUE_AUTO in Prefs
         val idx = items.indexOfFirst { it.address == selAddr }
-            .takeIf { it >= 0 } ?: 0
+            .takeIf { it >= 0 } ?: 0  // Fallback to Auto (index 0) if not found
         micSpinner.setSelection(idx)
     }
 }
