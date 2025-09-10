@@ -31,11 +31,13 @@ class MediaRecorderHolder(
         try {
             // Create a temporary file for MediaRecorder output (will be discarded)
             discardFile = File(context.cacheDir, "media_recorder_discard_${System.currentTimeMillis()}.tmp")
-            
+
             mediaRecorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB) // Higher quality encoder
+                setAudioSamplingRate(48000) // Explicit 48kHz
+                setAudioChannels(2) // Force 2-channel if possible
                 setOutputFile(discardFile!!.absolutePath)
                 prepare()
                 start()
