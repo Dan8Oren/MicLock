@@ -173,10 +173,16 @@ class MicLockService : Service() {
                     .setBufferSizeInBytes(bufferBytes)
                     .build()
 
-                preferredDevice?.let {
-                    try { recorder.setPreferredDevice(it) } catch (t: Throwable) {
+                // Only set preferred device if not in auto mode
+                if (preferredDevice != null) {
+                    Log.d(TAG, "Setting preferred device: ${preferredDevice.address} (type=${preferredDevice.type})")
+                    try { 
+                        recorder.setPreferredDevice(preferredDevice) 
+                    } catch (t: Throwable) {
                         Log.w(TAG, "setPreferredDevice failed: ${t.message}")
                     }
+                } else {
+                    Log.d(TAG, "No preferred device set - letting Android choose audio route")
                 }
 
                 if (recorder.state != AudioRecord.STATE_INITIALIZED) {
@@ -186,11 +192,11 @@ class MicLockService : Service() {
                 }
 
                 // Observe silencing for THIS session
-                val sessionId = recorder.audioSessionId
+                val recordingSessionId = recorder.audioSessionId
                 recCallback = object : AudioManager.AudioRecordingCallback() {
                     @RequiresApi(Build.VERSION_CODES.Q)
                     override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
-                        val mine = configs.firstOrNull { it.clientAudioSessionId == sessionId } ?: return
+                        val mine = configs.firstOrNull { it.clientAudioSessionId == recordingSessionId } ?: return
                         val silenced = mine.isClientSilenced
                         if (silenced != isSilenced) {
                             isSilenced = silenced
@@ -210,6 +216,16 @@ class MicLockService : Service() {
                 // Start capture
                 recorder.startRecording()
                 acquireWakeLock()
+
+                // Log audioSessionId after AudioRecord creation
+                val validationSessionId = recorder.audioSessionId
+                Log.d(TAG, "AudioRecord session ID: $validationSessionId")
+
+                // Add debug logs for AudioFormat configuration
+                Log.d(TAG, "AudioRecord config - Sample rate: ${sampleRate}Hz, Encoding: $encoding, Channel mask: $channelMask, Buffer: ${bufferBytes} bytes")
+
+                // Add route validation logging
+                logRouteValidation(validationSessionId)
 
                 val deviceDesc = preferredDevice?.let { d ->
                     val addr = d.address ?: "unknown"
@@ -262,7 +278,11 @@ class MicLockService : Service() {
 
     @RequiresApi(Build.VERSION_CODES.P)
     private fun findInputDeviceByAddress(sel: String): AudioDeviceInfo? {
-        if (sel == Prefs.VALUE_AUTO) return null
+        // Remove device pinning by default - return null for auto mode to let Android's policy choose
+        if (sel == Prefs.VALUE_AUTO) {
+            Log.d(TAG, "Auto mode selected - returning null to let Android choose audio route naturally")
+            return null
+        }
         val devices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
         return devices.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC && it.address == sel }
             ?: devices.firstOrNull { it.address == sel }
@@ -308,6 +328,63 @@ class MicLockService : Service() {
 
     private fun updateNotification(text: String) {
         notifManager.notify(NOTIF_ID, buildNotification(text))
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun logRouteValidation(sessionId: Int) {
+        try {
+            val activeConfigs = audioManager.activeRecordingConfigurations
+            val myConfig = activeConfigs.firstOrNull { it.clientAudioSessionId == sessionId }
+            
+            if (myConfig != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    val inputDevice = myConfig.audioDevice
+                    if (inputDevice != null) {
+                        val deviceAddress = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) inputDevice.address else "unknown"
+                        Log.d(TAG, "Active input device - Name: '${inputDevice.productName}', Address: '$deviceAddress', Type: ${inputDevice.type}")
+                        Log.d(TAG, "Device info - IsSource: ${inputDevice.isSource}, IsSink: ${inputDevice.isSink}")
+                        
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            // Log channel counts and sample rates
+                            Log.d(TAG, "Device capabilities - Channel counts: ${inputDevice.channelCounts.contentToString()}, Sample rates: ${inputDevice.sampleRates.contentToString()}")
+                            
+                            // Check for microphone position info
+                            try {
+                                val microphones = audioManager.microphones
+                                val deviceAddr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) inputDevice.address else null
+                                val matchingMic = microphones.firstOrNull { it.address == deviceAddr }
+                                if (matchingMic != null) {
+                                    val pos = matchingMic.position
+                                    Log.d(TAG, "Microphone position - X: ${pos.x}, Y: ${pos.y}, Z: ${pos.z}")
+                                    
+                                    // Validate we're NOT on @:bottom route when in auto mode
+                                    val currentSelection = Prefs.getSelectedAddress(this)
+                                    if (currentSelection == Prefs.VALUE_AUTO) {
+                                        if (pos.y < 0) {
+                                            Log.d(TAG, "ROUTE VALIDATION: Auto mode selected a bottom microphone (Y < 0). This is acceptable if it's Android's natural choice.")
+                                        } else {
+                                            Log.d(TAG, "ROUTE VALIDATION: Auto mode selected a non-bottom microphone (Y >= 0). Android chose this route naturally.")
+                                        }
+                                    }
+                                } else {
+                                    Log.d(TAG, "No matching microphone info found for address: $deviceAddr")
+                                }
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Could not retrieve microphone position info: ${e.message}")
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "No input device info available for session $sessionId")
+                    }
+                } else {
+                    Log.d(TAG, "AudioDevice info not available on API < N for session $sessionId")
+                }
+            } else {
+                Log.d(TAG, "No active recording configuration found for session $sessionId")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error during route validation: ${e.message}")
+        }
     }
 
     companion object {
