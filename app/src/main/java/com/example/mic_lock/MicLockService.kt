@@ -150,49 +150,72 @@ class MicLockService : Service() {
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private suspend fun holdSelectedMicLoop() {
         while (!stopFlag.get()) {
-            val sel = Prefs.getSelectedAddress(this)
-            currentSelection = sel
-            val preferredDevice = findInputDeviceByAddress(sel)
-            val useMediaRecorder = Prefs.getUseMediaRecorder(this)
-            
             isSilenced = false
             isPausedBySilence = false
-            
-            if (useMediaRecorder) {
-                // Use MediaRecorder mode
+
+            val useMediaRecorderPref = Prefs.getUseMediaRecorder(this) // User's preference via compatibility toggle
+
+            var primaryAttemptSuccessful = false
+            var fallbackAttemptSuccessful = false
+
+            if (useMediaRecorderPref) {
+                // User prefers MediaRecorder: Try MediaRecorder first
+                Log.d(TAG, "User prefers MediaRecorder. Attempting MediaRecorder mode...")
                 if (tryMediaRecorderMode()) {
                     currentRecordingMethod = "MediaRecorder"
                     Prefs.setLastRecordingMethod(this, "MediaRecorder")
+                    primaryAttemptSuccessful = true
                 } else {
-                    delay(2_000)
-                    continue
+                    Log.w(TAG, "MediaRecorder failed. Attempting AudioRecord as fallback...")
+                    // Fallback to AudioRecord
+                    val audioRecordResult = tryAudioRecordMode()
+                    when (audioRecordResult) {
+                        AudioRecordResult.SUCCESS -> {
+                            currentRecordingMethod = "AudioRecord"
+                            Prefs.setLastRecordingMethod(this, "AudioRecord")
+                            fallbackAttemptSuccessful = true
+                        }
+                        AudioRecordResult.BAD_ROUTE -> {
+                            Log.w(TAG, "AudioRecord fallback landed on bad route. No further fallback specified.")
+                        }
+                        AudioRecordResult.FAILED -> {
+                            Log.e(TAG, "AudioRecord fallback also failed.")
+                        }
+                    }
                 }
             } else {
-                // Try AudioRecord first
-                val audioRecordResult = tryAudioRecordMode(sel, preferredDevice)
-                
+                // User prefers AudioRecord (compatibility mode off): Try AudioRecord first
+                Log.d(TAG, "User prefers AudioRecord. Attempting AudioRecord mode...")
+                val audioRecordResult = tryAudioRecordMode()
                 when (audioRecordResult) {
                     AudioRecordResult.SUCCESS -> {
                         currentRecordingMethod = "AudioRecord"
                         Prefs.setLastRecordingMethod(this, "AudioRecord")
+                        primaryAttemptSuccessful = true
                     }
                     AudioRecordResult.BAD_ROUTE -> {
-                        Log.i(TAG, "AudioRecord landed on bad route, switching to MediaRecorder")
+                        Log.w(TAG, "AudioRecord landed on bad route. Attempting MediaRecorder as fallback...")
+                        // Fallback to MediaRecorder
                         if (tryMediaRecorderMode()) {
                             currentRecordingMethod = "MediaRecorder"
                             Prefs.setLastRecordingMethod(this, "MediaRecorder")
+                            fallbackAttemptSuccessful = true
                         } else {
-                            delay(2_000)
-                            continue
+                            Log.e(TAG, "MediaRecorder fallback also failed.")
                         }
                     }
                     AudioRecordResult.FAILED -> {
-                        delay(2_000)
-                        continue
+                        Log.e(TAG, "AudioRecord failed. No explicit fallback for this path, retrying...")
                     }
                 }
             }
-            
+
+            // If all attempts failed or resulted in a bad state, re-loop after delay.
+            if (!primaryAttemptSuccessful && !fallbackAttemptSuccessful) {
+                delay(2_000)
+                continue
+            }
+
             // If we exited because of silencing, wait to be unsilenced before retrying
             if (isSilenced && !stopFlag.get()) {
                 var waited = 0
@@ -214,7 +237,7 @@ class MicLockService : Service() {
     
     @RequiresApi(Build.VERSION_CODES.P)
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    private suspend fun tryAudioRecordMode(sel: String, preferredDevice: AudioDeviceInfo?): AudioRecordResult {
+    private suspend fun tryAudioRecordMode(): AudioRecordResult {
         val sampleRate = 48_000
         val channelMask = AudioFormat.CHANNEL_IN_MONO
         val encoding = AudioFormat.ENCODING_PCM_16BIT
@@ -236,17 +259,7 @@ class MicLockService : Service() {
                 .setBufferSizeInBytes(bufferBytes)
                 .build()
 
-            // Only set preferred device if not in auto mode
-            if (preferredDevice != null) {
-                Log.d(TAG, "Setting preferred device: ${preferredDevice.address} (type=${preferredDevice.type})")
-                try { 
-                    recorder.setPreferredDevice(preferredDevice) 
-                } catch (t: Throwable) {
-                    Log.w(TAG, "setPreferredDevice failed: ${t.message}")
-                }
-            } else {
-                Log.d(TAG, "No preferred device set - letting Android choose audio route")
-            }
+            Log.d(TAG, "No specific device set - letting Android choose audio route")
 
             if (recorder.state != AudioRecord.STATE_INITIALIZED) {
                 updateNotification("Mic-Lock idle (AudioRecord init failed). Retrying…")
@@ -270,7 +283,10 @@ class MicLockService : Service() {
                     currentDeviceAddress = routeInfo.deviceAddress
                     
                     // Check if we're in auto mode and landed on bottom mic (bad route)
-                    if (sel == Prefs.VALUE_AUTO && !routeInfo.isOnPrimaryArray) {
+                    // Check if current route is a 'bad' route (e.g., bottom mic when auto is preferred non-bottom)
+                    // Given that device selection is removed, we simplify this check.
+                    // If it's not on the primary array (Y >= 0), consider it a bad route for AudioRecord's primary use case.
+                    if (!routeInfo.isOnPrimaryArray) {
                         Log.w(TAG, "Bad route detected: Auto mode but landed on bottom microphone")
                         try {
                             if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) recorder.stop()
@@ -281,10 +297,10 @@ class MicLockService : Service() {
                     }
                 } else {
                     Log.w(TAG, "Could not validate route, continuing with AudioRecord")
-                    currentDeviceAddress = preferredDevice?.address
+                    currentDeviceAddress = "AudioRecord (unknown route)"
                 }
             } else {
-                currentDeviceAddress = preferredDevice?.address
+                currentDeviceAddress = "AudioRecord (auto)"
             }
 
             // Set up silencing callback
@@ -308,10 +324,7 @@ class MicLockService : Service() {
             }
             registerRecordingCallback(recCallback!!)
 
-            val deviceDesc = preferredDevice?.let { d ->
-                val addr = d.address ?: "unknown"
-                "AudioRecord | addr=$addr"
-            } ?: "AudioRecord | Auto selection"
+            val deviceDesc = "AudioRecord | Auto selection"
             updateNotification("Recording @${sampleRate/1000}kHz — $deviceDesc")
 
             val buf = ShortArray(bufferBytes / 2)
@@ -378,17 +391,7 @@ class MicLockService : Service() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
-    private fun findInputDeviceByAddress(sel: String): AudioDeviceInfo? {
-        // Remove device pinning by default - return null for auto mode to let Android's policy choose
-        if (sel == Prefs.VALUE_AUTO) {
-            Log.d(TAG, "Auto mode selected - returning null to let Android choose audio route naturally")
-            return null
-        }
-        val devices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
-        return devices.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC && it.address == sel }
-            ?: devices.firstOrNull { it.address == sel }
-    }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createChannel() {
