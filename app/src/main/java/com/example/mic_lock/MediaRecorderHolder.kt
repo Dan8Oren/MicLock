@@ -34,10 +34,11 @@ class MediaRecorderHolder(
 
             mediaRecorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB) // Higher quality encoder
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC) // AAC supports stereo
+                setAudioEncodingBitRate(128000) // Higher bitrate for quality
                 setAudioSamplingRate(48000) // Explicit 48kHz
-                setAudioChannels(2) // Force 2-channel if possible
+                setAudioChannels(2) // Force 2-channel stereo
                 setOutputFile(discardFile!!.absolutePath)
                 prepare()
                 start()

@@ -240,25 +240,9 @@ class MicLockService : Service() {
     private suspend fun tryAudioRecordMode(): AudioRecordResult {
         val sampleRate = 48_000
         
-        // Dynamically determine optimal channel mask - prefer multi-channel if available
-        val channelMask = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val inputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
-            val builtinMic = inputDevices.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC }
-            
-            // Check if device supports stereo (2+ channels)
-            val supportsStereo = builtinMic?.channelCounts?.any { it >= 2 } == true
-            
-            if (supportsStereo) {
-                Log.d(TAG, "Multi-channel mic detected, using stereo channel mask")
-                AudioFormat.CHANNEL_IN_STEREO
-            } else {
-                Log.d(TAG, "Single-channel mic detected, using mono channel mask")
-                AudioFormat.CHANNEL_IN_MONO
-            }
-        } else {
-            Log.d(TAG, "API < M, defaulting to mono channel mask")
-            AudioFormat.CHANNEL_IN_MONO
-        }
+        // Always attempt stereo (2-channel) to target primary array microphone
+        val channelMask = AudioFormat.CHANNEL_IN_STEREO
+        Log.d(TAG, "Using stereo channel mask to target primary array microphone")
         
         val encoding = AudioFormat.ENCODING_PCM_16BIT
         val minBuf = AudioRecord.getMinBufferSize(sampleRate, channelMask, encoding)
@@ -320,8 +304,8 @@ class MicLockService : Service() {
                     
                     // Consider it a bad route if:
                     // 1. Not on primary array (typically bottom mic)
-                    // 2. Single channel when we requested multi-channel
-                    val isBadRoute = !routeInfo.isOnPrimaryArray || (channelMask == AudioFormat.CHANNEL_IN_STEREO && actualChannelCount < 2)
+                    // 2. Single channel when we always request stereo (2-channel)
+                    val isBadRoute = !routeInfo.isOnPrimaryArray || actualChannelCount < 2
                     
                     if (isBadRoute) {
                         val reason = when {
