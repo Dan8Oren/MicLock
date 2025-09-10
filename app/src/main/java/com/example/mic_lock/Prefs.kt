@@ -23,7 +23,7 @@ object Prefs {
 
     fun getUseMediaRecorder(ctx: Context): Boolean =
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-            .getBoolean(KEY_USE_MEDIA_RECORDER, false)
+            .getBoolean(KEY_USE_MEDIA_RECORDER, true)
 
     fun setUseMediaRecorder(ctx: Context, value: Boolean) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit {

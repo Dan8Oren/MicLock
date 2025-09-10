@@ -28,24 +28,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
-    <!-- Mic Selection -->
-    <Spinner
-        android:id="@+id/micSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:drawable/editbox_dropdown_light_frame"
-        android:layout_marginBottom="8dp" />
 
-    <!-- Mic Selection Warning -->
-    <TextView
-        android:id="@+id/micSelectionWarningText"
-        android:text="⚠️ Manual mic selection may affect battery life"
-        android:textSize="12sp"
-        android:textColor="@android:color/holo_orange_dark"
-        android:layout_marginBottom="16dp"
-        android:visibility="gone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
 
     <!-- Detailed Status -->
     <TextView

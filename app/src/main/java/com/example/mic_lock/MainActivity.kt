@@ -7,7 +7,9 @@ import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.*
+import android.widget.Button
+import android.widget.Switch
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -18,8 +20,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var statusText: TextView
     private lateinit var startBtn: Button
     private lateinit var stopBtn: Button
-    private lateinit var micSpinner: Spinner
-    private lateinit var micSelectionWarningText: TextView
+
+
     private lateinit var detailedStatusText: TextView
     private lateinit var mediaRecorderToggle: Switch
     private lateinit var mediaRecorderBatteryWarningText: TextView
@@ -32,9 +34,6 @@ class MainActivity : ComponentActivity() {
     private val reqPerms = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ ->
-        if (hasAllPerms()) {
-            populateMics()
-        }
         updateAllUi()
     }
 
@@ -46,8 +45,7 @@ class MainActivity : ComponentActivity() {
         statusText = findViewById(R.id.statusText)
         startBtn = findViewById(R.id.startBtn)
         stopBtn = findViewById(R.id.stopBtn)
-        micSpinner = findViewById(R.id.micSpinner)
-        micSelectionWarningText = findViewById(R.id.micSelectionWarningText)
+
         detailedStatusText = findViewById(R.id.detailedStatusText)
         mediaRecorderToggle = findViewById(R.id.mediaRecorderToggle)
         mediaRecorderBatteryWarningText = findViewById(R.id.mediaRecorderBatteryWarningText)
@@ -73,30 +71,14 @@ class MainActivity : ComponentActivity() {
         }
         stopBtn.setOnClickListener { stopMicLock() }
 
-        micSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, v: android.view.View?, pos: Int, id: Long) {
-                val item = parent?.adapter?.getItem(pos) as MicItem
-                if (Prefs.getSelectedAddress(this@MainActivity) != item.address) {
-                    Prefs.setSelectedAddress(this@MainActivity, item.address)
-                    // Ask service to reconfigure if running
-                    if (MicLockService.isRunning) {
-                        val intent = Intent(this@MainActivity, MicLockService::class.java)
-                        intent.action = MicLockService.ACTION_RECONFIGURE
-                        ContextCompat.startForegroundService(this@MainActivity, intent)
-                    }
-                }
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
 
-        if (hasAllPerms()) populateMics()
+
         updateAllUi()
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onResume() {
         super.onResume()
-        if (hasAllPerms()) populateMics()
         updateAllUi()
     }
 
@@ -118,7 +100,6 @@ class MainActivity : ComponentActivity() {
 
     private fun updateAllUi() {
         updateMainStatus()
-        updateMicSelectionUi()
         updateCompatibilityModeUi()
         updateDetailedStatus()
     }
@@ -137,12 +118,7 @@ class MainActivity : ComponentActivity() {
         stopBtn.isEnabled = running
     }
 
-    private fun updateMicSelectionUi() {
-        val selectedAddr = Prefs.getSelectedAddress(this)
-        val isAuto = selectedAddr == Prefs.VALUE_AUTO
-        
-        micSelectionWarningText.visibility = if (isAuto) android.view.View.GONE else android.view.View.VISIBLE
-    }
+
 
     private fun updateCompatibilityModeUi() {
         val useMediaRecorder = Prefs.getUseMediaRecorder(this)
@@ -181,35 +157,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ----- mic list UI -----
 
-    data class MicItem(val label: String, val address: String) {
-        override fun toString(): String = label
-    }
-
-    @RequiresApi(Build.VERSION_CODES.P)
-    private fun populateMics() {
-        val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val choices = AudioSelector.listBuiltinMicChoices(am)
-
-        val items = mutableListOf<MicItem>()
-        // Ensure Auto is always the first item and is the strong default
-        items += MicItem("Auto (bottom mic)", Prefs.VALUE_AUTO)
-        choices.forEach { ch ->
-            val addr = ch.device.address ?: ch.micInfo?.address ?: "(unknown)"
-            val y = ch.micInfo?.position?.y
-            val yTxt = y?.let { " y=%.3f".format(it) } ?: ""
-            val label = "addr=$addr$yTxt"
-            items += MicItem(label, ch.device.address ?: addr)
-        }
-
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items)
-        micSpinner.adapter = adapter
-
-        // Select current pref - Auto is the strong default for new installs
-        val selAddr = Prefs.getSelectedAddress(this) // This already defaults to VALUE_AUTO in Prefs
-        val idx = items.indexOfFirst { it.address == selAddr }
-            .takeIf { it >= 0 } ?: 0  // Fallback to Auto (index 0) if not found
-        micSpinner.setSelection(idx)
-    }
 }
