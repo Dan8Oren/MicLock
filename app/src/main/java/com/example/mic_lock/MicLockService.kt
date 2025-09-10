@@ -239,7 +239,27 @@ class MicLockService : Service() {
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private suspend fun tryAudioRecordMode(): AudioRecordResult {
         val sampleRate = 48_000
-        val channelMask = AudioFormat.CHANNEL_IN_MONO
+        
+        // Dynamically determine optimal channel mask - prefer multi-channel if available
+        val channelMask = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val inputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+            val builtinMic = inputDevices.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_MIC }
+            
+            // Check if device supports stereo (2+ channels)
+            val supportsStereo = builtinMic?.channelCounts?.any { it >= 2 } == true
+            
+            if (supportsStereo) {
+                Log.d(TAG, "Multi-channel mic detected, using stereo channel mask")
+                AudioFormat.CHANNEL_IN_STEREO
+            } else {
+                Log.d(TAG, "Single-channel mic detected, using mono channel mask")
+                AudioFormat.CHANNEL_IN_MONO
+            }
+        } else {
+            Log.d(TAG, "API < M, defaulting to mono channel mask")
+            AudioFormat.CHANNEL_IN_MONO
+        }
+        
         val encoding = AudioFormat.ENCODING_PCM_16BIT
         val minBuf = AudioRecord.getMinBufferSize(sampleRate, channelMask, encoding)
         val bufferBytes = (minBuf * 2).coerceAtLeast(4096)
@@ -273,6 +293,10 @@ class MicLockService : Service() {
             val recordingSessionId = recorder.audioSessionId
             Log.d(TAG, "AudioRecord session ID: $recordingSessionId")
             
+            // Log actual channel count achieved
+            val actualChannelCount = recorder.format.channelCount
+            Log.d(TAG, "AudioRecord actual channel count: $actualChannelCount (requested: ${if (channelMask == AudioFormat.CHANNEL_IN_STEREO) 2 else 1})")
+            
             // Validate route after starting
             delay(100) // Give Android time to establish the route
             
@@ -283,17 +307,39 @@ class MicLockService : Service() {
                     currentDeviceAddress = routeInfo.deviceAddress
                     
                     // Check if we're in auto mode and landed on bottom mic (bad route)
-                    // Check if current route is a 'bad' route (e.g., bottom mic when auto is preferred non-bottom)
-                    // Given that device selection is removed, we simplify this check.
-                    // If it's not on the primary array (Y >= 0), consider it a bad route for AudioRecord's primary use case.
-                    if (!routeInfo.isOnPrimaryArray) {
-                        Log.w(TAG, "Bad route detected: Auto mode but landed on bottom microphone")
+                    // Enhanced validation: Check for multi-channel route and avoid bottom mic
+                    val isBottomMic = routeInfo.micInfo?.let { mic ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && mic.position != null) {
+                            // Bottom mic typically has the smallest Y coordinate
+                            mic.position.y < 0.0f
+                        } else false
+                    } ?: false
+                    
+                    // Log detailed route validation info
+                    Log.d(TAG, "Route validation details: channels=$actualChannelCount, isOnPrimaryArray=${routeInfo.isOnPrimaryArray}, isBottomMic=$isBottomMic")
+                    
+                    // Consider it a bad route if:
+                    // 1. Not on primary array (typically bottom mic)
+                    // 2. Single channel when we requested multi-channel
+                    val isBadRoute = !routeInfo.isOnPrimaryArray || (channelMask == AudioFormat.CHANNEL_IN_STEREO && actualChannelCount < 2)
+                    
+                    if (isBadRoute) {
+                        val reason = when {
+                            !routeInfo.isOnPrimaryArray && isBottomMic -> "Bottom microphone detected (Y=${routeInfo.micInfo?.position?.y})"
+                            !routeInfo.isOnPrimaryArray -> "Non-primary array microphone"
+                            actualChannelCount < 2 -> "Single-channel route when multi-channel was requested"
+                            else -> "Unknown bad route condition"
+                        }
+                        Log.w(TAG, "Bad route detected: $reason - switching to MediaRecorder fallback")
+                        
                         try {
                             if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) recorder.stop()
                             recorder.release()
                         } catch (_: Throwable) {}
                         releaseWakeLock()
                         return AudioRecordResult.BAD_ROUTE
+                    } else {
+                        Log.i(TAG, "Route validation passed: Multi-channel=${actualChannelCount >= 2}, Primary array=true")
                     }
                 } else {
                     Log.w(TAG, "Could not validate route, continuing with AudioRecord")
