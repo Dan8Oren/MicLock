@@ -10,6 +10,15 @@ data class MicChoice(
     val micInfo: MicrophoneInfo?    // may be null if not mappable
 )
 
+data class RouteInfo(
+    val deviceInfo: AudioDeviceInfo?,
+    val micInfo: MicrophoneInfo?,
+    val sessionId: Int,
+    val isOnPrimaryArray: Boolean,
+    val deviceAddress: String?,
+    val micPosition: MicrophoneInfo.Coordinate3F?
+)
+
 object AudioSelector {
     private const val TAG = "MicLock"
 
@@ -83,4 +92,83 @@ object AudioSelector {
     @RequiresApi(Build.VERSION_CODES.P)
     fun fmtPos(p: MicrophoneInfo.Coordinate3F?): String =
         if (p == null) "unknown" else "x=%.3f y=%.3f z=%.3f".format(p.x, p.y, p.z)
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun validateCurrentRoute(audioManager: AudioManager, sessionId: Int): RouteInfo? {
+        return try {
+            val activeConfigs = audioManager.activeRecordingConfigurations
+            val myConfig = activeConfigs.firstOrNull { it.clientAudioSessionId == sessionId }
+            
+            if (myConfig != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val inputDevice = myConfig.audioDevice
+                if (inputDevice != null) {
+                    val deviceAddress = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) inputDevice.address else null
+                    
+                    // Find matching microphone info
+                    var matchingMic: MicrophoneInfo? = null
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && deviceAddress != null) {
+                        try {
+                            val microphones = audioManager.microphones
+                            matchingMic = microphones.firstOrNull { it.address == deviceAddress }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Could not retrieve microphone info: ${e.message}")
+                        }
+                    }
+                    
+                    val isOnPrimary = isOnPrimaryArray(matchingMic)
+                    
+                    return RouteInfo(
+                        deviceInfo = inputDevice,
+                        micInfo = matchingMic,
+                        sessionId = sessionId,
+                        isOnPrimaryArray = isOnPrimary,
+                        deviceAddress = deviceAddress,
+                        micPosition = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) matchingMic?.position else null
+                    )
+                }
+            }
+            null
+        } catch (e: Exception) {
+            Log.w(TAG, "Error validating route: ${e.message}")
+            null
+        }
+    }
+
+    fun isOnPrimaryArray(micInfo: MicrophoneInfo?): Boolean {
+        return if (micInfo != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && micInfo.position != null) {
+            // Primary array typically has Y >= 0 (not bottom microphone)
+            // Bottom mic has the smallest Y value (negative or close to 0)
+            micInfo.position.y >= 0.0f
+        } else {
+            // If we can't determine position, assume it's primary array for safety
+            true
+        }
+    }
+
+    fun getRouteDebugInfo(routeInfo: RouteInfo): String {
+        val parts = mutableListOf<String>()
+        
+        parts.add("SessionID: ${routeInfo.sessionId}")
+        
+        routeInfo.deviceInfo?.let { device ->
+            parts.add("Device: '${device.productName}'")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                parts.add("Address: '${device.address ?: "unknown"}'")
+                parts.add("Type: ${device.type}")
+                parts.add("Channels: ${device.channelCounts.contentToString()}")
+                parts.add("SampleRates: ${device.sampleRates.contentToString()}")
+            }
+        }
+        
+        routeInfo.micInfo?.let { mic ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                parts.add("MicDesc: '${mic.description}'")
+                parts.add("MicPos: ${fmtPos(mic.position)}")
+            }
+        }
+        
+        parts.add("PrimaryArray: ${routeInfo.isOnPrimaryArray}")
+        
+        return parts.joinToString(", ")
+    }
 }

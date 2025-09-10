@@ -153,120 +153,46 @@ class MicLockService : Service() {
             val sel = Prefs.getSelectedAddress(this)
             currentSelection = sel
             val preferredDevice = findInputDeviceByAddress(sel)
-            currentDeviceAddress = preferredDevice?.address
-
-            // Recorder config
-            val sampleRate = 48_000
-            val channelMask = AudioFormat.CHANNEL_IN_MONO
-            val encoding = AudioFormat.ENCODING_PCM_16BIT
-            val minBuf = AudioRecord.getMinBufferSize(sampleRate, channelMask, encoding)
-            val bufferBytes = (minBuf * 2).coerceAtLeast(4096)
-
-            var recorder: AudioRecord? = null
+            val useMediaRecorder = Prefs.getUseMediaRecorder(this)
+            
             isSilenced = false
             isPausedBySilence = false
-
-            try {
-                val fmt = AudioFormat.Builder()
-                    .setSampleRate(sampleRate)
-                    .setEncoding(encoding)
-                    .setChannelMask(channelMask)
-                    .build()
-
-                // Default to MIC for best compatibility
-                recorder = AudioRecord.Builder()
-                    .setAudioSource(MediaRecorder.AudioSource.MIC)
-                    .setAudioFormat(fmt)
-                    .setBufferSizeInBytes(bufferBytes)
-                    .build()
-
-                // Only set preferred device if not in auto mode
-                if (preferredDevice != null) {
-                    Log.d(TAG, "Setting preferred device: ${preferredDevice.address} (type=${preferredDevice.type})")
-                    try { 
-                        recorder.setPreferredDevice(preferredDevice) 
-                    } catch (t: Throwable) {
-                        Log.w(TAG, "setPreferredDevice failed: ${t.message}")
-                    }
+            
+            if (useMediaRecorder) {
+                // Use MediaRecorder mode
+                if (tryMediaRecorderMode()) {
+                    currentRecordingMethod = "MediaRecorder"
+                    Prefs.setLastRecordingMethod(this, "MediaRecorder")
                 } else {
-                    Log.d(TAG, "No preferred device set - letting Android choose audio route")
-                }
-
-                if (recorder.state != AudioRecord.STATE_INITIALIZED) {
-                    updateNotification("Mic-Lock idle (init failed). Retrying…")
-                    delay(1500)
+                    delay(2_000)
                     continue
                 }
-
-                // Observe silencing for THIS session
-                val recordingSessionId = recorder.audioSessionId
-                recCallback = object : AudioManager.AudioRecordingCallback() {
-                    @RequiresApi(Build.VERSION_CODES.Q)
-                    override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
-                        val mine = configs.firstOrNull { it.clientAudioSessionId == recordingSessionId } ?: return
-                        val silenced = mine.isClientSilenced
-                        if (silenced != isSilenced) {
-                            isSilenced = silenced
-                            isPausedBySilence = silenced
-                            if (silenced) {
-                                Log.i(TAG, "Silenced by system (other app using mic).")
-                                updateNotification("Paused — mic in use by another app")
-                                try { recorder.stop() } catch (_: Throwable) {}
-                            } else {
-                                Log.i(TAG, "Unsilenced; will resume.")
-                            }
+            } else {
+                // Try AudioRecord first
+                val audioRecordResult = tryAudioRecordMode(sel, preferredDevice)
+                
+                when (audioRecordResult) {
+                    AudioRecordResult.SUCCESS -> {
+                        currentRecordingMethod = "AudioRecord"
+                        Prefs.setLastRecordingMethod(this, "AudioRecord")
+                    }
+                    AudioRecordResult.BAD_ROUTE -> {
+                        Log.i(TAG, "AudioRecord landed on bad route, switching to MediaRecorder")
+                        if (tryMediaRecorderMode()) {
+                            currentRecordingMethod = "MediaRecorder"
+                            Prefs.setLastRecordingMethod(this, "MediaRecorder")
+                        } else {
+                            delay(2_000)
+                            continue
                         }
                     }
-                }
-                registerRecordingCallback(recCallback!!)
-
-                // Start capture
-                recorder.startRecording()
-                acquireWakeLock()
-
-                // Log audioSessionId after AudioRecord creation
-                val validationSessionId = recorder.audioSessionId
-                Log.d(TAG, "AudioRecord session ID: $validationSessionId")
-
-                // Add debug logs for AudioFormat configuration
-                Log.d(TAG, "AudioRecord config - Sample rate: ${sampleRate}Hz, Encoding: $encoding, Channel mask: $channelMask, Buffer: ${bufferBytes} bytes")
-
-                // Add route validation logging
-                logRouteValidation(validationSessionId)
-
-                val deviceDesc = preferredDevice?.let { d ->
-                    val addr = d.address ?: "unknown"
-                    "Preferred mic | addr=$addr"
-                } ?: "Auto mic selection"
-                updateNotification("Recording @${sampleRate/1000}kHz, buf=$bufferBytes — $deviceDesc")
-
-                val buf = ShortArray(bufferBytes / 2)
-                while (!stopFlag.get()) {
-                    if (isSilenced) break
-                    val n = recorder.read(buf, 0, buf.size, AudioRecord.READ_BLOCKING)
-                    if (n < 0) {
-                        Log.w(TAG, "read() returned $n")
-                        delay(40)
+                    AudioRecordResult.FAILED -> {
+                        delay(2_000)
+                        continue
                     }
-                    // Intentionally discard audio — the point is to hold/occupy the mic politely.
                 }
-
-            } catch (t: Throwable) {
-                Log.e(TAG, "Loop error: ${t.message}", t)
-                updateNotification("Mic-Lock idle (error: ${t.javaClass.simpleName}). Retrying…")
-                delay(2_000)
-            } finally {
-                unregisterRecordingCallback(recCallback)
-                recCallback = null
-                try {
-                    recorder?.let {
-                        if (it.recordingState == AudioRecord.RECORDSTATE_RECORDING) it.stop()
-                        it.release()
-                    }
-                } catch (_: Throwable) {}
-                releaseWakeLock()
             }
-
+            
             // If we exited because of silencing, wait to be unsilenced before retrying
             if (isSilenced && !stopFlag.get()) {
                 var waited = 0
@@ -274,12 +200,181 @@ class MicLockService : Service() {
                     delay(200)
                     waited += 200
                 }
-                // small cooldown to avoid thrash when the other app toggles quickly
                 delay(300)
                 continue
             }
 
             delay(300)
+        }
+    }
+    
+    private enum class AudioRecordResult {
+        SUCCESS, BAD_ROUTE, FAILED
+    }
+    
+    @RequiresApi(Build.VERSION_CODES.P)
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    private suspend fun tryAudioRecordMode(sel: String, preferredDevice: AudioDeviceInfo?): AudioRecordResult {
+        val sampleRate = 48_000
+        val channelMask = AudioFormat.CHANNEL_IN_MONO
+        val encoding = AudioFormat.ENCODING_PCM_16BIT
+        val minBuf = AudioRecord.getMinBufferSize(sampleRate, channelMask, encoding)
+        val bufferBytes = (minBuf * 2).coerceAtLeast(4096)
+        
+        var recorder: AudioRecord? = null
+        
+        try {
+            val fmt = AudioFormat.Builder()
+                .setSampleRate(sampleRate)
+                .setEncoding(encoding)
+                .setChannelMask(channelMask)
+                .build()
+
+            recorder = AudioRecord.Builder()
+                .setAudioSource(MediaRecorder.AudioSource.MIC)
+                .setAudioFormat(fmt)
+                .setBufferSizeInBytes(bufferBytes)
+                .build()
+
+            // Only set preferred device if not in auto mode
+            if (preferredDevice != null) {
+                Log.d(TAG, "Setting preferred device: ${preferredDevice.address} (type=${preferredDevice.type})")
+                try { 
+                    recorder.setPreferredDevice(preferredDevice) 
+                } catch (t: Throwable) {
+                    Log.w(TAG, "setPreferredDevice failed: ${t.message}")
+                }
+            } else {
+                Log.d(TAG, "No preferred device set - letting Android choose audio route")
+            }
+
+            if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+                updateNotification("Mic-Lock idle (AudioRecord init failed). Retrying…")
+                return AudioRecordResult.FAILED
+            }
+
+            // Start recording first
+            recorder.startRecording()
+            acquireWakeLock()
+            
+            val recordingSessionId = recorder.audioSessionId
+            Log.d(TAG, "AudioRecord session ID: $recordingSessionId")
+            
+            // Validate route after starting
+            delay(100) // Give Android time to establish the route
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val routeInfo = AudioSelector.validateCurrentRoute(audioManager, recordingSessionId)
+                if (routeInfo != null) {
+                    Log.d(TAG, "Route validation: ${AudioSelector.getRouteDebugInfo(routeInfo)}")
+                    currentDeviceAddress = routeInfo.deviceAddress
+                    
+                    // Check if we're in auto mode and landed on bottom mic (bad route)
+                    if (sel == Prefs.VALUE_AUTO && !routeInfo.isOnPrimaryArray) {
+                        Log.w(TAG, "Bad route detected: Auto mode but landed on bottom microphone")
+                        try {
+                            if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) recorder.stop()
+                            recorder.release()
+                        } catch (_: Throwable) {}
+                        releaseWakeLock()
+                        return AudioRecordResult.BAD_ROUTE
+                    }
+                } else {
+                    Log.w(TAG, "Could not validate route, continuing with AudioRecord")
+                    currentDeviceAddress = preferredDevice?.address
+                }
+            } else {
+                currentDeviceAddress = preferredDevice?.address
+            }
+
+            // Set up silencing callback
+            recCallback = object : AudioManager.AudioRecordingCallback() {
+                @RequiresApi(Build.VERSION_CODES.Q)
+                override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
+                    val mine = configs.firstOrNull { it.clientAudioSessionId == recordingSessionId } ?: return
+                    val silenced = mine.isClientSilenced
+                    if (silenced != isSilenced) {
+                        isSilenced = silenced
+                        isPausedBySilence = silenced
+                        if (silenced) {
+                            Log.i(TAG, "AudioRecord silenced by system (other app using mic).")
+                            updateNotification("Paused — mic in use by another app")
+                            try { recorder.stop() } catch (_: Throwable) {}
+                        } else {
+                            Log.i(TAG, "AudioRecord unsilenced; will resume.")
+                        }
+                    }
+                }
+            }
+            registerRecordingCallback(recCallback!!)
+
+            val deviceDesc = preferredDevice?.let { d ->
+                val addr = d.address ?: "unknown"
+                "AudioRecord | addr=$addr"
+            } ?: "AudioRecord | Auto selection"
+            updateNotification("Recording @${sampleRate/1000}kHz — $deviceDesc")
+
+            val buf = ShortArray(bufferBytes / 2)
+            while (!stopFlag.get()) {
+                if (isSilenced) break
+                val n = recorder.read(buf, 0, buf.size, AudioRecord.READ_BLOCKING)
+                if (n < 0) {
+                    Log.w(TAG, "AudioRecord read() returned $n")
+                    delay(40)
+                }
+            }
+            
+            return AudioRecordResult.SUCCESS
+            
+        } catch (t: Throwable) {
+            Log.e(TAG, "AudioRecord error: ${t.message}", t)
+            updateNotification("Mic-Lock idle (AudioRecord error: ${t.javaClass.simpleName}). Retrying…")
+            return AudioRecordResult.FAILED
+        } finally {
+            unregisterRecordingCallback(recCallback)
+            recCallback = null
+            try {
+                recorder?.let {
+                    if (it.recordingState == AudioRecord.RECORDSTATE_RECORDING) it.stop()
+                    it.release()
+                }
+            } catch (_: Throwable) {}
+            releaseWakeLock()
+        }
+    }
+    
+    private suspend fun tryMediaRecorderMode(): Boolean {
+        return try {
+            mediaRecorderHolder = MediaRecorderHolder(this, audioManager) { silenced ->
+                isSilenced = silenced
+                isPausedBySilence = silenced
+                if (silenced) {
+                    Log.i(TAG, "MediaRecorder silenced by system (other app using mic).")
+                    updateNotification("Paused — mic in use by another app")
+                } else {
+                    Log.i(TAG, "MediaRecorder unsilenced; will resume.")
+                }
+            }
+            
+            mediaRecorderHolder!!.startRecording()
+            currentDeviceAddress = "MediaRecorder"
+            
+            updateNotification("Recording (MediaRecorder compatibility mode)")
+            
+            // Keep running until stopped or silenced
+            while (!stopFlag.get() && !isSilenced) {
+                delay(100)
+            }
+            
+            true
+            
+        } catch (t: Throwable) {
+            Log.e(TAG, "MediaRecorder error: ${t.message}", t)
+            updateNotification("Mic-Lock idle (MediaRecorder error: ${t.javaClass.simpleName}). Retrying…")
+            false
+        } finally {
+            mediaRecorderHolder?.stopRecording()
+            mediaRecorderHolder = null
         }
     }
 
@@ -337,62 +432,7 @@ class MicLockService : Service() {
         notifManager.notify(NOTIF_ID, buildNotification(text))
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun logRouteValidation(sessionId: Int) {
-        try {
-            val activeConfigs = audioManager.activeRecordingConfigurations
-            val myConfig = activeConfigs.firstOrNull { it.clientAudioSessionId == sessionId }
-            
-            if (myConfig != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    val inputDevice = myConfig.audioDevice
-                    if (inputDevice != null) {
-                        val deviceAddress = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) inputDevice.address else "unknown"
-                        Log.d(TAG, "Active input device - Name: '${inputDevice.productName}', Address: '$deviceAddress', Type: ${inputDevice.type}")
-                        Log.d(TAG, "Device info - IsSource: ${inputDevice.isSource}, IsSink: ${inputDevice.isSink}")
-                        
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                            // Log channel counts and sample rates
-                            Log.d(TAG, "Device capabilities - Channel counts: ${inputDevice.channelCounts.contentToString()}, Sample rates: ${inputDevice.sampleRates.contentToString()}")
-                            
-                            // Check for microphone position info
-                            try {
-                                val microphones = audioManager.microphones
-                                val deviceAddr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) inputDevice.address else null
-                                val matchingMic = microphones.firstOrNull { it.address == deviceAddr }
-                                if (matchingMic != null) {
-                                    val pos = matchingMic.position
-                                    Log.d(TAG, "Microphone position - X: ${pos.x}, Y: ${pos.y}, Z: ${pos.z}")
-                                    
-                                    // Validate we're NOT on @:bottom route when in auto mode
-                                    val currentSelection = Prefs.getSelectedAddress(this)
-                                    if (currentSelection == Prefs.VALUE_AUTO) {
-                                        if (pos.y < 0) {
-                                            Log.d(TAG, "ROUTE VALIDATION: Auto mode selected a bottom microphone (Y < 0). This is acceptable if it's Android's natural choice.")
-                                        } else {
-                                            Log.d(TAG, "ROUTE VALIDATION: Auto mode selected a non-bottom microphone (Y >= 0). Android chose this route naturally.")
-                                        }
-                                    }
-                                } else {
-                                    Log.d(TAG, "No matching microphone info found for address: $deviceAddr")
-                                }
-                            } catch (e: Exception) {
-                                Log.w(TAG, "Could not retrieve microphone position info: ${e.message}")
-                            }
-                        }
-                    } else {
-                        Log.d(TAG, "No input device info available for session $sessionId")
-                    }
-                } else {
-                    Log.d(TAG, "AudioDevice info not available on API < N for session $sessionId")
-                }
-            } else {
-                Log.d(TAG, "No active recording configuration found for session $sessionId")
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Error during route validation: ${e.message}")
-        }
-    }
+
 
     companion object {
         private const val TAG = "MicLockService"
