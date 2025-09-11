@@ -70,12 +70,6 @@ object AudioSelector {
         return Triple(16000, encoding, channel)
     }
 
-    fun preferUnprocessedSource(): Int =
-        if (android.os.Build.VERSION.SDK_INT >= 24)
-            MediaRecorder.AudioSource.UNPROCESSED
-        else
-            MediaRecorder.AudioSource.VOICE_RECOGNITION
-
     fun encodingName(enc: Int) = when (enc) {
         AudioFormat.ENCODING_PCM_8BIT  -> "PCM8"
         AudioFormat.ENCODING_PCM_16BIT -> "PCM16"
