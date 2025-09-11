@@ -44,6 +44,8 @@ class MicLockService : Service() {
 
     // Silencing state (per run)
     @Volatile private var isSilenced: Boolean = false
+    private var markCooldownStart: Long? = null
+    private var backoffMs: Long = 500L
     private var recCallback: AudioManager.AudioRecordingCallback? = null
     
     // MediaRecorder fallback
@@ -146,10 +148,59 @@ class MicLockService : Service() {
         }
     }
 
+    /**
+     * Helper function to determine if any other app is currently recording and not silenced.
+     * This is the core of the "polite holder" strategy.
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun othersRecording(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return false
+        }
+        val configs = audioManager.activeRecordingConfigurations
+        val hasOtherActiveRecorders = configs.any { cfg ->
+            // Check if it's an active (not silenced) session from any application
+            // We don't need to exclude our own session since we release it when silenced
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                !cfg.isClientSilenced
+            } else {
+                // For API < 29, assume all configurations are active
+                true
+            }
+        }
+        Log.d(TAG, "Checking for othersRecording: $hasOtherActiveRecorders (configs: ${configs.size} total)")
+        return hasOtherActiveRecorders
+    }
+
     @RequiresApi(Build.VERSION_CODES.P)
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private suspend fun holdSelectedMicLoop() {
         while (!stopFlag.get()) {
+            // --- Polite Holding Logic ---
+            if (isSilenced) {
+                val cooldownDuration = 3000L // Minimum 3 seconds cooldown
+                val timeSinceSilenced = markCooldownStart?.let { System.currentTimeMillis() - it } ?: 0L
+                Log.d(TAG, "Silenced state detected. Time since silenced: $timeSinceSilenced ms")
+
+                if (timeSinceSilenced < cooldownDuration) {
+                    Log.d(TAG, "Still in cooldown period. Waiting ${cooldownDuration - timeSinceSilenced} ms.")
+                    delay(300) // Small delay to prevent tight loop
+                    continue
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && othersRecording()) {
+                    Log.d(TAG, "Other active recorders detected. Applying backoff. Current backoff: ${backoffMs} ms.")
+                    delay(backoffMs)
+                    backoffMs = (backoffMs * 2).coerceAtMost(5000L) // Max 5 seconds backoff
+                    continue
+                } else {
+                    Log.d(TAG, "No other active recorders. Resetting silenced state and backoff.")
+                    isSilenced = false // Reset silenced state
+                    backoffMs = 500L // Reset backoff
+                }
+            }
+            // --- End Polite Holding Logic ---
+
             isSilenced = false
             isPausedBySilence = false
 
@@ -164,6 +215,7 @@ class MicLockService : Service() {
                 if (tryMediaRecorderMode()) {
                     currentRecordingMethod = "MediaRecorder"
                     Prefs.setLastRecordingMethod(this, "MediaRecorder")
+                    backoffMs = 500L // Reset backoff on successful acquisition
                     primaryAttemptSuccessful = true
                 } else {
                     Log.w(TAG, "MediaRecorder failed. Attempting AudioRecord as fallback...")
@@ -191,6 +243,7 @@ class MicLockService : Service() {
                     AudioRecordResult.SUCCESS -> {
                         currentRecordingMethod = "AudioRecord"
                         Prefs.setLastRecordingMethod(this, "AudioRecord")
+                        backoffMs = 500L // Reset backoff on successful acquisition
                         primaryAttemptSuccessful = true
                     }
                     AudioRecordResult.BAD_ROUTE -> {
@@ -199,6 +252,7 @@ class MicLockService : Service() {
                         if (tryMediaRecorderMode()) {
                             currentRecordingMethod = "MediaRecorder"
                             Prefs.setLastRecordingMethod(this, "MediaRecorder")
+                            backoffMs = 500L // Reset backoff on successful acquisition
                             fallbackAttemptSuccessful = true
                         } else {
                             Log.e(TAG, "MediaRecorder fallback also failed.")
@@ -339,16 +393,16 @@ class MicLockService : Service() {
                 override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
                     val mine = configs.firstOrNull { it.clientAudioSessionId == recordingSessionId } ?: return
                     val silenced = mine.isClientSilenced
-                    if (silenced != isSilenced) {
-                        isSilenced = silenced
-                        isPausedBySilence = silenced
-                        if (silenced) {
-                            Log.i(TAG, "AudioRecord silenced by system (other app using mic).")
-                            updateNotification("Paused — mic in use by another app")
-                            try { recorder.stop() } catch (_: Throwable) {}
-                        } else {
-                            Log.i(TAG, "AudioRecord unsilenced; will resume.")
-                        }
+                    if (silenced && !isSilenced) {
+                        isSilenced = true
+                        isPausedBySilence = true
+                        Log.i(TAG, "AudioRecord silenced by system (other app using mic).")
+                        markCooldownStart = System.currentTimeMillis()
+                        updateNotification("Paused — mic in use by another app")
+                        try { recorder.stop() } catch (_: Throwable) {}
+                    } else if (!silenced && isSilenced) {
+                        Log.i(TAG, "AudioRecord unsilenced; will resume (handled by main loop).")
+                        // DO NOT set isSilenced = false here. Main loop will handle this.
                     }
                 }
             }
@@ -389,13 +443,15 @@ class MicLockService : Service() {
     private suspend fun tryMediaRecorderMode(): Boolean {
         return try {
             mediaRecorderHolder = MediaRecorderHolder(this, audioManager) { silenced ->
-                isSilenced = silenced
-                isPausedBySilence = silenced
-                if (silenced) {
+                if (silenced && !isSilenced) {
+                    isSilenced = true
+                    isPausedBySilence = true
                     Log.i(TAG, "MediaRecorder silenced by system (other app using mic).")
+                    markCooldownStart = System.currentTimeMillis()
                     updateNotification("Paused — mic in use by another app")
-                } else {
-                    Log.i(TAG, "MediaRecorder unsilenced; will resume.")
+                } else if (!silenced && isSilenced) {
+                    Log.i(TAG, "MediaRecorder unsilenced; will resume (handled by main loop).")
+                    // DO NOT set isSilenced = false here. Main loop will handle this.
                 }
             }
             
