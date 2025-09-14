@@ -29,8 +29,8 @@ object AudioSelector {
 
     fun getAudioFormatCandidates(): List<AudioFormatConfig> {
         return listOf(
-            AudioFormatConfig(16000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT),
-            AudioFormatConfig(48000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT),
+            AudioFormatConfig(8000, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT),
+            AudioFormatConfig(16000, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT),
             AudioFormatConfig(48000, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT)
         )
     }
