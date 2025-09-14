@@ -48,8 +48,10 @@ When another application (e.g., WhatsApp) starts recording and contention for th
 
 * **Detect Silencing:** Actively detect when its audio client is silenced (e.g., `isClientSilenced == true` through `AudioRecordingCallback`).
 * **Prompt Release:** Upon detection of silencing, immediately **stop and release** its microphone input to free the route for the foreground application.
-* **Maintain Route for Foreground App:** Ensure that Android's policy keeps the **same (good) input route** established by Mic-Lock active for the foreground app, allowing it to record from the functional microphone.
-* **No Re-opening Until Unsilenced:** Do not attempt to re-open the microphone input until Mic-Lock is unsilenced, or the foreground app has stopped recording.
+* **Polite Re-acquisition Logic:** Do not attempt to re-acquire the microphone immediately after being unsilenced. Instead, employ a polite backoff strategy:
+    *   **Cooldown Period:** Wait for a minimum cooldown period (e.g., 3 seconds) after being silenced to prevent rapid re-acquisition.
+    *   **Active Recorder Check:** Before attempting to re-acquire, verify that no other applications are actively recording.
+    *   **Exponential Backoff:** If other recorders are still active after the cooldown, continue to wait, applying an exponential backoff to periodically re-check for an opportunity to safely re-acquire the microphone without causing contention.
 
 ### 3.4 Enhanced Route Validation
 
