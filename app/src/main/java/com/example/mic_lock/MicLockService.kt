@@ -77,24 +77,30 @@ class MicLockService : Service() {
         }
 
         when (intent?.action) {
+            ACTION_START_HOLDING -> {
+                if (isRunning) startMicHolding() // Only start if service is meant to be active
+            }
+            ACTION_STOP_HOLDING -> {
+                stopMicHolding()
+            }
             ACTION_STOP -> {
-                stopSelf()
+                isRunning = false
+                stopMicHolding()
+                stopSelf() // Full stop from user
                 return START_NOT_STICKY
             }
             ACTION_RECONFIGURE -> {
                 if (isRunning) {
                     restartLoop("Reconfigure requested from UI")
-                    return START_STICKY
                 }
             }
-        }
-
-        if (!isRunning) {
-            isRunning = true
-            isPausedBySilence = false
-            startForeground(NOTIF_ID, buildNotification("Starting…"))
-            stopFlag.set(false)
-            loopJob = scope.launch { holdSelectedMicLoop() }
+            // This is now the initial start from MainActivity/BootReceiver
+            else -> {
+                if (!isRunning) {
+                    isRunning = true
+                    startMicHolding()
+                }
+            }
         }
 
         return START_STICKY
@@ -134,6 +140,39 @@ class MicLockService : Service() {
 
     private fun registerRecordingCallback(cb: AudioManager.AudioRecordingCallback) {
         audioManager.registerAudioRecordingCallback(cb, Handler(Looper.getMainLooper()))
+    }
+
+        @RequiresApi(Build.VERSION_CODES.P)
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    private fun startMicHolding() {
+        if (loopJob?.isActive == true) {
+            Log.d(TAG, "Mic holding is already active.")
+            return
+        }
+        Log.i(TAG, "Screen is ON. Starting mic holding logic.")
+        startForeground(NOTIF_ID, buildNotification("Starting…"))
+        stopFlag.set(false)
+        isPausedBySilence = false
+        loopJob = scope.launch { holdSelectedMicLoop() }
+    }
+
+    private fun stopMicHolding() {
+        if (loopJob == null) return
+        Log.i(TAG, "Screen is OFF. Stopping mic holding logic.")
+        stopFlag.set(true)
+        loopJob?.cancel()
+        loopJob = null
+
+        // Release all resources
+        releaseWakeLock()
+        unregisterRecordingCallback(recCallback)
+        recCallback = null
+        mediaRecorderHolder?.stopRecording()
+        mediaRecorderHolder = null
+        currentDeviceAddress = null
+
+        // Stop the foreground service to remove the notification, but keep the service alive.
+        stopForeground(STOP_FOREGROUND_DETACH)
     }
 
     private fun unregisterRecordingCallback(cb: AudioManager.AudioRecordingCallback?) {
@@ -487,5 +526,8 @@ class MicLockService : Service() {
 
         const val ACTION_RECONFIGURE = "com.example.mic_lock.ACTION_RECONFIGURE"
         const val ACTION_STOP = "com.example.mic_lock.ACTION_STOP"
+
+        const val ACTION_START_HOLDING = "com.example.mic_lock.ACTION_START_HOLDING"
+        const val ACTION_STOP_HOLDING = "com.example.mic_lock.ACTION_STOP_HOLDING"
     }
 }
