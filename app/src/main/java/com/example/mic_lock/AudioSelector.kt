@@ -20,6 +20,20 @@ data class RouteInfo(
 )
 
 object AudioSelector {
+
+    data class AudioFormatConfig(
+        val sampleRate: Int,
+        val channelMask: Int,
+        val encoding: Int
+    )
+
+    fun getAudioFormatCandidates(): List<AudioFormatConfig> {
+        return listOf(
+            AudioFormatConfig(16000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT),
+            AudioFormatConfig(48000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT),
+            AudioFormatConfig(48000, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT)
+        )
+    }
     private const val TAG = "MicLock"
 
     /** All built-in mic input devices, best-effort joined to MicrophoneInfo by address. */
@@ -59,16 +73,7 @@ object AudioSelector {
         return choices.firstOrNull { (it.device.address ?: "") == address } ?: choices.first()
     }
 
-    fun chooseLowestPowerFormat(): Triple<Int, Int, Int> {
-        val candidates = listOf(8000, 16000, 22050)
-        val encoding = AudioFormat.ENCODING_PCM_16BIT
-        val channel = AudioFormat.CHANNEL_IN_MONO
-        for (sr in candidates) {
-            val min = AudioRecord.getMinBufferSize(sr, channel, encoding)
-            if (min > 0) return Triple(sr, encoding, channel)
-        }
-        return Triple(16000, encoding, channel)
-    }
+    
 
     fun encodingName(enc: Int) = when (enc) {
         AudioFormat.ENCODING_PCM_8BIT  -> "PCM8"
