@@ -330,7 +330,7 @@ class MicLockService : Service() {
                     .build()
 
                 recorder = AudioRecord.Builder()
-                    .setAudioSource(MediaRecorder.AudioSource.MIC)
+                    .setAudioSource(MediaRecorder.AudioSource.UNPROCESSED)
                     .setAudioFormat(fmt)
                     .setBufferSizeInBytes(bufferBytes)
                     .build()
