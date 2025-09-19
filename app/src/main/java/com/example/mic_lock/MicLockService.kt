@@ -8,6 +8,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.*
 import android.os.Build
@@ -15,6 +16,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
@@ -46,11 +48,27 @@ class MicLockService : Service() {
     
     // MediaRecorder fallback
     private var mediaRecorderHolder: MediaRecorderHolder? = null
+    
+    // Dynamic screen state receiver
+    private var screenStateReceiver: ScreenStateReceiver? = null
+    
+    // Android 14+ foreground service restriction handling
+    private var isStartedFromBoot = false
+    private var needsForegroundMode = false
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
         createChannel()
+        
+        // Register screen state receiver dynamically
+        screenStateReceiver = ScreenStateReceiver()
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+        registerReceiver(screenStateReceiver, filter)
+        Log.d(TAG, "ScreenStateReceiver registered dynamically")
     }
 
     override fun onDestroy() {
@@ -62,6 +80,18 @@ class MicLockService : Service() {
         recCallback = null
         mediaRecorderHolder?.stopRecording()
         mediaRecorderHolder = null
+        
+        // Unregister screen state receiver
+        screenStateReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                Log.d(TAG, "ScreenStateReceiver unregistered")
+            } catch (e: Exception) {
+                Log.w(TAG, "Error unregistering ScreenStateReceiver: ${e.message}")
+            }
+        }
+        screenStateReceiver = null
+        
         isRunning = false
         isPausedBySilence = false
         currentDeviceAddress = null
@@ -70,6 +100,8 @@ class MicLockService : Service() {
     @androidx.annotation.RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.i(TAG, "onStartCommand called with action: ${intent?.action}, isRunning: $isRunning")
+        
         if (!hasAllRequirements()) {
             Log.w(TAG, "Missing permission or notifications disabled. Stopping.")
             stopSelf()
@@ -77,14 +109,38 @@ class MicLockService : Service() {
         }
 
         when (intent?.action) {
+            ACTION_START_USER_INITIATED -> {
+                Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
+                needsForegroundMode = true
+                if (!isRunning) {
+                    isStartedFromBoot = false
+                    isRunning = true
+                    Log.i(TAG, "Starting service from user action - immediate foreground activation")
+                    startMicHolding()
+                } else {
+                    Log.i(TAG, "Service already running - activating foreground mode for user action")
+                    // Always start foreground when user explicitly starts the service
+                    // This satisfies Android's requirement for startForegroundService() calls
+                    startForeground(NOTIF_ID, buildNotification("Mic-Lock activated by user"))
+                }
+            }
             ACTION_START_HOLDING -> {
-                if (isRunning) startMicHolding() // Only start if service is meant to be active
+                Log.i(TAG, "Received ACTION_START_HOLDING, isRunning: $isRunning")
+                if (isRunning) {
+                    needsForegroundMode = true
+                    startMicHolding()
+                } else {
+                    Log.w(TAG, "Service not running, ignoring START_HOLDING action. (Consider starting service first)")
+                }
             }
             ACTION_STOP_HOLDING -> {
+                Log.i(TAG, "Received ACTION_STOP_HOLDING")
+                needsForegroundMode = false
                 stopMicHolding()
             }
             ACTION_STOP -> {
                 isRunning = false
+                needsForegroundMode = false
                 stopMicHolding()
                 stopSelf() // Full stop from user
                 return START_NOT_STICKY
@@ -94,12 +150,17 @@ class MicLockService : Service() {
                     restartLoop("Reconfigure requested from UI")
                 }
             }
-            // This is now the initial start from MainActivity/BootReceiver
-            else -> {
+            // Boot-initiated start (no explicit action from BOOT_COMPLETED)
+            null -> {
                 if (!isRunning) {
+                    isStartedFromBoot = true
                     isRunning = true
-                    startMicHolding()
+                    Log.i(TAG, "Service started from boot - waiting for screen state events")
+                    // Don't start mic holding immediately from boot to avoid foreground service restriction
                 }
+            }
+            else -> {
+                Log.w(TAG, "Unknown action received: ${intent?.action}")
             }
         }
 
@@ -150,7 +211,32 @@ class MicLockService : Service() {
             return
         }
         Log.i(TAG, "Screen is ON. Starting mic holding logic.")
-        startForeground(NOTIF_ID, buildNotification("Starting…"))
+        
+        // For user-initiated starts, always try to start foreground immediately
+        // For boot-initiated starts, use delayed activation to comply with Android 14+ restrictions
+        if (!isStartedFromBoot) {
+            Log.i(TAG, "User-initiated start - attempting foreground service activation")
+            try {
+                startForeground(NOTIF_ID, buildNotification("Starting…"))
+                Log.i(TAG, "Successfully activated foreground service for user-initiated start")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not start foreground service for user-initiated start: ${e.message}")
+                // Continue with mic holding even if foreground service fails
+            }
+        } else if (canStartForegroundService()) {
+            Log.i(TAG, "Boot-initiated start - attempting foreground service activation")
+            try {
+                startForeground(NOTIF_ID, buildNotification("Starting…"))
+                Log.i(TAG, "Successfully activated foreground service for boot-initiated start")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not start foreground service for boot-initiated start: ${e.message}")
+                // Continue with mic holding even if foreground service fails
+            }
+        } else {
+            Log.w(TAG, "Boot-initiated start - delaying foreground service start due to Android 14+ restriction")
+            scheduleDelayedForegroundStart()
+        }
+        
         stopFlag.set(false)
         isPausedBySilence = false
         loopJob = scope.launch { holdSelectedMicLoop() }
@@ -178,6 +264,27 @@ class MicLockService : Service() {
     private fun unregisterRecordingCallback(cb: AudioManager.AudioRecordingCallback?) {
         if (cb != null) {
             try { audioManager.unregisterAudioRecordingCallback(cb) } catch (_: Throwable) {}
+        }
+    }
+    
+    private fun canStartForegroundService(): Boolean {
+        // Allow foreground service if enough time has passed since boot
+        // or if not started from BOOT_COMPLETED
+        return !isStartedFromBoot || 
+               (SystemClock.elapsedRealtime() > 10_000) // 10 seconds after boot
+    }
+    
+    private fun scheduleDelayedForegroundStart() {
+        scope.launch {
+            delay(10_000) // Wait 10 seconds
+            if (needsForegroundMode && !stopFlag.get()) {
+                try {
+                    startForeground(NOTIF_ID, buildNotification("Recording active"))
+                    Log.i(TAG, "Delayed foreground service start successful")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to start foreground service after delay: ${e.message}", e)
+                }
+            }
         }
     }
 
@@ -529,5 +636,6 @@ class MicLockService : Service() {
 
         const val ACTION_START_HOLDING = "com.example.mic_lock.ACTION_START_HOLDING"
         const val ACTION_STOP_HOLDING = "com.example.mic_lock.ACTION_STOP_HOLDING"
+        const val ACTION_START_USER_INITIATED = "com.example.mic_lock.ACTION_START_USER_INITIATED"
     }
 }

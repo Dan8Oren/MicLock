@@ -70,13 +70,19 @@ Mic-Lock should avoid requesting audio modes or flags that might inadvertently b
 * **No Special Processing:** Do **not** request `UNPROCESSED`, `FAST/RAW`, or similar modes that trigger raw or AAudio paths.
 * **No Communication Bias:** Do **not** set `MODE_IN_COMMUNICATION`, initiate SCO connections, or aggressively request audio focus in a manner that biases routing to communication-specific paths.
 
-### 3.6 Proper Foreground Service (FGS) Lifecycle
+### 3.6 Proper Foreground Service (FGS) Lifecycle and Android 14+ Compatibility
 
-Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to ensure stable policy classification:
+Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to ensure stable policy classification, while gracefully handling Android 14+ background service restrictions:
 
 * **Open Input After FGS Start:** The microphone input should only be opened *after* the Foreground Service is fully running and its notification is visible.
 * **Persistent Notification:** Maintain a clear, ongoing notification that indicates the service status and allows user control.
 * **Graceful Shutdown:** Properly clean up resources and release wake locks when the service is stopped.
+* **Android 14+ Background Resilience:** Handle `ForegroundServiceStartNotAllowedException` gracefully by:
+  - Wrapping all `startForeground()` calls in try-catch blocks
+  - Allowing microphone holding to continue even if foreground service activation fails
+  - Distinguishing between user-initiated and boot-initiated service starts
+  - Using regular `startService()` for already-running services to avoid background restrictions
+* **Screen State Integration:** Properly coordinate with screen state changes to manage foreground service lifecycle without triggering Android's background service restrictions.
 
 ### 3.7 User Interface and Preferences
 
@@ -117,6 +123,13 @@ val isBadRoute = !routeInfo.isOnPrimaryArray ||
 4. **Retry Logic:** If both methods fail, wait 2 seconds and retry the entire process
 5. **User Feedback:** Update UI to reflect current status and any method switches
 
+### 4.4 Android 14+ Compatibility Handling
+
+* **Exception Resilience:** All `startForeground()` calls must be wrapped in try-catch blocks to handle `ForegroundServiceStartNotAllowedException`
+* **Service Communication:** Use `context.startService()` instead of `ContextCompat.startForegroundService()` when sending actions to already-running services
+* **Graceful Degradation:** Allow core microphone holding functionality to continue even when foreground service activation fails due to background restrictions
+* **Boot vs User Start Differentiation:** Track service start origin to apply appropriate foreground service activation strategies
+
 ## 5. Testing and Validation
 
 To validate that Mic-Lock is working correctly:
@@ -146,5 +159,21 @@ When modifying this application:
 * **Test Route Inheritance:** Verify that changes don't break the core route-sharing behavior with other apps
 * **Monitor Battery Impact:** Ensure modifications don't significantly increase power consumption
 * **Validate on Problem Devices:** Test specifically on devices known to have bottom microphone issues
+* **Preserve Android 14+ Compatibility:** Maintain try-catch blocks around `startForeground()` calls and the distinction between service communication methods
+* **Test Background Scenarios:** Verify that microphone holding continues to work even when foreground service activation is denied by the system
+
+## 8. Android Version Compatibility
+
+### 8.1 Android 14+ (API 34+) Considerations
+
+* **Background Foreground Service Restrictions:** Android 14+ significantly restricts when apps can start foreground services from the background
+* **Screen State Handling:** The app handles screen ON/OFF cycles gracefully, allowing microphone holding to continue even when foreground service activation is restricted
+* **Service Communication Strategy:** Uses appropriate service communication methods based on service state to avoid triggering system restrictions
+* **Graceful Degradation:** Core functionality (microphone route establishment and holding) continues to work even when foreground service features are limited by system policies
+
+### 8.2 Backward Compatibility
+
+* **API Level Support:** Maintains compatibility with older Android versions while leveraging newer APIs when available
+* **Progressive Enhancement:** Uses feature detection to enable advanced capabilities on supported devices
 
 This specification ensures that Mic-Lock continues to solve the core problem of enabling reliable microphone access for other applications on devices with faulty microphone hardware.

@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
 
     private fun startMicLock() {
         val intent = Intent(this, MicLockService::class.java)
+        intent.action = MicLockService.ACTION_START_USER_INITIATED
         ContextCompat.startForegroundService(this, intent)
         updateAllUi()
     }
