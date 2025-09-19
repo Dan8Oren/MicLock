@@ -85,7 +85,7 @@ class MicLockService : Service() {
             .setContentTitle("Mic-Lock Stopped")
             .setContentText("Tap to restart microphone protection")
             .setSmallIcon(android.R.drawable.stat_sys_phone_call_forward)
-            .addAction(0, "Restart", restartPI)
+            .setContentIntent(restartPI)
             .setAutoCancel(true)
             .build()
 
@@ -136,6 +136,7 @@ class MicLockService : Service() {
 
         when (intent?.action) {
             ACTION_START_USER_INITIATED -> {
+                notifManager.cancel(RESTART_NOTIF_ID)
                 Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
                 needsForegroundMode = true
                 if (!isRunning) {
