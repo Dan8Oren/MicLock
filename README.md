@@ -93,6 +93,14 @@ Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to
   - Current recording method (MediaRecorder/AudioRecord) and device information
 * **Auto-Selection Default:** The app defaults to automatic microphone selection rather than manual device pinning.
 * **Battery Usage Awareness:** Clearly communicate to users that MediaRecorder mode uses more battery but provides better compatibility.
+* **Battery Optimization Exemption:** Upon first launch, the app prompts the user to grant an exemption from battery optimizations. This is critical to prevent the Android system from terminating the service during long periods of device inactivity, ensuring continuous background operation.
+
+### 3.8 Service Resilience and User Experience
+
+To ensure the service remains active and is easy to manage, Mic-Lock implements several resilience features:
+
+*   **Enhanced Foreground Service:** The foreground service notification is configured with a low priority and service category, making it "sticky" and less likely to be dismissed or have its associated service terminated by the Android system during low-memory situations.
+*   **User-Friendly Reactivation:** If the service is terminated for any reason (e.g., by the system), a "Mic-Lock Stopped" notification is displayed. A single tap on this notification immediately restarts the service, providing a quick and seamless way for the user to restore functionality. This restart notification is automatically dismissed upon a successful restart.
 
 ## 4. Technical Implementation Requirements
 
