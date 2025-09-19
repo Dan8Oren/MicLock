@@ -3,6 +3,9 @@ package com.example.mic_lock
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
@@ -71,6 +74,9 @@ class MainActivity : ComponentActivity() {
         }
         stopBtn.setOnClickListener { stopMicLock() }
 
+        // Request battery optimization exemption
+        requestBatteryOptimizationExemption()
+
 
 
         updateAllUi()
@@ -80,6 +86,18 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         updateAllUi()
+    }
+
+    private fun requestBatteryOptimizationExemption() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (!powerManager.isIgnoringBatteryOptimizations(packageName)) {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+            }
+        }
     }
 
     private fun hasAllPerms(): Boolean {
