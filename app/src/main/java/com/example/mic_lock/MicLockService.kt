@@ -71,8 +71,30 @@ class MicLockService : Service() {
         Log.d(TAG, "ScreenStateReceiver registered dynamically")
     }
 
+        private fun createRestartNotification() {
+        val restartIntent = Intent(this, MicLockService::class.java).apply {
+            action = ACTION_START_USER_INITIATED
+        }
+        val restartPI = PendingIntent.getService(
+            this, 4, restartIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                    (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+        )
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Mic-Lock Stopped")
+            .setContentText("Tap to restart microphone protection")
+            .setSmallIcon(android.R.drawable.stat_sys_phone_call_forward)
+            .addAction(0, "Restart", restartPI)
+            .setAutoCancel(true)
+            .build()
+
+        notifManager.notify(RESTART_NOTIF_ID, notification)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        val wasRunning = isRunning
         stopFlag.set(true)
         scope.cancel()
         releaseWakeLock()
@@ -95,6 +117,10 @@ class MicLockService : Service() {
         isRunning = false
         isPausedBySilence = false
         currentDeviceAddress = null
+
+        if (wasRunning) {
+            createRestartNotification()
+        }
     }
 
     @androidx.annotation.RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
@@ -612,6 +638,9 @@ class MicLockService : Service() {
             .setSmallIcon(android.R.drawable.stat_sys_phone_call_forward)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW) // Prevents dismissal
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(pi)
             .addAction(0, "Recheck", reconfigPI)
             .addAction(0, "Stop", stopPI)
@@ -626,6 +655,7 @@ class MicLockService : Service() {
         private const val TAG = "MicLockService"
         private const val CHANNEL_ID = "mic_lock_channel"
         private const val NOTIF_ID = 42
+        private const val RESTART_NOTIF_ID = 43
 
         @JvmStatic @Volatile var isRunning: Boolean = false
         @JvmStatic @Volatile var isPausedBySilence: Boolean = false
