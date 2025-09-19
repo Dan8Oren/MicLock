@@ -59,7 +59,7 @@ class MicLockService : Service() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
-        createChannel()
+        createChannels()
         
         // Register screen state receiver dynamically
         screenStateReceiver = ScreenStateReceiver()
@@ -81,7 +81,7 @@ class MicLockService : Service() {
                     (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
         )
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(this, RESTART_CHANNEL_ID)
             .setContentTitle("Mic-Lock Stopped")
             .setContentText("Tap to restart microphone protection")
             .setSmallIcon(android.R.drawable.stat_sys_phone_call_forward)
@@ -608,13 +608,20 @@ class MicLockService : Service() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun createChannel() {
-        val ch = NotificationChannel(
+    private fun createChannels() {
+        val statusChannel = NotificationChannel(
             CHANNEL_ID,
-            "Mic Lock",
+            "Mic Lock Status",
             NotificationManager.IMPORTANCE_LOW
         ).apply { setShowBadge(false) }
-        notifManager.createNotificationChannel(ch)
+        notifManager.createNotificationChannel(statusChannel)
+
+        val restartChannel = NotificationChannel(
+            RESTART_CHANNEL_ID,
+            "Mic Lock Alerts",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply { setShowBadge(true) }
+        notifManager.createNotificationChannel(restartChannel)
     }
 
     private fun buildNotification(text: String): Notification {
@@ -655,6 +662,7 @@ class MicLockService : Service() {
     companion object {
         private const val TAG = "MicLockService"
         private const val CHANNEL_ID = "mic_lock_channel"
+        private const val RESTART_CHANNEL_ID = "mic_lock_restart_channel"
         private const val NOTIF_ID = 42
         private const val RESTART_NOTIF_ID = 43
 
