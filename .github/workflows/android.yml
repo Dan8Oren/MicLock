@@ -1,0 +1,77 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Run unit tests
+      run: ./gradlew test
+
+    - name: Build debug APK
+      run: ./gradlew assembleDebug
+
+    - name: Run lint
+      run: ./gradlew lint
+
+    # Optional: Upload test results
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: app/build/test-results/
+
+    # Optional: Upload lint results
+    - name: Upload lint results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: lint-results
+        path: app/build/reports/lint-results*.html
+
+  # Instrumented tests would require an Android emulator
+  # Commented out for now as it's complex and may not be needed for initial setup
+  # instrumented-test:
+  #   runs-on: macos-latest
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #
+  #   - name: Set up JDK 17
+  #     uses: actions/setup-java@v4
+  #     with:
+  #       java-version: '17'
+  #       distribution: 'temurin'
+  #       cache: gradle
+  #
+  #   - name: Grant execute permission for gradlew
+  #     run: chmod +x gradlew
+  #
+  #   - name: Run instrumented tests
+  #     uses: reactivecircus/android-emulator-runner@v2
+  #     with:
+  #       api-level: 30
+  #       target: default
+  #       arch: x86_64
+  #       profile: pixel_5
+  #       script: ./gradlew connectedAndroidTest
