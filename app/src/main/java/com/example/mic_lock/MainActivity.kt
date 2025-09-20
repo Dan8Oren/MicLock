@@ -10,23 +10,22 @@ import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
-import android.widget.Button
-import android.widget.Switch
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var statusText: TextView
-    private lateinit var startBtn: Button
-    private lateinit var stopBtn: Button
+    private lateinit var startBtn: MaterialButton
+    private lateinit var stopBtn: MaterialButton
 
 
-    private lateinit var detailedStatusText: TextView
-    private lateinit var mediaRecorderToggle: Switch
+    private lateinit var mediaRecorderToggle: SwitchMaterial
     private lateinit var mediaRecorderBatteryWarningText: TextView
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
@@ -49,7 +48,6 @@ class MainActivity : ComponentActivity() {
         startBtn = findViewById(R.id.startBtn)
         stopBtn = findViewById(R.id.stopBtn)
 
-        detailedStatusText = findViewById(R.id.detailedStatusText)
         mediaRecorderToggle = findViewById(R.id.mediaRecorderToggle)
         mediaRecorderBatteryWarningText = findViewById(R.id.mediaRecorderBatteryWarningText)
 
@@ -120,19 +118,27 @@ class MainActivity : ComponentActivity() {
     private fun updateAllUi() {
         updateMainStatus()
         updateCompatibilityModeUi()
-        updateDetailedStatus()
     }
 
     private fun updateMainStatus() {
         val running = MicLockService.isRunning
         val paused = MicLockService.isPausedBySilence
-        
-        statusText.text = when {
-            !running -> "Mic-lock is OFF"
-            paused -> "Paused — mic in use by another app"
-            else -> "Mic-lock is ON"
+
+        when {
+            !running -> {
+                statusText.text = "OFF"
+                statusText.setTextColor(ContextCompat.getColor(this, R.color.error_red))
+            }
+            paused -> {
+                statusText.text = "PAUSED"
+                statusText.setTextColor(ContextCompat.getColor(this, R.color.on_surface_variant))
+            }
+            else -> {
+                statusText.text = "ON"
+                statusText.setTextColor(ContextCompat.getColor(this, R.color.secondary_green))
+            }
         }
-        
+
         startBtn.isEnabled = !running
         stopBtn.isEnabled = running
     }
@@ -142,37 +148,16 @@ class MainActivity : ComponentActivity() {
     private fun updateCompatibilityModeUi() {
         val useMediaRecorder = Prefs.getUseMediaRecorder(this)
         val lastMethod = Prefs.getLastRecordingMethod(this)
-        
+
         mediaRecorderToggle.isChecked = useMediaRecorder
-        
+
         // Auto-suggest MediaRecorder if AudioRecord failed
         if (lastMethod == "AudioRecord" && !useMediaRecorder) {
             mediaRecorderBatteryWarningText.text = "AudioRecord mode (optimized battery usage)"
         } else if (useMediaRecorder) {
-            mediaRecorderBatteryWarningText.text = "MediaRecorder mode (higher battery usage)"
+            mediaRecorderBatteryWarningText.text = "MediaRecorder mode (Higher battery usage, may resolve issues)"
         } else {
             mediaRecorderBatteryWarningText.text = "AudioRecord mode (optimized battery usage)"
-        }
-    }
-
-    private fun updateDetailedStatus() {
-        val currentDevice = MicLockService.currentDeviceAddress
-        val lastMethod = Prefs.getLastRecordingMethod(this)
-        
-        val details = mutableListOf<String>()
-        
-        if (currentDevice != null) {
-            details.add("Device: $currentDevice")
-        }
-        
-        if (lastMethod != null) {
-            details.add("Method: $lastMethod")
-        }
-        
-        detailedStatusText.text = if (details.isNotEmpty()) {
-            details.joinToString(" • ")
-        } else {
-            ""
         }
     }
 

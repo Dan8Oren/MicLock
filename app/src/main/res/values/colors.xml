@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- New Custom Colors -->
+    <color name="dark_background">#121b2e</color>
+    <color name="secondary_green">#5ada9c</color>
+
+    <!-- Primary brand colors - adjusted to dark theme -->
+    <color name="primary">#5ada9c</color> <!-- Using secondary_green as primary for visibility -->
+    <color name="primary_variant">#4CAF50</color> <!-- Green accent -->
+    <color name="secondary">#03DAC6</color>
+    <color name="secondary_variant">#018786</color>
+
+    <!-- Status colors -->
+    <color name="success_green">#4CAF50</color>
+    <color name="warning_orange">#FF9800</color>
+    <color name="error_red">#bf3d44</color>
+
+    <!-- Surface colors - adjusted for dark theme -->
+    <color name="surface">#1E2738</color>
+    <color name="surface_variant">#293246</color>
+    <color name="outline">#374052</color>
+
+    <!-- Text colors - adjusted for dark theme -->
+    <color name="on_surface">#FFFFFF</color>
+    <color name="on_surface_variant">#B0B0B0</color>
+
+    <!-- Existing/Legacy colors -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>

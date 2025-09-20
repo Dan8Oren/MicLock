@@ -1,107 +1,189 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="24dp"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:background="@android:color/background_light"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/dark_background">
 
-    <!-- App Title -->
-    <TextView
-        android:id="@+id/appTitle"
-        android:text="Mic-Lock"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/black"
-        android:layout_marginBottom="32dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <!-- Status -->
-    <TextView
-        android:id="@+id/statusText"
-        android:text="Mic-Lock is OFF"
-        android:textSize="16sp"
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginBottom="24dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-
-
-    <!-- Detailed Status -->
-    <TextView
-        android:id="@+id/detailedStatusText"
-        android:text=""
-        android:textSize="12sp"
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <!-- Compatibility Mode Section -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@android:drawable/editbox_background"
-        android:padding="12dp"
-        android:layout_marginBottom="24dp">
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
+        <!-- Header Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_marginTop="30dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:src="@mipmap/ic_launcher"
+                    android:contentDescription="@string/app_name"
+                    android:layout_marginBottom="12dp"
+                    app:tint="@color/secondary_green" />
+
+                <TextView
+                    android:id="@+id/appTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mic-Lock"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/on_surface" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Microphone Route Protection"
+                    android:textSize="14sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:alpha="0.8"
+                    android:layout_marginTop="4dp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Unified Status and Settings Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/surface"
+            app:strokeColor="@color/secondary_green"
+            app:strokeWidth="0.5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mic-Lock Status"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary_green"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/statusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="OFF"
+                    android:textSize="40sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/on_surface_variant"
+                    android:gravity="center"
+                    android:layout_marginBottom="12dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Recording Method"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/secondary_green"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:text="Compatibility Mode (MediaRecorder)"
+                                android:textSize="14sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/on_surface"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                            <TextView
+                                android:id="@+id/mediaRecorderBatteryWarningText"
+                                android:text="MediaRecorder mode (Higher battery usage, may resolve issues)"
+                                android:textSize="12sp"
+                                android:textColor="@color/on_surface_variant"
+                                android:layout_marginTop="2dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/mediaRecorderToggle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:thumbTint="@color/secondary_green"
+                            app:trackTint="@color/outline" />
+
+                    </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:orientation="vertical">
 
-            <TextView
-                android:text="Compatibility Mode"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/black"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/startBtn"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:text="Start Protection"
+                android:textSize="18sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/secondary_green"
+                android:textColor="@color/dark_background"
+                app:cornerRadius="20dp"
+                app:strokeColor="@color/outline"
+                app:strokeWidth="1dp"
+                android:layout_marginBottom="16dp" />
 
-            <Switch
-                android:id="@+id/mediaRecorderToggle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/stopBtn"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:text="Stop Protection"
+                android:textSize="18sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/error_red"
+                android:textColor="@color/dark_background"
+                app:cornerRadius="20dp"
+                app:strokeColor="@color/outline"
+                app:strokeWidth="1dp"
+                android:layout_marginBottom="8dp" />
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/mediaRecorderBatteryWarningText"
-            android:text="Uses MediaRecorder (higher battery usage)"
-            android:textSize="11sp"
-            android:textColor="@android:color/darker_gray"
-            android:layout_marginTop="4dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
     </LinearLayout>
-
-    <!-- Start Button -->
-    <Button
-        android:id="@+id/startBtn"
-        android:text="Start"
-        android:textAllCaps="false"
-        android:backgroundTint="@android:color/holo_green_dark"
-        android:textColor="@android:color/white"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <!-- Stop Button -->
-    <Button
-        android:id="@+id/stopBtn"
-        android:text="Stop"
-        android:textAllCaps="false"
-        android:backgroundTint="@android:color/holo_red_dark"
-        android:textColor="@android:color/white"
-        android:layout_marginTop="16dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-</LinearLayout>
+</ScrollView>

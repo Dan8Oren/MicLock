@@ -1,6 +1,25 @@
 <resources>
-    <style name="Theme.MicLock" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Keep it simple; no special colors needed -->
+    <style name="Theme.MicLock" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_variant</item>
+        <item name="colorOnPrimary">@color/dark_background</item>
+        
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/secondary_green</item>
+        <item name="colorSecondaryVariant">@color/secondary_variant</item>
+        <item name="colorOnSecondary">@color/dark_background</item>
+        
+        <!-- Background and surface colors -->
+        <item name="android:colorBackground">@color/dark_background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        <item name="colorOutline">@color/outline</item>
+        
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@color/dark_background</item>
+        <item name="android:navigationBarColor">@color/dark_background</item>
     </style>
 </resources>
-

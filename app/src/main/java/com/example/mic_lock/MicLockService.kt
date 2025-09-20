@@ -84,7 +84,7 @@ class MicLockService : Service() {
         val notification = NotificationCompat.Builder(this, RESTART_CHANNEL_ID)
             .setContentTitle("Mic-Lock Stopped")
             .setContentText("Tap to restart microphone protection")
-            .setSmallIcon(android.R.drawable.stat_sys_phone_call_forward)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(restartPI)
             .setAutoCancel(true)
             .build()
@@ -643,7 +643,7 @@ class MicLockService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Mic-Lock")
             .setContentText(text)
-            .setSmallIcon(android.R.drawable.stat_sys_phone_call_forward)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_LOW) // Prevents dismissal
