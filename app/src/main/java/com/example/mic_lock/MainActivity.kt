@@ -1,4 +1,4 @@
-package com.example.mic_lock
+package io.github.miclock
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -24,6 +24,18 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
 
+/**
+ * MainActivity provides the user interface for controlling the Mic-Lock service.
+ * 
+ * This activity allows users to:
+ * - Start and stop the microphone protection service
+ * - Configure recording modes (MediaRecorder vs AudioRecord)
+ * - Monitor service status in real-time
+ * - Manage battery optimization settings
+ * 
+ * The activity communicates with MicLockService through intents and observes
+ * service state changes via StateFlow to update the UI accordingly.
+ */
 class MainActivity : ComponentActivity() {
 
     private lateinit var statusText: TextView
@@ -47,6 +59,12 @@ class MainActivity : ComponentActivity() {
         updateAllUi()
     }
 
+    /**
+     * Called when the activity is first created. Sets up the UI components,
+     * initializes event listeners, and requests necessary permissions.
+     * 
+     * @param savedInstanceState If the activity is being re-initialized after being shut down
+     */
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -124,12 +142,19 @@ class MainActivity : ComponentActivity() {
         return all.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }
     }
 
+    /**
+     * Starts the MicLockService with user-initiated action.
+     * This sends an ACTION_START_USER_INITIATED intent to the service.
+     */
     private fun startMicLock() {
         val intent = Intent(this, MicLockService::class.java)
         intent.action = MicLockService.ACTION_START_USER_INITIATED
         ContextCompat.startForegroundService(this, intent)
     }
 
+    /**
+     * Stops the MicLockService by calling stopService().
+     */
     private fun stopMicLock() {
         stopService(Intent(this, MicLockService::class.java))
     }

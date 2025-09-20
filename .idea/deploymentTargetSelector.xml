@@ -24,9 +24,6 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="testUIStatusUpdates()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="MicLockServiceTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>

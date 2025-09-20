@@ -1,5 +1,5 @@
 // app/src/main/java/com/example/miclock/BootCompletedReceiver.kt
-package com.example.mic_lock
+package io.github.miclock
 
 import android.Manifest
 import android.app.NotificationManager

@@ -1,4 +1,4 @@
-package com.example.mic_lock
+package io.github.miclock
 
 import org.junit.Test
 

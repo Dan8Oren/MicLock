@@ -1,187 +1,99 @@
-# Mic-Lock Application: Purpose and Behavioral Specification
+# Mic-Lock 🎤🔒
 
-This document outlines the core purpose of the Mic-Lock application and the specific behavioral requirements necessary to achieve its objectives. This specification serves as a guiding principle for all future development, ensuring the app maintains its intended functionality, especially regarding microphone route management and interaction with other applications.
+> **Fix microphone issues on Android devices by ensuring apps use working microphones instead of faulty ones**
 
-## 1. Application Purpose
+## What is Mic-Lock?
 
-The primary purpose of the Mic-Lock application is to:
+Mic-Lock addresses a frustrating and common issue for **Google Pixel phone** users, especially those who have had their **screens replaced**. During screen replacement procedures, the **bottom microphone** can sometimes become damaged or disconnected, causing apps like WhatsApp, voice recorders, and video calling applications to record silence instead of actual audio.
 
-* **Ensure Reliable Microphone Access:** On devices with problematic built-in microphones (e.g., a non-working bottom mic), Mic-Lock aims to enable other applications (like WhatsApp) to reliably capture audio from a *working* microphone (e.g., the top array mic).
-* **Optimize Microphone Route Management:** Leverage Android's audio policy to consistently establish a "good" (primary/array, multi-channel) microphone input route, allowing other apps to inherit this optimal route when they start recording.
-* **Act as a Polite Background Holder:** Graciously yield microphone access to foreground applications while ensuring they utilize the established optimal microphone route, preventing silent recordings or use of non-functional microphones.
-* **Maintain Battery Efficiency:** Achieve the above objectives with minimal impact on device battery life, offering a more efficient solution compared to alternatives like MyRecorder.
+This app was specifically **invented to fix this issue** by running discreetly in the background and intelligently **rerouting audio input requests** from other apps to a **working microphone** (typically the **earpiece microphone**). The solution is designed to be **battery-efficient** by politely "holding" onto a working microphone route and stepping aside when another app needs to record, passing on the correct audio path seamlessly.
 
-## 2. Core Problem Being Solved
+## 🚨 Problem Solved
 
-Based on investigation findings:
+**Common issue**: After Google Pixel screen replacement → Bottom microphone damaged → Apps record silence
 
-* On devices like Pixel phones, the **bottom** built-in mic (`AUDIO_DEVICE_IN_BUILTIN_MIC, address @:bottom`) may be the **faulty** capsule.
-* When **Mic-Lock + WhatsApp** record together, both bind to the **same input route/patch** whose **device address is `@:bottom`**. Android then **silences Mic-Lock** and lets WhatsApp use that *route*—but since that route is bottom, WhatsApp captures **silence**.
-* When **MyRecorder + WhatsApp** record together, MyRecorder is frequently on a **2-channel 48 kHz device path** (array/primary front-end). When WhatsApp starts, Android **silences MyRecorder** and keeps WhatsApp on that **good (array/top) route**, so WhatsApp captures real audio.
+**Mic-Lock solution**: Automatically routes all apps to the working earpiece microphone
 
-**Key Insight:** The difference isn't that MyRecorder "unmutes" WhatsApp; it's that MyRecorder tends to be attached to a **good route** that the policy shares with WhatsApp, whereas without Mic-Lock, apps get attached to the **bad bottom route**.
+-   **WhatsApp voice messages are silent** ❌ → **Clear audio recordings** ✅
+-   **Video calls have no audio** ❌ → **Perfect call quality** ✅
+-   **Voice recorder apps capture nothing** ❌ → **Reliable recordings** ✅
 
-## 3. Necessary Behavioral Specification
+## 📱 How It Works
 
-To fulfill its purpose, the Mic-Lock application *must* exhibit the following behaviors:
+Mic-Lock acts as a "polite background holder" that:
+1.  **Detects Faulty Microphone**: Identifies when the default microphone path is compromised (typically the bottom mic on Pixel devices).
+2.  **Secures Working Mic**: Establishes and holds a connection to your device's *working* earpiece microphone array in a battery-efficient manner.
+3.  **Graceful Handover**: When other apps start recording, Mic-Lock gracefully releases its hold.
+4.  **Correct Path Inheritance**: The other app then inherits the correctly routed audio path to the functional microphone instead of defaulting to the broken one.
+5.  **Seamless Experience**: Your recordings and calls work perfectly without manual intervention!
 
-### 3.1 Microphone Route Selection and Establishment
+## 🔧 Installation
 
-Mic-Lock must prioritize and consistently land on the *primary/array* (good) input route, not problematic capsules (like the bottom mic). This involves:
+### Option 1: Download APK (Recommended for most users)
+1.  Download the latest stable APK: [`mic-lock_stable.apk`](app/release/mic-lock_stable.apk)
+2.  Enable "Install from Unknown Sources" in your device settings if prompted (this is standard for sideloaded apps).
+3.  Install the downloaded APK file.
+4.  Grant **microphone** and **notification** permissions when the app first launches.
+5.  **Crucially**, allow the app to ignore battery optimizations (usually found in App Info → Battery Usage or similar path) to ensure uninterrupted background operation.
 
-* **Avoid Pinning Microphones:** Do **not** call `setPreferredDevice(...)` to pin a specific physical microphone capsule (e.g., "bottom" or "top") by default. The default selection should be "Auto".
-* **Target Primary Array Path:** Use audio capture configurations (e.g., specific sample rates, channel counts, and audio sources) that Android's audio policy maps to the **primary/array** path. This path is typically observed as a `dev=2ch 48000` configuration on the device side.
-* **Multi-Channel Route Preference:** Dynamically request stereo (2-channel) input when device capabilities allow, as this tends to route to the primary microphone array rather than single-capsule routes.
+### Option 2: Build from Source (For developers and advanced users)
 
-### 3.2 Dual Recording Strategy
-
-Mic-Lock implements a dual-strategy approach with intelligent fallback:
-
-* **MediaRecorder Priority:** By default, attempt MediaRecorder first as it tends to establish better routes on many devices.
-* **AudioRecord Fallback:** If MediaRecorder fails or user prefers AudioRecord mode, fall back to AudioRecord with enhanced route validation.
-* **Route Validation:** After establishing any recording session, validate the actual route obtained and switch methods if a bad route is detected.
-* **Smart Retry Logic:** If landing on `@:bottom` or non-primary array routes, immediately stop and retry with the alternative recording method.
-
-### 3.3 Polite Background Holding and Yielding
-
-When another application (e.g., WhatsApp) starts recording and contention for the microphone occurs, Mic-Lock must gracefully yield control:
-
-* **Detect Silencing:** Actively detect when its audio client is silenced (e.g., `isClientSilenced == true` through `AudioRecordingCallback`).
-* **Prompt Release:** Upon detection of silencing, immediately **stop and release** its microphone input to free the route for the foreground application.
-* **Polite Re-acquisition Logic:** Do not attempt to re-acquire the microphone immediately after being unsilenced. Instead, employ a polite backoff strategy:
-    *   **Cooldown Period:** Wait for a minimum cooldown period (e.g., 3 seconds) after being silenced to prevent rapid re-acquisition.
-    *   **Active Recorder Check:** Before attempting to re-acquire, verify that no other applications are actively recording.
-    *   **Exponential Backoff:** If other recorders are still active after the cooldown, continue to wait, applying an exponential backoff to periodically re-check for an opportunity to safely re-acquire the microphone without causing contention.
-
-### 3.4 Enhanced Route Validation
-
-Mic-Lock must validate the *actual* microphone route it obtains, not just its requested settings:
-
-* **Multi-Channel Validation:** Verify that the established route provides the requested channel count (preferably 2-channel for primary array access).
-* **Primary Array Detection:** Check microphone position coordinates (Y >= 0.0f typically indicates primary array, not bottom mic).
-* **Device Address Inspection:** Log and validate that the route is not using `@:bottom` address when possible.
-* **Session ID Tracking:** Monitor audio session IDs to confirm route inheritance by foreground applications.
-
-### 3.5 Avoid Bias-Inducing Modes
-
-Mic-Lock should avoid requesting audio modes or flags that might inadvertently bias Android's audio policy towards niche or single-capsule microphone paths:
-
-* **Default Audio Source:** Stick to the default `MediaRecorder.AudioSource.MIC` (or equivalent for `AudioRecord`).
-* **No Special Processing:** Do **not** request `UNPROCESSED`, `FAST/RAW`, or similar modes that trigger raw or AAudio paths.
-* **No Communication Bias:** Do **not** set `MODE_IN_COMMUNICATION`, initiate SCO connections, or aggressively request audio focus in a manner that biases routing to communication-specific paths.
-
-### 3.6 Proper Foreground Service (FGS) Lifecycle and Android 14+ Compatibility
-
-Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to ensure stable policy classification, while gracefully handling Android 14+ background service restrictions:
-
-* **Open Input After FGS Start:** The microphone input should only be opened *after* the Foreground Service is fully running and its notification is visible.
-* **Persistent Notification:** Maintain a clear, ongoing notification that indicates the service status and allows user control.
-* **Graceful Shutdown:** Properly clean up resources and release wake locks when the service is stopped.
-* **Android 14+ Background Resilience:** Handle `ForegroundServiceStartNotAllowedException` gracefully by:
-  - Wrapping all `startForeground()` calls in try-catch blocks
-  - Allowing microphone holding to continue even if foreground service activation fails
-  - Distinguishing between user-initiated and boot-initiated service starts
-  - Using regular `startService()` for already-running services to avoid background restrictions
-* **Screen State Integration:** Properly coordinate with screen state changes to manage foreground service lifecycle without triggering Android's background service restrictions.
-
-### 3.7 User Interface and Preferences
-
-* **Compatibility Mode Toggle:** Provide a runtime toggle between MediaRecorder and AudioRecord modes, with MediaRecorder as the default (higher battery usage but better route establishment).
-* **Enhanced Status Reporting:** The UI should clearly display status messages, such as:
-  - "Mic-lock is ON" when actively holding microphone
-  - "Paused — mic in use by another app" when silenced by foreground app
-  - Current recording method (MediaRecorder/AudioRecord) and device information
-* **Auto-Selection Default:** The app defaults to automatic microphone selection rather than manual device pinning.
-* **Battery Usage Awareness:** Clearly communicate to users that MediaRecorder mode uses more battery but provides better compatibility.
-* **Battery Optimization Exemption:** Upon first launch, the app prompts the user to grant an exemption from battery optimizations. This is critical to prevent the Android system from terminating the service during long periods of device inactivity, ensuring continuous background operation.
-
-### 3.8 Service Resilience and User Experience
-
-To ensure the service remains active and is easy to manage, Mic-Lock implements several resilience features:
-
-*   **Enhanced Foreground Service:** The foreground service notification is configured with a low priority and service category, making it "sticky" and less likely to be dismissed or have its associated service terminated by the Android system during low-memory situations.
-*   **User-Friendly Reactivation:** If the service is terminated for any reason (e.g., by the system), a "Mic-Lock Stopped" notification is displayed. A single tap on this notification immediately restarts the service, providing a quick and seamless way for the user to restore functionality. This restart notification is automatically dismissed upon a successful restart.
-
-## 4. Technical Implementation Requirements
-
-### 4.1 Audio Configuration
-
-* **Sample Rate:** Use 48kHz as the primary sample rate to match common device capabilities.
-* **Channel Configuration:** Request stereo (2-channel) input when device supports it, falling back to mono if necessary.
-* **Audio Format:** Use PCM 16-bit encoding for broad compatibility.
-* **Buffer Management:** Use appropriate buffer sizes (minimum 4KB) to ensure stable recording.
-
-### 4.2 Route Validation Logic
-
-```kotlin
-// Core validation criteria:
-// 1. Not on primary array (Y coordinate < 0.0f typically indicates bottom mic)
-// 2. Single channel when multi-channel was requested
-// 3. Device address indicating bottom microphone (@:bottom)
-val isBadRoute = !routeInfo.isOnPrimaryArray || 
-                (channelMask == AudioFormat.CHANNEL_IN_STEREO && actualChannelCount < 2) ||
-                routeInfo.deviceAddress == "@:bottom"
+```bash
+git clone https://github.com/yourusername/mic-lock.git
+cd mic-lock
+./gradlew assembleRelease
 ```
+*Replace `yourusername` with your GitHub username or organization name.*
 
-### 4.3 Fallback Strategy
+## 🎯 Quick Start
 
-1. **Primary Attempt:** Try user's preferred recording method (MediaRecorder by default)
-2. **Route Validation:** Check if the established route meets quality criteria
-3. **Fallback Trigger:** If bad route detected, immediately switch to alternative method
-4. **Retry Logic:** If both methods fail, wait 2 seconds and retry the entire process
-5. **User Feedback:** Update UI to reflect current status and any method switches
+1.  **Launch the app** and complete the initial permission requests.
+2.  **Tap "Start"** to activate microphone protection.
+3.  **Test with WhatsApp** or another app by recording a voice message or making a call.
+4.  **Enjoy working audio!** The app runs silently in the background, continuously safeguarding your microphone access.
 
-### 4.4 Android 14+ Compatibility Handling
+## ⚙️ Settings
 
-* **Exception Resilience:** All `startForeground()` calls must be wrapped in try-catch blocks to handle `ForegroundServiceStartNotAllowedException`
-* **Service Communication:** Use `context.startService()` instead of `ContextCompat.startForegroundService()` when sending actions to already-running services
-* **Graceful Degradation:** Allow core microphone holding functionality to continue even when foreground service activation fails due to background restrictions
-* **Boot vs User Start Differentiation:** Track service start origin to apply appropriate foreground service activation strategies
+-   **MediaRecorder Mode**: (Default) Offers wider compatibility, especially on older or more problematic devices, but might use slightly more battery.
+-   **AudioRecord Mode**: More battery-efficient, optimized for most modern devices. If you experience high battery usage, switch to this mode.
+-   **Auto-restart**: Ensures the Mic-Lock service automatically restarts if it's ever stopped (e.g., after a device reboot or memory cleanup).
 
-## 5. Testing and Validation
+## 🔋 Battery Usage
 
-To validate that Mic-Lock is working correctly:
+-   **AudioRecord Mode**: Designed for minimal battery impact, making it ideal for daily use.
+-   **MediaRecorder Mode**: Due to its compatibility methods, it might exhibit slightly higher battery consumption. Choose based on your device's behavior and priority.
 
-1. **Baseline Test:** Start Mic-Lock → check `dumpsys audio` → verify `dev=2ch 48000` and non-`@:bottom` address
-2. **Integration Test:** Start WhatsApp recording → verify same patch ID inheritance with Mic-Lock silenced and WhatsApp active
-3. **Route Quality Test:** Confirm that other apps record actual audio (not silence) when Mic-Lock is running
-4. **Battery Efficiency Test:** Compare battery usage against alternatives like MyRecorder
+## 🛠️ Troubleshooting
 
-## 6. Success Criteria
+**Q: The app doesn't seem to work, or audio is still silent.**
+A: Try switching between **MediaRecorder Mode** and **AudioRecord Mode** in the app's settings. Some device configurations might prefer one over the other.
 
-The application is functioning correctly when:
+**Q: I'm experiencing high battery usage.**
+A: Ensure you're using **AudioRecord Mode** in the settings. If the issue persists, verify that battery optimizations are correctly disabled for Mic-Lock.
 
-* Other recording apps (WhatsApp, voice recorders, etc.) capture clear audio instead of silence
-* Mic-Lock consistently establishes primary array routes (not bottom microphone routes)
-* The app gracefully yields to foreground applications while maintaining good route inheritance
-* Battery usage remains reasonable, especially in AudioRecord mode
-* Users can toggle between recording methods based on their device's specific characteristics
+**Q: The app stops working after a device restart or after some time.**
+A: Make sure to disable battery optimization for Mic-Lock as described in the Installation section. Also, enable the **Auto-restart** option in settings.
 
-## 7. Maintenance Guidelines
+## 🤝 Contributing
 
-When modifying this application:
+We welcome contributions from the community! Whether it's bug reports, feature suggestions, or code contributions, your help is valuable. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-* **Preserve Route Establishment Logic:** Never remove or significantly alter the route validation and fallback mechanisms
-* **Maintain Dual Strategy:** Keep both MediaRecorder and AudioRecord implementations with intelligent switching
-* **Respect Silencing Behavior:** Always yield promptly to foreground applications
-* **Test Route Inheritance:** Verify that changes don't break the core route-sharing behavior with other apps
-* **Monitor Battery Impact:** Ensure modifications don't significantly increase power consumption
-* **Validate on Problem Devices:** Test specifically on devices known to have bottom microphone issues
-* **Preserve Android 14+ Compatibility:** Maintain try-catch blocks around `startForeground()` calls and the distinction between service communication methods
-* **Test Background Scenarios:** Verify that microphone holding continues to work even when foreground service activation is denied by the system
+## 📄 License
 
-## 8. Android Version Compatibility
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for full details.
 
-### 8.1 Android 14+ (API 34+) Considerations
+## 📖 Technical Details
 
-* **Background Foreground Service Restrictions:** Android 14+ significantly restricts when apps can start foreground services from the background
-* **Screen State Handling:** The app handles screen ON/OFF cycles gracefully, allowing microphone holding to continue even when foreground service activation is restricted
-* **Service Communication Strategy:** Uses appropriate service communication methods based on service state to avoid triggering system restrictions
-* **Graceful Degradation:** Core functionality (microphone route establishment and holding) continues to work even when foreground service features are limited by system policies
+For developers and those interested in the technical implementation, architecture, problem-solving approach, and detailed behavioral specifications, refer to the [DEV_SPECS.md](DEV_SPECS.md) file. This document provides deep insights into the app's internal logic and design decisions.
 
-### 8.2 Backward Compatibility
+## 🙏 Acknowledgments
 
-* **API Level Support:** Maintains compatibility with older Android versions while leveraging newer APIs when available
-* **Progressive Enhancement:** Uses feature detection to enable advanced capabilities on supported devices
+-   Thanks to the Android audio system documentation and the open-source community for insights.
+-   Inspired by the real-world need to fix persistent microphone hardware issues on **Google Pixel phones** after screen replacements.
 
-This specification ensures that Mic-Lock continues to solve the core problem of enabling reliable microphone access for other applications on devices with faulty microphone hardware.
+---
+
+**Supported Android Versions**: Android 7.0 (API 24) and above  
+**Tested Devices**: **Google Pixel 7 Pro** (primary development and testing device). Compatibility with other devices is expected but may require adjustments or specific mode selections (AudioRecord/MediaRecorder).
+**Problem Origin**: Screen replacement damage to bottom microphone on Google Pixel devices  
+**Solution**: Battery-efficient rerouting to working earpiece microphone

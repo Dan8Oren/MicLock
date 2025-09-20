@@ -1,15 +1,31 @@
-package com.example.mic_lock
+package io.github.miclock
 
 import android.media.*
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 
+/**
+ * Represents a microphone device choice with its associated hardware information.
+ * 
+ * @property device The AudioDeviceInfo representing the microphone hardware
+ * @property micInfo The MicrophoneInfo containing position and characteristics (may be null)
+ */
 data class MicChoice(
     val device: AudioDeviceInfo,
     val micInfo: MicrophoneInfo?    // may be null if not mappable
 )
 
+/**
+ * Contains information about an established audio route for validation.
+ * 
+ * @property deviceInfo The audio device being used
+ * @property micInfo The microphone hardware information
+ * @property sessionId The audio session ID
+ * @property isOnPrimaryArray Whether this microphone is on the primary array (not bottom mic)
+ * @property deviceAddress The device address string
+ * @property micPosition The 3D position coordinates of the microphone
+ */
 data class RouteInfo(
     val deviceInfo: AudioDeviceInfo?,
     val micInfo: MicrophoneInfo?,
@@ -19,6 +35,15 @@ data class RouteInfo(
     val micPosition: MicrophoneInfo.Coordinate3F?
 )
 
+/**
+ * AudioSelector handles the selection and validation of audio input routes.
+ * 
+ * This object provides utilities for:
+ * - Enumerating available microphone devices
+ * - Validating audio routes to ensure they use working microphones
+ * - Detecting problematic routes (like bottom microphone on damaged devices)
+ * - Providing fallback strategies when routes are suboptimal
+ */
 object AudioSelector {
 
     data class AudioFormatConfig(
@@ -37,6 +62,12 @@ object AudioSelector {
     private const val TAG = "MicLock"
 
     /** All built-in mic input devices, best-effort joined to MicrophoneInfo by address. */
+    /**
+     * Lists all built-in microphone input devices and attempts to map them to MicrophoneInfo.
+     * 
+     * @param am The AudioManager instance
+     * @return List of MicChoice objects representing available microphones
+     */
     @RequiresApi(Build.VERSION_CODES.P)
     fun listBuiltinMicChoices(am: AudioManager): List<MicChoice> {
         val inputs = am.getDevices(AudioManager.GET_DEVICES_INPUTS)
@@ -73,7 +104,13 @@ object AudioSelector {
     fun fmtPos(p: MicrophoneInfo.Coordinate3F?): String =
         if (p == null) "unknown" else "x=%.3f y=%.3f z=%.3f".format(p.x, p.y, p.z)
 
-    @RequiresApi(Build.VERSION_CODES.M)
+    /**
+     * Validates the current audio route for a given session to ensure it's using a good microphone.
+     * 
+     * @param audioManager The AudioManager instance
+     * @param sessionId The audio session ID to validate
+     * @return RouteInfo object containing validation results, or null if validation fails
+     */
     fun validateCurrentRoute(audioManager: AudioManager, sessionId: Int): RouteInfo? {
         return try {
             val activeConfigs = audioManager.activeRecordingConfigurations
@@ -125,7 +162,20 @@ object AudioSelector {
         }
     }
 
-        fun isRouteBad(routeInfo: RouteInfo, requestedStereo: Boolean, actualChannelCount: Int): Boolean {
+        /**
+     * Determines if an audio route should be considered 'bad' and avoided.
+     * 
+     * A route is considered bad if:
+     * - It's not on the primary microphone array
+     * - It's using the bottom microphone (common failure point)
+     * - It provides fewer channels than requested (indicates routing issues)
+     * 
+     * @param routeInfo The route information to evaluate
+     * @param requestedStereo Whether stereo recording was requested
+     * @param actualChannelCount The actual number of channels provided
+     * @return true if the route should be avoided
+     */
+    fun isRouteBad(routeInfo: RouteInfo, requestedStereo: Boolean, actualChannelCount: Int): Boolean {
         val isBottomMic = routeInfo.micInfo?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && it.position != null) {
                 it.position.y < 0.0f

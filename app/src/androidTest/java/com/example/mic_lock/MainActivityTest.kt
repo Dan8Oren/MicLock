@@ -1,4 +1,4 @@
-package com.example.mic_lock
+package io.github.miclock
 
 import android.Manifest
 import android.content.ComponentName

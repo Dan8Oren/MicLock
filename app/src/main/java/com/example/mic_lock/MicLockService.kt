@@ -1,4 +1,4 @@
-package com.example.mic_lock
+package io.github.miclock
 
 import android.Manifest
 import android.app.Notification
@@ -29,12 +29,31 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Represents the current state of the MicLockService.
+ * 
+ * @property isRunning Whether the service is currently active
+ * @property isPausedBySilence Whether the service is paused because another app is using the microphone
+ * @property currentDeviceAddress The address of the currently held microphone device
+ */
 data class ServiceState(
     val isRunning: Boolean = false,
     val isPausedBySilence: Boolean = false,
     val currentDeviceAddress: String? = null
 )
 
+/**
+ * MicLockService is the core background service that manages microphone access to work around
+ * faulty hardware microphones, commonly found on devices like Google Pixel phones after screen replacements.
+ *
+ * The service operates by:
+ * 1. Acquiring a connection to a working microphone (typically the earpiece mic)
+ * 2. Holding this connection politely in the background
+ * 3. Yielding to other applications when they need microphone access
+ * 4. Ensuring other apps inherit the correctly routed microphone path
+ *
+ * This solves the problem where apps default to a broken bottom microphone and record silence.
+ */
 class MicLockService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -67,6 +86,10 @@ class MicLockService : Service() {
     private var needsForegroundMode = false
 
     @RequiresApi(Build.VERSION_CODES.O)
+    /**
+     * Called when the service is first created. Initializes notification channels and
+     * registers the screen state receiver for managing service lifecycle.
+     */
     override fun onCreate() {
         super.onCreate()
         createChannels()
@@ -192,6 +215,14 @@ class MicLockService : Service() {
 
     @androidx.annotation.RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     @RequiresApi(Build.VERSION_CODES.P)
+    /**
+     * Handles incoming intents to control the service behavior.
+     * 
+     * @param intent The Intent supplied to start the service
+     * @param flags Additional data about this start request
+     * @param startId A unique integer representing this specific request to start
+     * @return START_STICKY to indicate the service should be restarted if killed
+     */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(TAG, "onStartCommand called with action: ${intent?.action}, isRunning: ${state.value.isRunning}")
         
@@ -688,11 +719,11 @@ class MicLockService : Service() {
         private const val NOTIF_ID = 42
         private const val RESTART_NOTIF_ID = 43
 
-        const val ACTION_RECONFIGURE = "com.example.mic_lock.ACTION_RECONFIGURE"
-        const val ACTION_STOP = "com.example.mic_lock.ACTION_STOP"
+        const val ACTION_RECONFIGURE = "io.github.miclock.ACTION_RECONFIGURE"
+        const val ACTION_STOP = "io.github.miclock.ACTION_STOP"
 
-        const val ACTION_START_HOLDING = "com.example.mic_lock.ACTION_START_HOLDING"
-        const val ACTION_STOP_HOLDING = "com.example.mic_lock.ACTION_STOP_HOLDING"
-        const val ACTION_START_USER_INITIATED = "com.example.mic_lock.ACTION_START_USER_INITIATED"
+        const val ACTION_START_HOLDING = "io.github.miclock.ACTION_START_HOLDING"
+        const val ACTION_STOP_HOLDING = "io.github.miclock.ACTION_STOP_HOLDING"
+        const val ACTION_START_USER_INITIATED = "io.github.miclock.ACTION_START_USER_INITIATED"
     }
 }
