@@ -13,6 +13,9 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,7 +34,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var mediaRecorderToggle: SwitchMaterial
     private lateinit var mediaRecorderBatteryWarningText: TextView
     
-    private var statusReceiver: BroadcastReceiver? = null
+
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
     private val notifPerms = if (Build.VERSION.SDK_INT >= 33)
@@ -60,7 +63,7 @@ class MainActivity : ComponentActivity() {
         mediaRecorderToggle.isChecked = Prefs.getUseMediaRecorder(this)
         mediaRecorderToggle.setOnCheckedChangeListener { _, isChecked ->
             Prefs.setUseMediaRecorder(this, isChecked)
-            if (MicLockService.isRunning) {
+            if (MicLockService.state.value.isRunning) {
                 val intent = Intent(this, MicLockService::class.java)
                 intent.action = MicLockService.ACTION_RECONFIGURE
                 ContextCompat.startForegroundService(this, intent)
@@ -85,21 +88,23 @@ class MainActivity : ComponentActivity() {
         updateAllUi()
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun onResume() {
         super.onResume()
-        registerStatusReceiver()
         updateAllUi()
+
+        lifecycleScope.launch {
+            MicLockService.state.collect { _ ->
+                updateAllUi()
+            }
+        }
     }
     
     override fun onPause() {
         super.onPause()
-        unregisterStatusReceiver()
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        unregisterStatusReceiver()
         super.onDestroy()
     }
 
@@ -136,8 +141,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateMainStatus() {
-        val running = MicLockService.isRunning
-        val paused = MicLockService.isPausedBySilence
+        val running = MicLockService.state.value.isRunning
+        val paused = MicLockService.state.value.isPausedBySilence
 
         when {
             !running -> {
@@ -181,38 +186,11 @@ class MainActivity : ComponentActivity() {
         }
     }
     
-    private fun setupStatusReceiver() {
-        statusReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == MicLockService.ACTION_STATUS_CHANGED) {
-                    Log.d("MainActivity", "Received status update broadcast")
-                    runOnUiThread {
-                        updateAllUi()
-                    }
-                }
-            }
-        }
-    }
+
     
-    private fun registerStatusReceiver() {
-        if (statusReceiver == null) {
-            setupStatusReceiver()
-        }
-        val filter = IntentFilter(MicLockService.ACTION_STATUS_CHANGED)
-        ContextCompat.registerReceiver(this, statusReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
-        Log.d("MainActivity", "Status receiver registered")
-    }
+
     
-    private fun unregisterStatusReceiver() {
-        statusReceiver?.let {
-            try {
-                unregisterReceiver(it)
-                Log.d("MainActivity", "Status receiver unregistered")
-            } catch (e: Exception) {
-                Log.w("MainActivity", "Error unregistering status receiver: ${e.message}")
-            }
-        }
-    }
+
 
 
 }

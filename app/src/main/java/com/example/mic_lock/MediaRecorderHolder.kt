@@ -7,7 +7,7 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
+
 import android.util.Log
 import androidx.annotation.RequiresApi
 import java.io.File
@@ -19,7 +19,7 @@ class MediaRecorderHolder(
 ) {
     private val TAG = "MediaRecorderHolder"
     private var mediaRecorder: MediaRecorder? = null
-    private var wakeLock: PowerManager.WakeLock? = null
+    private val wakeLockManager by lazy { WakeLockManager(context, "MediaRecorderHolder") }
     private var recordingCallback: AudioManager.AudioRecordingCallback? = null
     private var discardFile: File? = null
     
@@ -44,7 +44,7 @@ class MediaRecorderHolder(
                 start()
             }
             
-            acquireWakeLock()
+            wakeLockManager.acquire()
             
             // Register callback to detect silencing
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -98,7 +98,7 @@ class MediaRecorderHolder(
         }
         mediaRecorder = null
         
-        releaseWakeLock()
+        wakeLockManager.release()
         
         recordingCallback?.let {
             try {
@@ -122,25 +122,5 @@ class MediaRecorderHolder(
         isSilenced = false
     }
     
-    private fun acquireWakeLock() {
-        if (wakeLock?.isHeld == true) return
-        val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "$TAG:rec").apply {
-            setReferenceCounted(false)
-            try { acquire() } catch (e: Exception) {
-                Log.w(TAG, "Failed to acquire wake lock: ${e.message}")
-            }
-        }
-    }
-    
-    private fun releaseWakeLock() {
-        wakeLock?.let {
-            try {
-                if (it.isHeld) it.release()
-            } catch (e: Exception) {
-                Log.w(TAG, "Error releasing wake lock: ${e.message}")
-            }
-        }
-        wakeLock = null
-    }
+            
 }

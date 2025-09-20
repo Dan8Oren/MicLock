@@ -50,28 +50,9 @@ object AudioSelector {
     }
 
     /** Bottom mic = smallest Y; origin is bottom-left-back. */
-    @RequiresApi(Build.VERSION_CODES.P)
-    fun chooseBottomBuiltinMic(am: AudioManager): MicChoice? {
-        val choices = listBuiltinMicChoices(am)
-        if (choices.isEmpty()) return null
-        val withY = choices.map { ch -> ch to (ch.micInfo?.position?.y ?: Float.MAX_VALUE) }
-        val bottom = withY.minByOrNull { it.second }?.first ?: choices.first()
-        bottom.micInfo?.let {
-            Log.i(TAG, "Bottom mic: ${it.description} addr=${it.address} pos=${fmtPos(it.position)}")
-        } ?: run {
-            Log.i(TAG, "Bottom mic (fallback dev): ${bottom.device.productName} addr=${bottom.device.address}")
-        }
-        return bottom
-    }
 
-    /** Pick by AudioDeviceInfo.address; fall back to first built-in. */
-    @RequiresApi(Build.VERSION_CODES.P)
-    fun chooseByAddress(am: AudioManager, address: String): MicChoice? {
-        if (address == Prefs.VALUE_AUTO) return chooseBottomBuiltinMic(am)
-        val choices = listBuiltinMicChoices(am)
-        if (choices.isEmpty()) return null
-        return choices.firstOrNull { (it.device.address ?: "") == address } ?: choices.first()
-    }
+
+
 
     
 
@@ -142,6 +123,18 @@ object AudioSelector {
             // If we can't determine position, assume it's primary array for safety
             true
         }
+    }
+
+        fun isRouteBad(routeInfo: RouteInfo, requestedStereo: Boolean, actualChannelCount: Int): Boolean {
+        val isBottomMic = routeInfo.micInfo?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && it.position != null) {
+                it.position.y < 0.0f
+            } else false
+        } ?: (routeInfo.deviceAddress == "@:bottom")
+
+        return !routeInfo.isOnPrimaryArray ||
+                isBottomMic ||
+                (requestedStereo && actualChannelCount < 2)
     }
 
     fun getRouteDebugInfo(routeInfo: RouteInfo): String {
