@@ -1,8 +1,10 @@
 package com.example.mic_lock
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
@@ -10,6 +12,7 @@ import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,6 +30,8 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var mediaRecorderToggle: SwitchMaterial
     private lateinit var mediaRecorderBatteryWarningText: TextView
+    
+    private var statusReceiver: BroadcastReceiver? = null
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
     private val notifPerms = if (Build.VERSION.SDK_INT >= 33)
@@ -83,7 +88,19 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onResume() {
         super.onResume()
+        registerStatusReceiver()
         updateAllUi()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        unregisterStatusReceiver()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterStatusReceiver()
+        super.onDestroy()
     }
 
     private fun requestBatteryOptimizationExemption() {
@@ -107,12 +124,10 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, MicLockService::class.java)
         intent.action = MicLockService.ACTION_START_USER_INITIATED
         ContextCompat.startForegroundService(this, intent)
-        updateAllUi()
     }
 
     private fun stopMicLock() {
         stopService(Intent(this, MicLockService::class.java))
-        updateAllUi()
     }
 
     private fun updateAllUi() {
@@ -128,14 +143,19 @@ class MainActivity : ComponentActivity() {
             !running -> {
                 statusText.text = "OFF"
                 statusText.setTextColor(ContextCompat.getColor(this, R.color.error_red))
+                statusText.animate().alpha(1.0f).setDuration(200)
             }
             paused -> {
                 statusText.text = "PAUSED"
                 statusText.setTextColor(ContextCompat.getColor(this, R.color.on_surface_variant))
+                statusText.animate().alpha(0.6f).setDuration(500).withEndAction {
+                    statusText.animate().alpha(1.0f).setDuration(500)
+                }
             }
             else -> {
                 statusText.text = "ON"
                 statusText.setTextColor(ContextCompat.getColor(this, R.color.secondary_green))
+                statusText.animate().alpha(1.0f).setDuration(200)
             }
         }
 
@@ -158,6 +178,39 @@ class MainActivity : ComponentActivity() {
             mediaRecorderBatteryWarningText.text = "MediaRecorder mode (Higher battery usage, may resolve issues)"
         } else {
             mediaRecorderBatteryWarningText.text = "AudioRecord mode (optimized battery usage)"
+        }
+    }
+    
+    private fun setupStatusReceiver() {
+        statusReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == MicLockService.ACTION_STATUS_CHANGED) {
+                    Log.d("MainActivity", "Received status update broadcast")
+                    runOnUiThread {
+                        updateAllUi()
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun registerStatusReceiver() {
+        if (statusReceiver == null) {
+            setupStatusReceiver()
+        }
+        val filter = IntentFilter(MicLockService.ACTION_STATUS_CHANGED)
+        ContextCompat.registerReceiver(this, statusReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        Log.d("MainActivity", "Status receiver registered")
+    }
+    
+    private fun unregisterStatusReceiver() {
+        statusReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                Log.d("MainActivity", "Status receiver unregistered")
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Error unregistering status receiver: ${e.message}")
+            }
         }
     }
 

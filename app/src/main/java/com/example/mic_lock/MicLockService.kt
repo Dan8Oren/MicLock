@@ -114,9 +114,7 @@ class MicLockService : Service() {
         }
         screenStateReceiver = null
         
-        isRunning = false
-        isPausedBySilence = false
-        currentDeviceAddress = null
+        updateServiceState(running = false, paused = false, deviceAddr = null)
 
         if (wasRunning) {
             createRestartNotification()
@@ -141,7 +139,7 @@ class MicLockService : Service() {
                 needsForegroundMode = true
                 if (!isRunning) {
                     isStartedFromBoot = false
-                    isRunning = true
+                    updateServiceState(running = true)
                     Log.i(TAG, "Starting service from user action - immediate foreground activation")
                     startMicHolding()
                 } else {
@@ -166,7 +164,7 @@ class MicLockService : Service() {
                 stopMicHolding()
             }
             ACTION_STOP -> {
-                isRunning = false
+                updateServiceState(running = false)
                 needsForegroundMode = false
                 stopMicHolding()
                 stopSelf() // Full stop from user
@@ -181,7 +179,7 @@ class MicLockService : Service() {
             null -> {
                 if (!isRunning) {
                     isStartedFromBoot = true
-                    isRunning = true
+                    updateServiceState(running = true)
                     Log.i(TAG, "Service started from boot - waiting for screen state events")
                     // Don't start mic holding immediately from boot to avoid foreground service restriction
                 }
@@ -359,12 +357,13 @@ class MicLockService : Service() {
                 } else {
                     Log.d(TAG, "No other active recorders. Resetting silenced state and backoff.")
                     isSilenced = false
+                    updateServiceState(paused = false)
                     backoffMs = 500L
                 }
             }
 
             isSilenced = false
-            isPausedBySilence = false
+            updateServiceState(paused = false)
 
             val useMediaRecorderPref = Prefs.getUseMediaRecorder(this)
 
@@ -493,7 +492,7 @@ class MicLockService : Service() {
                     val routeInfo = AudioSelector.validateCurrentRoute(audioManager, recordingSessionId)
                     if (routeInfo != null) {
                         Log.d(TAG, "Route validation: ${AudioSelector.getRouteDebugInfo(routeInfo)}")
-                        currentDeviceAddress = routeInfo.deviceAddress
+                        updateServiceState(deviceAddr = routeInfo.deviceAddress)
                         
                         val isBottomMic = routeInfo.micInfo?.let {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && it.position != null) {
@@ -530,7 +529,7 @@ class MicLockService : Service() {
                         val silenced = mine.isClientSilenced
                         if (silenced && !isSilenced) {
                             isSilenced = true
-                            isPausedBySilence = true
+                            updateServiceState(paused = true)
                             Log.i(TAG, "AudioRecord silenced by system (other app using mic).")
                             markCooldownStart = System.currentTimeMillis()
                             updateNotification("Paused — mic in use by another app")
@@ -577,7 +576,7 @@ class MicLockService : Service() {
             mediaRecorderHolder = MediaRecorderHolder(this, audioManager) { silenced ->
                 if (silenced && !isSilenced) {
                     isSilenced = true
-                    isPausedBySilence = true
+                    updateServiceState(paused = true)
                     Log.i(TAG, "MediaRecorder silenced by system (other app using mic).")
                     markCooldownStart = System.currentTimeMillis()
                     updateNotification("Paused — mic in use by another app")
@@ -587,7 +586,7 @@ class MicLockService : Service() {
             }
             
             mediaRecorderHolder!!.startRecording()
-            currentDeviceAddress = "MediaRecorder"
+            updateServiceState(deviceAddr = "MediaRecorder")
             
             updateNotification("Recording (MediaRecorder compatibility mode)")
             
@@ -658,6 +657,29 @@ class MicLockService : Service() {
     private fun updateNotification(text: String) {
         notifManager.notify(NOTIF_ID, buildNotification(text))
     }
+    
+    private fun broadcastStatusUpdate() {
+        val intent = Intent(ACTION_STATUS_CHANGED).apply {
+            putExtra(EXTRA_IS_RUNNING, isRunning)
+            putExtra(EXTRA_IS_PAUSED, isPausedBySilence)
+            putExtra(EXTRA_DEVICE_ADDRESS, currentDeviceAddress)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+        Log.d(TAG, "Broadcasted status update: running=$isRunning, paused=$isPausedBySilence")
+    }
+    
+    private val stateLock = Any()
+    
+    private fun updateServiceState(running: Boolean? = null, paused: Boolean? = null, deviceAddr: String? = null) {
+        synchronized(stateLock) {
+            running?.let { isRunning = it }
+            paused?.let { isPausedBySilence = it }
+            deviceAddr?.let { currentDeviceAddress = it }
+            
+            broadcastStatusUpdate()
+        }
+    }
 
     companion object {
         private const val TAG = "MicLockService"
@@ -676,5 +698,11 @@ class MicLockService : Service() {
         const val ACTION_START_HOLDING = "com.example.mic_lock.ACTION_START_HOLDING"
         const val ACTION_STOP_HOLDING = "com.example.mic_lock.ACTION_STOP_HOLDING"
         const val ACTION_START_USER_INITIATED = "com.example.mic_lock.ACTION_START_USER_INITIATED"
+        
+        // Broadcast actions for UI updates
+        const val ACTION_STATUS_CHANGED = "com.example.mic_lock.STATUS_CHANGED"
+        const val EXTRA_IS_RUNNING = "extra_is_running"
+        const val EXTRA_IS_PAUSED = "extra_is_paused"
+        const val EXTRA_DEVICE_ADDRESS = "extra_device_address"
     }
 }
