@@ -1,15 +1,56 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Built application files
+*.ap_
+*.aab
+*.aar
+
+# Files for the Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+build/
+.gradle/
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/codeStyles/
+.idea/gradle.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/assetWizardSettings.xml
+.idea/vcs.xml
+.idea/kotlinScripting.xml
+.idea/artifacts/
+.idea/inspectionProfiles/
+
+# Local configuration files (e.g., for Android Studio)
 local.properties
+.DS_Store
+Thumbs.db
+profileOutput.json
+
+# Gradle files
+gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar # Keep the wrapper script but ignore the downloaded JAR
+
+# User-specific files
+captures/
+.externalNativeBuild/
+.cxx/
+.navigation/
+
+# Android Studio specific files
+*.iml
+*.iws
+*.ipr
+
+# Keystore files
+*.jks
+*.keystore
+
+# External libraries
+libs/ # If you are not managing libraries through Gradle dependencies

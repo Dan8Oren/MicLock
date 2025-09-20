@@ -105,7 +105,6 @@ class MainActivity : ComponentActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
-        super.onDestroy()
     }
 
     private fun requestBatteryOptimizationExemption() {
