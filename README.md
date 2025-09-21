@@ -9,7 +9,7 @@ This app was specifically **invented to fix this issue** by running discreetly i
 ## 🔧 Installation
 
 ### Option 1: Download APK (Recommended for most users)
-1.  Download the latest stable APK: [`mic-lock_stable.apk`](app/release/mic-lock_stable.apk)
+1.  Download the latest stable APK: [`releases`](https://github.com/Dan8Oren/MicLock/releases/)
 2.  Enable "Install from Unknown Sources" in your device settings if prompted (this is standard for sideloaded apps).
 3.  Install the downloaded APK file.
 4.  Grant **microphone** and **notification** permissions when the app first launches.
