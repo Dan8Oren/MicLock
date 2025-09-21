@@ -1,6 +1,5 @@
+![logo](mic-lock_logo.png)
 # Mic-Lock 🎤🔒
-
-> **Fix microphone issues on Android devices by ensuring apps use working microphones instead of faulty ones**
 
 ## What is Mic-Lock?
 
