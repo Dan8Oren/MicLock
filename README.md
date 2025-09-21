@@ -13,7 +13,6 @@ This app was specifically **invented to fix this issue** by running discreetly i
 2.  Enable "Install from Unknown Sources" in your device settings if prompted (this is standard for sideloaded apps).
 3.  Install the downloaded APK file.
 4.  Grant **microphone** and **notification** permissions when the app first launches.
-5.  **Crucially**, allow the app to ignore battery optimizations (usually found in App Info → Battery Usage or similar path) to ensure uninterrupted background operation.
 
 ### Option 2: Build from Source (For developers and advanced users)
 
