@@ -17,12 +17,10 @@ This app was specifically **invented to fix this issue** by running discreetly i
 ### Option 2: Build from Source (For developers and advanced users)
 
 ```bash
-git clone https://github.com/yourusername/mic-lock.git
-cd mic-lock
+git clone https://github.com/Dan8Oren/MicLock.git
+cd MicLock
 ./gradlew assembleRelease
 ```
-*Replace `yourusername` with your GitHub username or organization name.*
-
 ## 🎯 Quick Start
 
 1.  **Launch the app** and complete the initial permission requests.
@@ -41,8 +39,8 @@ Mic-Lock acts as a "polite background holder" that:
 
 ## ⚙️ Settings
 
--   **MediaRecorder Mode**: (Default) Offers wider compatibility, especially on older or more problematic devices, but might use slightly more battery.
--   **AudioRecord Mode**: More battery-efficient, optimized for most modern devices. If you experience high battery usage, switch to this mode.
+-   **AudioRecord Mode**: (Default) More battery-efficient, optimized for most modern devices. If you experience high battery usage, switch to this mode.
+-   **MediaRecorder Mode**:  Offers wider compatibility, especially on older or more problematic devices, but might use slightly more battery.
 
 ## 🛠️ Troubleshooting
 
