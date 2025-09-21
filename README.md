@@ -1,5 +1,4 @@
 ![logo](mic-lock_logo.png)
-# Mic-Lock 🎤🔒
 
 ## What is Mic-Lock?
 
