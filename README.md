@@ -37,6 +37,23 @@ Mic-Lock acts as a "polite background holder" that:
 4.  **Correct Path Inheritance**: The other app then inherits the correctly routed audio path to the functional microphone instead of defaulting to the broken one.
 5.  **Seamless Experience**: Your recordings and calls work perfectly without manual intervention!
 
+## 🔒 Security & Privacy
+
+Mic-Lock is built with user privacy and security as core principles:
+
+- The app does **not collect, store, or transmit any personal data**.
+- All audio management happens **locally on your device**.
+- Only **essential permissions** (microphone and notifications) are requested.
+- **No network access** is required; Mic-Lock works entirely offline.
+- The entire codebase is **open source** and available for review.
+
+For full details, please see:
+- [Security Policy](https://github.com/Dan8Oren/MicLock/blob/main/SECURITY.md)
+- [Privacy Policy](https://github.com/Dan8Oren/MicLock/blob/main/PRIVACY.md)
+
+If you have questions or wish to report a vulnerability, consult the guides above or open an issue in the repository.
+
+
 ## ⚙️ Settings
 
 -   **AudioRecord Mode**: (Default) More battery-efficient, optimized for most modern devices. If you experience high battery usage, switch to this mode.
