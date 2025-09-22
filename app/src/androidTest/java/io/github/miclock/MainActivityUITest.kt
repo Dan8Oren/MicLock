@@ -15,6 +15,10 @@ import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
+import io.github.miclock.data.Prefs
+import io.github.miclock.service.MicLockService
+import io.github.miclock.service.model.ServiceState
+import io.github.miclock.ui.MainActivity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest

@@ -6,6 +6,9 @@ import androidx.test.core.app.ApplicationProvider
 import android.Manifest
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
+import io.github.miclock.service.MicLockService
+import io.github.miclock.service.model.ServiceState
+import io.github.miclock.util.WakeLockManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

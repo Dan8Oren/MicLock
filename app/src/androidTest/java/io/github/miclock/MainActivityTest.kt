@@ -1,7 +1,6 @@
 package io.github.miclock
 
 import android.Manifest
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.view.View
@@ -13,7 +12,6 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
-import androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent
 import androidx.test.espresso.matcher.BoundedMatcher
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -21,8 +19,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.common.truth.Truth.assertThat
+import io.github.miclock.data.Prefs
+import io.github.miclock.service.MicLockService
+import io.github.miclock.service.model.ServiceState
+import io.github.miclock.ui.MainActivity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
