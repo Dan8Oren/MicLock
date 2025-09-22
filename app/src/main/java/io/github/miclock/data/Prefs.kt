@@ -1,4 +1,4 @@
-package io.github.miclock
+package io.github.miclock.data
 
 import android.content.Context
 import androidx.core.content.edit

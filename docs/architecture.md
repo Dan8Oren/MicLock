@@ -110,7 +110,7 @@ Handles persistent storage of user settings and preferences.
 
 ### Power Management
 - **Wake Lock Management**: Minimal CPU wake locks only during active recording
-- **Screen State Integration**: Adapts behavior based on screen on/off state
+- **Screen State Integration**: To maximize reliability, the service remains in the foreground even when the screen is off. When the screen turns off, microphone usage is paused to conserve battery, and the notification is updated to "Paused (Screen off)". This prevents the OS from killing the service.
 - **Foreground Service**: Prevents system termination while maintaining low priority
 
 ## 🛡️ Android Compatibility

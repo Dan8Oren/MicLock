@@ -1,4 +1,4 @@
-package io.github.miclock
+package io.github.miclock.ui
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -12,6 +12,9 @@ import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
+import io.github.miclock.R
+import io.github.miclock.data.Prefs
+import io.github.miclock.service.MicLockService
 import android.util.Log
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.collect

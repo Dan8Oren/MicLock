@@ -1,8 +1,11 @@
-package io.github.miclock
+package io.github.miclock.audio
 
 import android.media.*
 import android.os.Build
 import android.util.Log
+import io.github.miclock.audio.model.AudioFormatConfig
+import io.github.miclock.audio.model.MicChoice
+import io.github.miclock.audio.model.RouteInfo
 import androidx.annotation.RequiresApi
 
 /**
@@ -11,10 +14,7 @@ import androidx.annotation.RequiresApi
  * @property device The AudioDeviceInfo representing the microphone hardware
  * @property micInfo The MicrophoneInfo containing position and characteristics (may be null)
  */
-data class MicChoice(
-    val device: AudioDeviceInfo,
-    val micInfo: MicrophoneInfo?    // may be null if not mappable
-)
+
 
 /**
  * Contains information about an established audio route for validation.
@@ -26,14 +26,7 @@ data class MicChoice(
  * @property deviceAddress The device address string
  * @property micPosition The 3D position coordinates of the microphone
  */
-data class RouteInfo(
-    val deviceInfo: AudioDeviceInfo?,
-    val micInfo: MicrophoneInfo?,
-    val sessionId: Int,
-    val isOnPrimaryArray: Boolean,
-    val deviceAddress: String?,
-    val micPosition: MicrophoneInfo.Coordinate3F?
-)
+
 
 /**
  * AudioSelector handles the selection and validation of audio input routes.
@@ -46,11 +39,7 @@ data class RouteInfo(
  */
 object AudioSelector {
 
-    data class AudioFormatConfig(
-        val sampleRate: Int,
-        val channelMask: Int,
-        val encoding: Int
-    )
+    
 
     fun getAudioFormatCandidates(): List<AudioFormatConfig> {
         return listOf(

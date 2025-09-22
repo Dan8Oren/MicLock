@@ -19,7 +19,7 @@
         android:theme="@style/Theme.MicLock">
 
         <activity
-            android:name="io.github.miclock.MainActivity"
+            android:name="io.github.miclock.ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -28,12 +28,12 @@
         </activity>
 
         <service
-            android:name="io.github.miclock.MicLockService"
+            android:name="io.github.miclock.service.MicLockService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
         <receiver
-            android:name="io.github.miclock.BootCompletedReceiver"
+            android:name="io.github.miclock.receiver.BootCompletedReceiver"
             android:enabled="true"
             android:exported="true"
             android:directBootAware="true">
@@ -44,7 +44,7 @@
         </receiver>
 
         <receiver
-            android:name="io.github.miclock.ScreenStateReceiver"
+            android:name="io.github.miclock.receiver.ScreenStateReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

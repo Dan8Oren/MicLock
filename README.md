@@ -64,10 +64,6 @@ If you have questions or wish to report a vulnerability, consult the guides abov
 **Q: The app doesn't seem to work, or audio is still silent.**
 A: Try switching between **MediaRecorder Mode** and **AudioRecord Mode** in the app's settings. Some device configurations might prefer one over the other.
 
-**Q: The app stops working after some time.**
-A: It's intentionally, the app stops when the screen is off to save battery.
-Inevitably after some time the system will destroy the background process and a notification to restart the app will be sent to easily restart it again.
-
 ## 🤝 Contributing
 
 We welcome contributions from the community! Whether it's bug reports, feature suggestions, or code contributions, your help is valuable. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.

@@ -1,4 +1,4 @@
-package io.github.miclock
+package io.github.miclock.audio
 
 import android.content.Context
 import android.media.AudioManager
@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 
+import io.github.miclock.util.WakeLockManager
 import android.util.Log
 import androidx.annotation.RequiresApi
 import java.io.File

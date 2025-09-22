@@ -1,5 +1,5 @@
 // app/src/main/java/com/example/miclock/BootCompletedReceiver.kt
-package io.github.miclock
+package io.github.miclock.receiver
 
 import android.Manifest
 import android.app.NotificationManager
@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import io.github.miclock.service.MicLockService
 import androidx.core.content.ContextCompat
 
 class BootCompletedReceiver : BroadcastReceiver() {

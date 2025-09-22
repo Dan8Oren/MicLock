@@ -1,4 +1,4 @@
-package io.github.miclock
+package io.github.miclock.service
 
 import android.Manifest
 import android.app.Notification
@@ -14,6 +14,8 @@ import android.media.*
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import io.github.miclock.R
+import io.github.miclock.ui.MainActivity
 import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
@@ -21,6 +23,12 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
+import io.github.miclock.audio.AudioSelector
+import io.github.miclock.audio.MediaRecorderHolder
+import io.github.miclock.data.Prefs
+import io.github.miclock.receiver.ScreenStateReceiver
+import io.github.miclock.service.model.ServiceState
+import io.github.miclock.util.WakeLockManager
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,11 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @property isPausedBySilence Whether the service is paused because another app is using the microphone
  * @property currentDeviceAddress The address of the currently held microphone device
  */
-data class ServiceState(
-    val isRunning: Boolean = false,
-    val isPausedBySilence: Boolean = false,
-    val currentDeviceAddress: String? = null
-)
+
 
 /**
  * MicLockService is the core background service that manages microphone access to work around
@@ -185,8 +189,14 @@ class MicLockService : Service() {
 
     private fun handleStopHolding() {
         Log.i(TAG, "Received ACTION_STOP_HOLDING")
-        needsForegroundMode = false
-        stopMicHolding()
+        needsForegroundMode = false // This flag may no longer be as critical, but we can keep it.
+        
+        // Call our modified stopMicHolding function
+        stopMicHolding() 
+        
+        // NEW: Update the service state to reflect it is paused.
+        // This is now handled inside stopMicHolding, but we can ensure it here.
+        updateServiceState(paused = true)
     }
 
     private fun handleStop(): Int {
@@ -270,45 +280,42 @@ class MicLockService : Service() {
     @RequiresApi(Build.VERSION_CODES.P)
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private fun startMicHolding() {
+        // This check is important. If the loop is active, we don't need to do anything.
         if (loopJob?.isActive == true) {
             Log.d(TAG, "Mic holding is already active.")
             return
         }
-        Log.i(TAG, "Screen is ON. Starting mic holding logic.")
-        
-        // For user-initiated starts, always try to start foreground immediately
-        // For boot-initiated starts, use delayed activation to comply with Android 14+ restrictions
+        // Change the log message to be more generic for screen on or user start
+        Log.i(TAG, "Starting or resuming mic holding logic.")
+
+        // The existing foreground service logic is fine. If the service isn't in the
+        // foreground yet, this will correctly start it. If it already is, it will
+        // just update the notification.
         if (!isStartedFromBoot) {
-            Log.i(TAG, "User-initiated start - attempting foreground service activation")
             try {
                 startForeground(NOTIF_ID, buildNotification("Starting…"))
-                Log.i(TAG, "Successfully activated foreground service for user-initiated start")
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service for user-initiated start: ${e.message}")
-                // Continue with mic holding even if foreground service fails
             }
         } else if (canStartForegroundService()) {
-            Log.i(TAG, "Boot-initiated start - attempting foreground service activation")
             try {
                 startForeground(NOTIF_ID, buildNotification("Starting…"))
-                Log.i(TAG, "Successfully activated foreground service for boot-initiated start")
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service for boot-initiated start: ${e.message}")
-                // Continue with mic holding even if foreground service fails
             }
         } else {
-            Log.w(TAG, "Boot-initiated start - delaying foreground service start due to Android 14+ restriction")
             scheduleDelayedForegroundStart()
         }
         
         stopFlag.set(false)
-        updateServiceState(paused = false)
+        // Explicitly un-pause the state when starting to hold.
+        updateServiceState(paused = false) 
         loopJob = scope.launch { holdSelectedMicLoop() }
     }
 
     private fun stopMicHolding() {
-        if (loopJob == null) return
-        Log.i(TAG, "Screen is OFF. Stopping mic holding logic.")
+        if (loopJob == null && !state.value.isPausedBySilence) return // Avoid redundant calls
+        Log.i(TAG, "Screen is OFF. Pausing mic holding logic.")
         stopFlag.set(true)
         loopJob?.cancel()
         loopJob = null
@@ -319,10 +326,11 @@ class MicLockService : Service() {
         recCallback = null
         mediaRecorderHolder?.stopRecording()
         mediaRecorderHolder = null
-        updateServiceState(deviceAddr = null)
+        updateServiceState(deviceAddr = null, paused = true) // Mark as paused
 
-        // Stop the foreground service to remove the notification, but keep the service alive.
-        stopForeground(STOP_FOREGROUND_DETACH)
+        // UPDATE: Instead of stopping the foreground service, just update the notification
+        // to show an idle state. This keeps the service's priority high.
+        updateNotification("Paused (Screen off)")
     }
 
     private fun unregisterRecordingCallback(cb: AudioManager.AudioRecordingCallback?) {

@@ -1,4 +1,4 @@
-package io.github.miclock
+package io.github.miclock.util
 
 import android.content.Context
 import android.os.PowerManager
