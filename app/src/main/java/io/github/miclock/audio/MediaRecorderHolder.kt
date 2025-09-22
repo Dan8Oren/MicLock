@@ -16,11 +16,11 @@ import java.io.File
 class MediaRecorderHolder(
     private val context: Context,
     private val audioManager: AudioManager,
+    private val wakeLockManager: WakeLockManager = WakeLockManager(context, "MediaRecorderHolder"),
     private val onSilencedChanged: (Boolean) -> Unit
 ) {
     private val TAG = "MediaRecorderHolder"
     private var mediaRecorder: MediaRecorder? = null
-    private val wakeLockManager by lazy { WakeLockManager(context, "MediaRecorderHolder") }
     private var recordingCallback: AudioManager.AudioRecordingCallback? = null
     private var discardFile: File? = null
     

@@ -620,7 +620,7 @@ class MicLockService : Service() {
     
     private suspend fun tryMediaRecorderMode(): Boolean {
         return try {
-            mediaRecorderHolder = MediaRecorderHolder(this, audioManager) { silenced ->
+            mediaRecorderHolder = MediaRecorderHolder(this, audioManager, wakeLockManager = WakeLockManager(this, "MediaRecorderHolder")) { silenced ->
                 if (silenced && !isSilenced) {
                     isSilenced = true
                     updateServiceState(paused = true)
