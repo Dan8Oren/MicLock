@@ -111,6 +111,94 @@ class MicLockServiceLogicTest {
         assertEquals(initialLoopCount + 1, serviceLogic.loopRestartCount)
         assertTrue(serviceLogic.state.value.isRunning)
     }
+
+    // ===== State Transition Tests =====
+
+    @Test
+    fun testStateTransitions_completeLifecycle() = runTest {
+        // Given: Service in initial state
+        assertFalse(serviceLogic.state.value.isRunning)
+        assertFalse(serviceLogic.state.value.isPausedBySilence)
+
+        // When: Starting service
+        serviceLogic.handleIntent("ACTION_START_USER_INITIATED")
+
+        // Then: Should be running and not paused
+        assertTrue(serviceLogic.state.value.isRunning)
+        assertFalse(serviceLogic.state.value.isPausedBySilence)
+
+        // When: Pausing for screen off
+        serviceLogic.handleIntent("ACTION_STOP_HOLDING")
+
+        // Then: Should be running but paused
+        assertTrue(serviceLogic.state.value.isRunning)
+        assertTrue(serviceLogic.state.value.isPausedBySilence)
+
+        // When: Resuming for screen on
+        serviceLogic.handleIntent("ACTION_START_HOLDING")
+
+        // Then: Should be running and not paused
+        assertTrue(serviceLogic.state.value.isRunning)
+        assertFalse(serviceLogic.state.value.isPausedBySilence)
+
+        // When: Stopping service
+        serviceLogic.handleIntent("ACTION_STOP")
+
+        // Then: Should be stopped
+        assertFalse(serviceLogic.state.value.isRunning)
+        assertFalse(serviceLogic.state.value.isPausedBySilence)
+    }
+
+    @Test
+    fun testStateTransitions_invalidSequences() = runTest {
+        // Given: Service not running
+        assertFalse(serviceLogic.state.value.isRunning)
+
+        // When: Attempting to pause without starting
+        serviceLogic.handleIntent("ACTION_STOP_HOLDING")
+
+        // Then: Should remain in stopped state
+        assertFalse(serviceLogic.state.value.isRunning)
+        assertTrue(serviceLogic.state.value.isPausedBySilence)
+
+        // When: Attempting to resume without starting
+        serviceLogic.handleIntent("ACTION_START_HOLDING")
+
+        // Then: Should remain stopped but not paused
+        assertFalse(serviceLogic.state.value.isRunning)
+        assertFalse(serviceLogic.state.value.isPausedBySilence)
+    }
+
+    // ===== Reconfiguration Tests =====
+
+    @Test
+    fun testReconfiguration_whileRunning() = runTest {
+        // Given: Running service
+        serviceLogic.handleIntent("ACTION_START_USER_INITIATED")
+        val initialLoopCount = serviceLogic.loopRestartCount
+
+        // When: Reconfiguring multiple times
+        serviceLogic.handleIntent("ACTION_RECONFIGURE")
+        serviceLogic.handleIntent("ACTION_RECONFIGURE")
+
+        // Then: Should restart loop multiple times
+        assertEquals(initialLoopCount + 2, serviceLogic.loopRestartCount)
+        assertTrue(serviceLogic.state.value.isRunning)
+    }
+
+    @Test
+    fun testReconfiguration_whileStopped() = runTest {
+        // Given: Stopped service
+        assertFalse(serviceLogic.state.value.isRunning)
+        val initialLoopCount = serviceLogic.loopRestartCount
+
+        // When: Attempting to reconfigure
+        serviceLogic.handleIntent("ACTION_RECONFIGURE")
+
+        // Then: Should not restart loop
+        assertEquals(initialLoopCount, serviceLogic.loopRestartCount)
+        assertFalse(serviceLogic.state.value.isRunning)
+    }
 }
 
 // Mockable interfaces for Android dependencies

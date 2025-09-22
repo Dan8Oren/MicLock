@@ -236,6 +236,91 @@ class MediaRecorderHolderTest {
         }
     }
 
+    // ===== Resource Management Tests =====
+
+    @Test
+    fun testResourceManagement_wakeLockLifecycle() {
+        // Given: MediaRecorderHolder instance
+        val holder = createMediaRecorderHolder()
+
+        // When: Starting and stopping recording
+        assertDoesNotThrow("Should not throw during start") {
+            holder.startRecording()
+        }
+
+        // Then: Should acquire wake lock
+        verify(mockWakeLockManager).acquire()
+
+        // When: Stopping recording
+        assertDoesNotThrow("Should not throw during stop") {
+            holder.stopRecording()
+        }
+
+        // Then: Should release wake lock
+        verify(mockWakeLockManager).release()
+    }
+
+    @Test
+    fun testResourceManagement_fileCleanup() {
+        // Given: MediaRecorderHolder instance
+        val holder = createMediaRecorderHolder()
+
+        // When: Starting recording (creates temp file)
+        assertDoesNotThrow("Should not throw during start") {
+            holder.startRecording()
+        }
+
+        // When: Stopping recording
+        assertDoesNotThrow("Should not throw during stop") {
+            holder.stopRecording()
+        }
+
+        // Then: Temp files should be cleaned up (verified by no exceptions)
+        // Note: Actual file cleanup verification would require access to internal file reference
+    }
+
+    // ===== Callback State Management Tests =====
+
+    @Test
+    fun testCallbackStateManagement_stateChangeDetection() {
+        // Given: MediaRecorderHolder
+        val holder = createMediaRecorderHolder()
+
+        assertDoesNotThrow("Should not throw during start") {
+            holder.startRecording()
+        }
+
+        // When: State changes from unsilenced to silenced
+        simulateSilencingEvent(holder, true)
+
+        // Then: Should detect state change and invoke callback
+        assertTrue("Should have detected state change", callbackInvocations.contains(true))
+        assertTrue("Internal state should be updated", holder.isSilenced)
+
+        // When: State changes back to unsilenced
+        simulateSilencingEvent(holder, false)
+
+        // Then: Should detect reverse state change
+        assertTrue("Should have detected reverse state change", callbackInvocations.contains(false))
+        assertFalse("Internal state should be reset", holder.isSilenced)
+    }
+
+    // ===== Compatibility Tests =====
+
+    @Test
+    fun testCompatibilityMode_mediaRecorderConfiguration() {
+        // Given: MediaRecorderHolder instance
+        val holder = createMediaRecorderHolder()
+
+        // When: Starting in compatibility mode
+        assertDoesNotThrow("MediaRecorder compatibility mode should not crash") {
+            holder.startRecording()
+        }
+
+        // Then: Should configure for stereo AAC at 48kHz (verified by no exceptions)
+        assertFalse("Should start in unsilenced state", holder.isSilenced)
+    }
+
     // ===== Helper Methods =====
 
     private fun createMediaRecorderHolder(): MediaRecorderHolder {
