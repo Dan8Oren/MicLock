@@ -8,6 +8,7 @@ import io.github.miclock.util.WakeLockManager
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
@@ -361,12 +362,4 @@ class MediaRecorderHolderTest {
         }
     }
 
-    // Helper method for assertDoesNotThrow (if not available in your test framework)
-    private fun assertDoesNotThrow(message: String, executable: () -> Unit) {
-        try {
-            executable()
-        } catch (e: Exception) {
-            fail("$message: ${e.message}")
-        }
-    }
 }

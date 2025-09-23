@@ -9,6 +9,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.junit.jupiter.api.assertDoesNotThrow
 
 /**
  * Unit tests for WakeLockManager utility.
@@ -208,15 +209,6 @@ class WakeLockManagerTest {
             wakeLockManager2.acquire()
             wakeLockManager1.release()
             wakeLockManager2.release()
-        }
-    }
-
-    // Helper method for assertDoesNotThrow
-    private fun assertDoesNotThrow(message: String, executable: () -> Unit) {
-        try {
-            executable()
-        } catch (e: Exception) {
-            fail("$message: ${e.message}")
         }
     }
 }
