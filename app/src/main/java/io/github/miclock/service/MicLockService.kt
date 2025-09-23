@@ -87,7 +87,6 @@ class MicLockService : Service() {
     
     // Android 14+ foreground service restriction handling
     private var isStartedFromBoot = false
-    private var needsForegroundMode = false
 
     @RequiresApi(Build.VERSION_CODES.O)
     /**
@@ -163,7 +162,6 @@ class MicLockService : Service() {
     private fun handleStartUserInitiated() {
         notifManager.cancel(RESTART_NOTIF_ID)
         Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
-        needsForegroundMode = true
         if (!state.value.isRunning) {
             isStartedFromBoot = false
             updateServiceState(running = true)
@@ -180,7 +178,6 @@ class MicLockService : Service() {
     private fun handleStartHolding() {
         Log.i(TAG, "Received ACTION_START_HOLDING, isRunning: ${state.value.isRunning}")
         if (state.value.isRunning) {
-            needsForegroundMode = true
             startMicHolding()
         } else {
             Log.w(TAG, "Service not running, ignoring START_HOLDING action. (Consider starting service first)")
@@ -189,19 +186,11 @@ class MicLockService : Service() {
 
     private fun handleStopHolding() {
         Log.i(TAG, "Received ACTION_STOP_HOLDING")
-        needsForegroundMode = false // This flag may no longer be as critical, but we can keep it.
-        
-        // Call our modified stopMicHolding function
-        stopMicHolding() 
-        
-        // NEW: Update the service state to reflect it is paused.
-        // This is now handled inside stopMicHolding, but we can ensure it here.
-        updateServiceState(paused = true)
+        stopMicHolding()
     }
 
     private fun handleStop(): Int {
         updateServiceState(running = false)
-        needsForegroundMode = false
         stopMicHolding()
         stopSelf() // Full stop from user
         return START_NOT_STICKY
@@ -288,20 +277,12 @@ class MicLockService : Service() {
         // Change the log message to be more generic for screen on or user start
         Log.i(TAG, "Starting or resuming mic holding logic.")
 
-        // The existing foreground service logic is fine. If the service isn't in the
-        // foreground yet, this will correctly start it. If it already is, it will
-        // just update the notification.
-        if (!isStartedFromBoot) {
+        // Try to start foreground service based on current conditions
+        if (canStartForegroundService()) {
             try {
                 startForeground(NOTIF_ID, buildNotification("Starting…"))
             } catch (e: Exception) {
-                Log.w(TAG, "Could not start foreground service for user-initiated start: ${e.message}")
-            }
-        } else if (canStartForegroundService()) {
-            try {
-                startForeground(NOTIF_ID, buildNotification("Starting…"))
-            } catch (e: Exception) {
-                Log.w(TAG, "Could not start foreground service for boot-initiated start: ${e.message}")
+                Log.w(TAG, "Could not start foreground service: ${e.message}")
             }
         } else {
             scheduleDelayedForegroundStart()
@@ -328,8 +309,6 @@ class MicLockService : Service() {
         mediaRecorderHolder = null
         updateServiceState(deviceAddr = null, paused = true) // Mark as paused
 
-        // UPDATE: Instead of stopping the foreground service, just update the notification
-        // to show an idle state. This keeps the service's priority high.
         updateNotification("Paused (Screen off)")
     }
 
@@ -349,7 +328,7 @@ class MicLockService : Service() {
     private fun scheduleDelayedForegroundStart() {
         scope.launch {
             delay(10_000) // Wait 10 seconds
-            if (needsForegroundMode && !stopFlag.get()) {
+            if (state.value.isRunning && !stopFlag.get()) {
                 try {
                     startForeground(NOTIF_ID, buildNotification("Recording active"))
                     Log.i(TAG, "Delayed foreground service start successful")
