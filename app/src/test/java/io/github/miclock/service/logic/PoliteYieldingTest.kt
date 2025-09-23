@@ -4,6 +4,7 @@ package io.github.miclock.service.logic
 import io.github.miclock.TestableYieldingLogic
 import io.github.miclock.MockableAudioRecordingCallback
 import io.github.miclock.MockableAudioManager
+import io.github.miclock.MockRouteInfo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -28,8 +29,21 @@ class PoliteYieldingTest {
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
+        setupDefaultMockBehaviors()
         yieldingLogic = TestableYieldingLogic(mockCallback, mockAudioManager)
     }
+
+    private fun setupDefaultMockBehaviors() {
+        // Default: no other apps recording
+        whenever(mockAudioManager.othersRecording()).thenReturn(false)
+        whenever(mockAudioManager.validateCurrentRoute(any())).thenReturn(createGoodRouteInfo())
+    }
+
+    private fun createGoodRouteInfo() = MockRouteInfo(
+        isOnPrimaryArray = true,
+        deviceAddress = "@:primary",
+        actualChannelCount = 2
+    )
 
     @Test
     fun testSilencing_anotherAppRecords_setsSilencedAndPausesState() = runTest {

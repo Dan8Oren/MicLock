@@ -20,17 +20,26 @@ class MicrophoneHoldingLoopTest {
     @Mock private lateinit var mockAudioSelector: MockableAudioSelector
     @Mock private lateinit var mockMediaRecorderHolder: MockableMediaRecorderHolder
     @Mock private lateinit var mockPrefs: MockablePrefs
+    @Mock private lateinit var mockAudioManager: MockableAudioManager
 
     private lateinit var holdingLogic: TestableHoldingLogic
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
+        setupDefaultMockBehaviors()
         holdingLogic = TestableHoldingLogic(
             mockAudioSelector,
             mockMediaRecorderHolder,
-            mockPrefs
+            mockPrefs,
+            mockAudioManager
         )
+    }
+
+    private fun setupDefaultMockBehaviors() {
+        // Default: no other apps recording
+        whenever(mockAudioManager.othersRecording()).thenReturn(false)
+        whenever(mockAudioManager.validateCurrentRoute(any())).thenReturn(createGoodRouteInfo())
     }
 
     @Test
@@ -136,7 +145,8 @@ data class HoldingAttemptResult(
 class TestableHoldingLogic(
     private val audioSelector: MockableAudioSelector,
     private val mediaRecorderHolder: MockableMediaRecorderHolder,
-    private val prefs: MockablePrefs
+    private val prefs: MockablePrefs,
+    private val audioManager: MockableAudioManager
 ) {
     fun executeHoldingAttempt(): HoldingAttemptResult {
         val useMediaRecorderPref = prefs.getUseMediaRecorder()
@@ -160,10 +170,7 @@ class TestableHoldingLogic(
     
     private fun tryAudioRecordFirst(): HoldingAttemptResult {
         // Simulate route validation logic
-        val routeInfo = audioSelector.validateCurrentRoute(object : MockableAudioManager {
-            override fun othersRecording(): Boolean = false
-            override fun validateCurrentRoute(sessionId: Int): MockRouteInfo? = null
-        }, 12345)
+        val routeInfo = audioSelector.validateCurrentRoute(audioManager, 12345)
 
         return if (routeInfo != null && !audioSelector.isRouteBad(routeInfo, true, routeInfo.actualChannelCount)) {
             prefs.setLastRecordingMethod("AudioRecord")
@@ -180,10 +187,7 @@ class TestableHoldingLogic(
     }
     
     private fun tryAudioRecordFallback(): HoldingAttemptResult {
-        val routeInfo = audioSelector.validateCurrentRoute(object : MockableAudioManager {
-            override fun othersRecording(): Boolean = false
-            override fun validateCurrentRoute(sessionId: Int): MockRouteInfo? = null
-        }, 12345)
+        val routeInfo = audioSelector.validateCurrentRoute(audioManager, 12345)
         return if (routeInfo != null && !audioSelector.isRouteBad(routeInfo, true, routeInfo.actualChannelCount)) {
             prefs.setLastRecordingMethod("AudioRecord")
             HoldingAttemptResult(HoldingResult.SUCCESS_AUDIO_RECORD, true)
