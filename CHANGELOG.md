@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-01-23
+
+### Enhanced
+- **Improved Service Reliability (Always-On Foreground Service):** The MicLockService now remains in the foreground at all times when active, even when the screen is off. This significantly improves service reliability by preventing the Android system from terminating the background process.
+  - When the screen turns off, microphone usage is automatically paused to conserve battery
+  - The service notification is updated to display "Paused (Screen off)" to clearly communicate its status
+  - When the screen turns on, microphone holding automatically resumes
+
+### Fixed
+- Addressed issues where the service could be terminated by aggressive OEM power management when the screen was off
+
 ## [1.0.0] - 2024-01-20
 
 ### Added
