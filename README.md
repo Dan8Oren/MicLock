@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/github/license/Dan8Oren/MicLock" alt="License">
 </div>
 
-# What is Mic-Lock?
+# What is MicLock?
 
 Mic-Lock addresses a frustrating and common issue for **Google Pixel phone** users, especially those who have had their **screens replaced**. During screen replacement procedures, the **bottom microphone** can sometimes become damaged or disconnected, causing apps like WhatsApp, voice recorders, and video calling applications to record silence instead of actual audio.
 
