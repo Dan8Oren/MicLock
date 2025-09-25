@@ -1,5 +1,7 @@
 package io.github.miclock.tile
 
+import android.app.ActivityManager
+import android.content.Context
 import android.graphics.drawable.Icon
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
@@ -25,10 +27,17 @@ class MicLockTileService : TileService() {
         super.onStartListening()
         Log.d(TAG, "Tile started listening")
         
-        // Start observing service state
+        // Start observing service state with fallback
         stateCollectionJob = scope.launch {
-            MicLockService.state.collect { state ->
-                updateTileState(state)
+            try {
+                MicLockService.state.collect { state ->
+                    updateTileState(state)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to observe service state: ${e.message}")
+                // Fallback: Check if service is actually running
+                val fallbackState = checkServiceRunningState()
+                updateTileState(fallbackState)
             }
         }
     }
@@ -108,6 +117,18 @@ class MicLockTileService : TileService() {
         
         tile.updateTile()
         Log.d(TAG, "Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}")
+    }
+
+    private fun checkServiceRunningState(): ServiceState {
+        return try {
+            val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            val isRunning = activityManager.getRunningServices(Integer.MAX_VALUE)
+                .any { it.service.className == MicLockService::class.java.name }
+            ServiceState(isRunning = isRunning, isPausedBySilence = false)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to check service running state: ${e.message}")
+            ServiceState(isRunning = false, isPausedBySilence = false)
+        }
     }
 
     override fun onDestroy() {
