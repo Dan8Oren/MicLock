@@ -265,13 +265,18 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
 
     
     private fun hasAllPerms(): Boolean {
-        return hasRecordAudioPermission && hasNotificationPermission
+        val hasPerms = hasRecordAudioPermission && hasNotificationPermission
+        // Simulate logging like the real implementation
+        println("Permission check: mic=$hasRecordAudioPermission, notifs=$hasNotificationPermission, hasAll=$hasPerms")
+        return hasPerms
     }
     
     fun getQsTile(): Tile? = mockTile
     
     fun onStartListening() {
         isStateCollectionActive = true
+        // Simulate immediate tile state update upon listening start
+        testUpdateTileState(mockStateFlow.value)
         // Simulate state collection start
     }
     
@@ -281,9 +286,14 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
     }
     
     fun testOnClick(): Intent? {
-        // Check permissions first (mimicking the real tile service logic)
-        if (!hasAllPerms()) {
-            // Do nothing when permissions are missing - just return null
+        // Force permission re-check like the real implementation
+        val currentPerms = hasAllPerms()
+        println("onClick permission check result: $currentPerms")
+        
+        if (!currentPerms) {
+            println("Permissions missing - forcing tile update to show unavailable state")
+            // Force immediate tile update to reflect current permission state
+            testUpdateTileState(mockStateFlow.value)
             return null
         }
         
@@ -304,34 +314,43 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
     fun testUpdateTileState(state: ServiceState) {
         val tile = mockTile ?: return
         
+        // Always re-check permissions fresh like the real implementation
+        val hasPerms = hasAllPerms()
+        println("updateTileState: hasPerms=$hasPerms, isRunning=${state.isRunning}, isPaused=${state.isPausedBySilence}")
+        
         when {
-            !hasAllPerms() -> {
+            !hasPerms -> {
                 tile.state = Tile.STATE_UNAVAILABLE
                 tile.label = "No Permission"
                 tile.contentDescription = "Tap to grant microphone and notification permissions"
                 // Note: Icon setting skipped in unit tests due to Android framework dependencies
+                println("Tile set to 'No Permission' state")
             }
             !state.isRunning -> {
                 tile.state = Tile.STATE_INACTIVE
                 tile.label = TILE_TEXT
                 tile.contentDescription = "Tap to start microphone protection"
                 // Note: Icon setting skipped in unit tests due to Android framework dependencies
+                println("Tile set to INACTIVE state")
             }
             state.isPausedBySilence -> {
                 tile.state = Tile.STATE_UNAVAILABLE
                 tile.label = TILE_TEXT
                 tile.contentDescription = "Microphone protection paused"
                 // Note: Icon setting skipped in unit tests due to Android framework dependencies
+                println("Tile set to PAUSED state")
             }
             else -> {
                 tile.state = Tile.STATE_ACTIVE
                 tile.label = TILE_TEXT
                 tile.contentDescription = "Tap to stop microphone protection"
                 // Note: Icon setting skipped in unit tests due to Android framework dependencies
+                println("Tile set to ACTIVE state")
             }
         }
         
         tile.updateTile()
+        println("Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}, HasPerms: $hasPerms")
     }
     
     fun onDestroy() {

@@ -35,6 +35,10 @@ class MicLockTileService : TileService() {
         super.onStartListening()
         Log.d(TAG, "Tile started listening")
         
+        // Force immediate tile update when we start listening
+        // This ensures permissions are re-checked
+        updateTileState(MicLockService.state.value)
+        
         // Start observing service state with fallback
         stateCollectionJob = scope.launch {
             try {
@@ -60,23 +64,43 @@ class MicLockTileService : TileService() {
     }
 
     private fun hasAllPerms(): Boolean {
-        val micGranted = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notifs = if (Build.VERSION.SDK_INT >= 33) {
-            nm.areNotificationsEnabled() &&
-            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        } else {
-            nm.areNotificationsEnabled()
+        val micGranted = try {
+            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        } catch (e: Exception) {
+            Log.w(TAG, "Error checking RECORD_AUDIO permission: ${e.message}")
+            false
         }
-        return micGranted && notifs
+        
+        val notifs = try {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (Build.VERSION.SDK_INT >= 33) {
+                nm.areNotificationsEnabled() &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            } else {
+                nm.areNotificationsEnabled()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error checking notification permissions: ${e.message}")
+            false
+        }
+        
+        val hasPerms = micGranted && notifs
+        Log.d(TAG, "Permission check: mic=$micGranted, notifs=$notifs, hasAll=$hasPerms")
+        return hasPerms
     }
 
     override fun onClick() {
         super.onClick()
         Log.d(TAG, "Tile clicked")
         
-        if (!hasAllPerms()) {
-            Log.d(TAG, "Permissions missing - tile will show unavailable state")
+        // Force permission re-check and tile update on every click
+        val currentPerms = hasAllPerms()
+        Log.d(TAG, "onClick permission check result: $currentPerms")
+        
+        if (!currentPerms) {
+            Log.d(TAG, "Permissions missing - forcing tile update to show unavailable state")
+            // Force immediate tile update to reflect current permission state
+            updateTileState(MicLockService.state.value)
             return
         }
         
@@ -116,13 +140,18 @@ class MicLockTileService : TileService() {
     private fun updateTileState(state: ServiceState) {
         val tile = qsTile ?: return
         
+        // Always re-check permissions fresh
+        val hasPerms = hasAllPerms()
+        Log.d(TAG, "updateTileState: hasPerms=$hasPerms, isRunning=${state.isRunning}, isPaused=${state.isPausedBySilence}")
+        
         when {
-            !hasAllPerms() -> {
+            !hasPerms -> {
                 // Permissions missing - show unavailable state
                 tile.state = Tile.STATE_UNAVAILABLE
                 tile.label = "No Permission"
                 tile.contentDescription = "Tap to grant microphone and notification permissions"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_off)
+                Log.d(TAG, "Tile set to 'No Permission' state")
             }
             !state.isRunning -> {
                 // Service is OFF
@@ -130,6 +159,7 @@ class MicLockTileService : TileService() {
                 tile.label = TILE_TEXT
                 tile.contentDescription = "Tap to start microphone protection"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_off)
+                Log.d(TAG, "Tile set to INACTIVE state")
             }
             state.isPausedBySilence -> {
                 // Service is PAUSED
@@ -137,6 +167,7 @@ class MicLockTileService : TileService() {
                 tile.label = TILE_TEXT
                 tile.contentDescription = "Microphone protection paused"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_pause)
+                Log.d(TAG, "Tile set to PAUSED state")
             }
             else -> {
                 // Service is ON
@@ -144,11 +175,12 @@ class MicLockTileService : TileService() {
                 tile.label = TILE_TEXT
                 tile.contentDescription = "Tap to stop microphone protection"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_on)
+                Log.d(TAG, "Tile set to ACTIVE state")
             }
         }
         
         tile.updateTile()
-        Log.d(TAG, "Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}")
+        Log.d(TAG, "Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}, HasPerms: $hasPerms")
     }
 
     private fun checkServiceRunningState(): ServiceState {

@@ -27,6 +27,9 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
+import android.content.ComponentName
+import android.service.quicksettings.TileService
+import io.github.miclock.tile.MicLockTileService
 
 /**
  * MainActivity provides the user interface for controlling the Mic-Lock service.
@@ -61,6 +64,8 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ ->
         updateAllUi()
+        // Request tile update after permission changes
+        requestTileUpdate()
     }
 
     /**
@@ -189,6 +194,9 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, MicLockService::class.java)
         intent.action = MicLockService.ACTION_START_USER_INITIATED
         ContextCompat.startForegroundService(this, intent)
+        
+        // Request tile update to reflect service start
+        requestTileUpdate()
     }
 
     /**
@@ -246,6 +254,21 @@ class MainActivity : ComponentActivity() {
             mediaRecorderBatteryWarningText.text = "MediaRecorder mode (Higher battery usage, may resolve issues)"
         } else {
             mediaRecorderBatteryWarningText.text = "AudioRecord mode (optimized battery usage)"
+        }
+    }
+    
+    /**
+     * Requests the Quick Settings tile to update its state.
+     * This ensures the tile reflects current permission and service status.
+     */
+    private fun requestTileUpdate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            try {
+                val componentName = ComponentName(this, MicLockTileService::class.java)
+                TileService.requestListeningState(this, componentName)
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to request tile update: ${e.message}")
+            }
         }
     }
     
