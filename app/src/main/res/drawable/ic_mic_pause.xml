@@ -1,12 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+
+    <!-- Oval circle -->
     <path
         android:fillColor="#FF9800"
-        android:pathData="M12,14c1.66,0 2.99,-1.34 2.99,-3L15,5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3.53 -2.61,6.44 -6,6.93V21h-2v-3.07c-3.39,-0.49 -6,-3.4 -6,-6.93h2c0,2.81 2.29,5.1 5.1,5.1s5.1,-2.29 5.1,-5.1h2z"/>
+        android:pathData="M 15 6 v 5 a 3 3 0 0 1 -6 0 v -6 a 3 3 0 0 1 6 0 z"/>
+
+
+    <!-- Microphone base -->
     <path
         android:fillColor="#FF9800"
-        android:pathData="M8,16h2v4H8zM14,16h2v4h-2z"/>
+        android:pathData="M 17.3 11 c -0.3 7 -10.3 7 -10.7 0 H 5 c 0 3.2 2.72 6.23 6 6.72 V 21 h 2 v -3.28 C 16.41 17.2 19 14.23 19 11 z"/>
+
+    <path
+        android:fillColor="#FF9800"
+    android:pathData="M8,16h2v4H8zM14,16h2v4h-2z"/>
+
 </vector>
