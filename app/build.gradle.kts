@@ -7,6 +7,10 @@ android {
     namespace = "io.github.miclock"
     compileSdk = 36
 
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
+
     defaultConfig {
         applicationId = "io.github.miclock"
         minSdk = 24
