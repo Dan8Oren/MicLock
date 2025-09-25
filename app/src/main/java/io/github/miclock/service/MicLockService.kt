@@ -281,10 +281,13 @@ class MicLockService : Service() {
         if (canStartForegroundService()) {
             try {
                 startForeground(NOTIF_ID, buildNotification("Starting…"))
+                Log.d(TAG, "Foreground service started successfully")
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service: ${e.message}")
+                // Continue with background operation - core functionality still works
             }
         } else {
+            Log.d(TAG, "Delaying foreground service start due to boot restrictions")
             scheduleDelayedForegroundStart()
         }
         

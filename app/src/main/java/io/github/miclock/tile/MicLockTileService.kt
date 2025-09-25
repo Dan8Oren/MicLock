@@ -50,19 +50,32 @@ class MicLockTileService : TileService() {
         val intent = Intent(this, MicLockService::class.java)
         
         if (currentState.isRunning) {
-            // Stop the service
+            // Stop the service - use regular startService since service is already running
             intent.action = MicLockService.ACTION_STOP
             Log.d(TAG, "Stopping MicLock service via tile")
+            try {
+                startService(intent)
+                Log.d(TAG, "Successfully sent stop intent to running service")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send stop intent to service: ${e.message}", e)
+            }
         } else {
-            // Start the service
+            // Start the service - use startForegroundService for new service start
             intent.action = MicLockService.ACTION_START_USER_INITIATED
             Log.d(TAG, "Starting MicLock service via tile")
-        }
-        
-        try {
-            ContextCompat.startForegroundService(this, intent)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to send intent to service: ${e.message}", e)
+            try {
+                ContextCompat.startForegroundService(this, intent)
+                Log.d(TAG, "Successfully sent foreground start intent to service")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send foreground start intent to service: ${e.message}", e)
+                // Fallback: try regular startService if foreground start fails
+                try {
+                    startService(intent)
+                    Log.i(TAG, "Fallback to regular startService succeeded")
+                } catch (fallbackException: Exception) {
+                    Log.e(TAG, "Fallback startService also failed: ${fallbackException.message}", fallbackException)
+                }
+            }
         }
     }
 
