@@ -79,7 +79,7 @@ class MicLockTileServiceUnitTest {
     }
 
     @Test
-    fun testOnClick_missingPermissions_launchesMainActivity() {
+    fun testOnClick_missingPermissions_doesNothing() {
         // Given: Permissions are missing
         mockStateFlow.value = ServiceState(isRunning = false, isPausedBySilence = false)
         tileService.setMockTile(mockTile)
@@ -88,14 +88,12 @@ class MicLockTileServiceUnitTest {
         // When: onClick is called
         val result = tileService.testOnClick()
         
-        // Then: Should launch MainActivity and not send service intent
-        assertTrue("Should have launched MainActivity", tileService.wasActivityLaunched())
-        assertEquals("Should launch MainActivity", MainActivity::class.java.name, tileService.getLaunchedActivityClass())
+        // Then: Should do nothing - no activity launch, no service intent
         assertNull("Should not send service intent when permissions missing", result)
     }
 
     @Test
-    fun testOnClick_missingNotificationPermissions_launchesMainActivity() {
+    fun testOnClick_missingNotificationPermissions_doesNothing() {
         // Given: Notification permissions are missing
         mockStateFlow.value = ServiceState(isRunning = false, isPausedBySilence = false)
         tileService.setMockTile(mockTile)
@@ -104,9 +102,7 @@ class MicLockTileServiceUnitTest {
         // When: onClick is called
         val result = tileService.testOnClick()
         
-        // Then: Should launch MainActivity and not send service intent
-        assertTrue("Should have launched MainActivity", tileService.wasActivityLaunched())
-        assertEquals("Should launch MainActivity", MainActivity::class.java.name, tileService.getLaunchedActivityClass())
+        // Then: Should do nothing - no activity launch, no service intent
         assertNull("Should not send service intent when permissions missing", result)
     }
 
@@ -120,9 +116,8 @@ class MicLockTileServiceUnitTest {
         // When: onClick is called
         val capturedIntent = tileService.testOnClick()
         
-        // Then: Should send STOP action and not launch activity
+        // Then: Should send STOP action
         assertEquals("Should send STOP action", MicLockService.ACTION_STOP, capturedIntent?.action)
-        assertFalse("Should not launch activity when permissions granted", tileService.wasActivityLaunched())
     }
 
     @Test
@@ -135,10 +130,9 @@ class MicLockTileServiceUnitTest {
         // When: onClick is called
         val capturedIntent = tileService.testOnClick()
         
-        // Then: Should send START_USER_INITIATED action and not launch activity
+        // Then: Should send START_USER_INITIATED action
         assertEquals("Should send START_USER_INITIATED action", 
             MicLockService.ACTION_START_USER_INITIATED, capturedIntent?.action)
-        assertFalse("Should not launch activity when permissions granted", tileService.wasActivityLaunched())
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -205,6 +199,24 @@ class MicLockTileServiceUnitTest {
         assertFalse("State collection should be stopped after destroy", tileService.isStateCollectionActive)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun testUpdateTileState_missingPermissions_setsUnavailableState() = runTest {
+        // Given: Permissions are missing
+        val state = ServiceState(isRunning = false, isPausedBySilence = false)
+        tileService.setMockTile(mockTile)
+        tileService.setMockPermissions(hasRecordAudio = false, hasNotifications = true)
+        
+        // When: updateTileState is called
+        tileService.testUpdateTileState(state)
+        
+        // Then: Tile should be set to unavailable state with "No Permission" label
+        verify(mockTile).state = Tile.STATE_UNAVAILABLE
+        verify(mockTile).label = "No Permission"
+        verify(mockTile).contentDescription = "Tap to grant microphone and notification permissions"
+        verify(mockTile).updateTile()
+    }
+
     @Test
     fun testLifecycle_completeFlow() {
         // Given: Fresh tile service
@@ -236,7 +248,6 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
     
     private var mockTile: Tile? = null
     private var lastIntent: Intent? = null
-    private var launchedActivityClass: String? = null
     private var hasRecordAudioPermission = true
     private var hasNotificationPermission = true
     var isStateCollectionActive = false
@@ -251,9 +262,7 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
         hasNotificationPermission = hasNotifications
     }
     
-    fun wasActivityLaunched(): Boolean = launchedActivityClass != null
-    
-    fun getLaunchedActivityClass(): String? = launchedActivityClass
+
     
     private fun hasAllPerms(): Boolean {
         return hasRecordAudioPermission && hasNotificationPermission
@@ -272,14 +281,10 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
     }
     
     fun testOnClick(): Intent? {
-        // Reset activity launch tracking
-        launchedActivityClass = null
-        
         // Check permissions first (mimicking the real tile service logic)
         if (!hasAllPerms()) {
-            // Simulate launching MainActivity
-            launchedActivityClass = MainActivity::class.java.name
-            return null // No service intent when permissions are missing
+            // Do nothing when permissions are missing - just return null
+            return null
         }
         
         val currentState = mockStateFlow.value
@@ -300,6 +305,12 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
         val tile = mockTile ?: return
         
         when {
+            !hasAllPerms() -> {
+                tile.state = Tile.STATE_UNAVAILABLE
+                tile.label = "No Permission"
+                tile.contentDescription = "Tap to grant microphone and notification permissions"
+                // Note: Icon setting skipped in unit tests due to Android framework dependencies
+            }
             !state.isRunning -> {
                 tile.state = Tile.STATE_INACTIVE
                 tile.label = TILE_TEXT

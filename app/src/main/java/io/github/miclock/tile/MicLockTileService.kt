@@ -11,6 +11,7 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
+
 import androidx.core.content.ContextCompat
 import io.github.miclock.R
 import io.github.miclock.service.MicLockService
@@ -75,10 +76,7 @@ class MicLockTileService : TileService() {
         Log.d(TAG, "Tile clicked")
         
         if (!hasAllPerms()) {
-            Log.d(TAG, "Permissions missing - launching MainActivity")
-            val intent = Intent(this, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            startActivityAndCollapse(intent)
+            Log.d(TAG, "Permissions missing - tile will show unavailable state")
             return
         }
         
@@ -119,6 +117,13 @@ class MicLockTileService : TileService() {
         val tile = qsTile ?: return
         
         when {
+            !hasAllPerms() -> {
+                // Permissions missing - show unavailable state
+                tile.state = Tile.STATE_UNAVAILABLE
+                tile.label = "No Permission"
+                tile.contentDescription = "Tap to grant microphone and notification permissions"
+                tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_off)
+            }
             !state.isRunning -> {
                 // Service is OFF
                 tile.state = Tile.STATE_INACTIVE
@@ -157,6 +162,8 @@ class MicLockTileService : TileService() {
             ServiceState(isRunning = false, isPausedBySilence = false)
         }
     }
+
+
 
     override fun onDestroy() {
         super.onDestroy()
