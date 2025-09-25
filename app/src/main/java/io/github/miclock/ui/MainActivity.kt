@@ -200,10 +200,16 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Stops the MicLockService by calling stopService().
+     * Stops the MicLockService using ACTION_STOP intent for consistency with tile service.
      */
     private fun stopMicLock() {
-        stopService(Intent(this, MicLockService::class.java))
+        // Use the same ACTION_STOP intent that the tile uses for consistency
+        val intent = Intent(this, MicLockService::class.java)
+        intent.action = MicLockService.ACTION_STOP
+        startService(intent) // Send stop command to service
+        
+        // Request tile update after service stop
+        requestTileUpdate()
     }
 
     private fun updateAllUi() {
