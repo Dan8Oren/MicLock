@@ -1,6 +1,7 @@
 package io.github.miclock.ui
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -104,13 +105,15 @@ class MainActivity : ComponentActivity() {
         // Request battery optimization exemption
         requestBatteryOptimizationExemption()
 
-
-
+        // Always enforce permissions on every app start
+        enforcePermsOrRequest()
         updateAllUi()
     }
 
     override fun onResume() {
         super.onResume()
+        // Re-check permissions every time activity becomes visible
+        enforcePermsOrRequest()
         updateAllUi()
 
         lifecycleScope.launch {
@@ -141,8 +144,41 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun hasAllPerms(): Boolean {
-        val all = audioPerms + notifPerms
-        return all.all { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }
+        val micGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        
+        var notifGranted = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val postNotificationsGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            notifGranted = notificationManager.areNotificationsEnabled() && postNotificationsGranted
+        } else {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notifGranted = notificationManager.areNotificationsEnabled()
+        }
+        
+        return micGranted && notifGranted
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun enforcePermsOrRequest() {
+        if (!hasAllPerms()) {
+            val permissionsToRequest = mutableListOf<String>()
+            
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+            }
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED || !notificationManager.areNotificationsEnabled()) {
+                    permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+
+            if (permissionsToRequest.isNotEmpty()) {
+                reqPerms.launch(permissionsToRequest.toTypedArray())
+            }
+        }
     }
 
     /**
