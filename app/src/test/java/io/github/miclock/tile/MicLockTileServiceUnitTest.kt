@@ -153,7 +153,7 @@ class MicLockTileServiceUnitTest {
         
         // Then: Tile should be set to inactive state
         verify(mockTile).state = Tile.STATE_INACTIVE
-        verify(mockTile).label = "Mic Protection"
+        verify(mockTile).label = TILE_TEXT
         verify(mockTile).contentDescription = "Tap to start microphone protection"
         verify(mockTile).updateTile()
     }
@@ -170,7 +170,7 @@ class MicLockTileServiceUnitTest {
         
         // Then: Tile should be set to active state
         verify(mockTile).state = Tile.STATE_ACTIVE
-        verify(mockTile).label = "Mic Protection"
+        verify(mockTile).label = TILE_TEXT
         verify(mockTile).contentDescription = "Tap to stop microphone protection"
         verify(mockTile).updateTile()
     }
@@ -187,7 +187,7 @@ class MicLockTileServiceUnitTest {
         
         // Then: Tile should be set to unavailable state
         verify(mockTile).state = Tile.STATE_UNAVAILABLE
-        verify(mockTile).label = "Mic Protection"
+        verify(mockTile).label = TILE_TEXT
         verify(mockTile).contentDescription = "Microphone protection paused"
         verify(mockTile).updateTile()
     }
@@ -302,19 +302,19 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
         when {
             !state.isRunning -> {
                 tile.state = Tile.STATE_INACTIVE
-                tile.label = "Mic Protection"
+                tile.label = TILE_TEXT
                 tile.contentDescription = "Tap to start microphone protection"
                 // Note: Icon setting skipped in unit tests due to Android framework dependencies
             }
             state.isPausedBySilence -> {
                 tile.state = Tile.STATE_UNAVAILABLE
-                tile.label = "Mic Protection"
+                tile.label = TILE_TEXT
                 tile.contentDescription = "Microphone protection paused"
                 // Note: Icon setting skipped in unit tests due to Android framework dependencies
             }
             else -> {
                 tile.state = Tile.STATE_ACTIVE
-                tile.label = "Mic Protection"
+                tile.label = TILE_TEXT
                 tile.contentDescription = "Tap to stop microphone protection"
                 // Note: Icon setting skipped in unit tests due to Android framework dependencies
             }

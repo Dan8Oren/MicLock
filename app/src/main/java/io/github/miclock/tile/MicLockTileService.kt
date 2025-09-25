@@ -19,6 +19,8 @@ import io.github.miclock.ui.MainActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 
+const val TILE_TEXT = "MicLock"
+
 class MicLockTileService : TileService() {
     
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -120,21 +122,21 @@ class MicLockTileService : TileService() {
             !state.isRunning -> {
                 // Service is OFF
                 tile.state = Tile.STATE_INACTIVE
-                tile.label = "Mic Protection"
+                tile.label = TILE_TEXT
                 tile.contentDescription = "Tap to start microphone protection"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_off)
             }
             state.isPausedBySilence -> {
                 // Service is PAUSED
                 tile.state = Tile.STATE_UNAVAILABLE
-                tile.label = "Mic Protection"
+                tile.label = TILE_TEXT
                 tile.contentDescription = "Microphone protection paused"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_pause)
             }
             else -> {
                 // Service is ON
                 tile.state = Tile.STATE_ACTIVE
-                tile.label = "Mic Protection"
+                tile.label = TILE_TEXT
                 tile.contentDescription = "Tap to stop microphone protection"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_on)
             }
