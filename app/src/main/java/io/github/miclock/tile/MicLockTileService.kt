@@ -1,16 +1,21 @@
 package io.github.miclock.tile
 
+import android.Manifest
 import android.app.ActivityManager
+import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
+import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import android.content.Intent
 import android.util.Log
 import androidx.core.content.ContextCompat
 import io.github.miclock.R
 import io.github.miclock.service.MicLockService
 import io.github.miclock.service.model.ServiceState
+import io.github.miclock.ui.MainActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 
@@ -51,9 +56,29 @@ class MicLockTileService : TileService() {
         stateCollectionJob = null
     }
 
+    private fun hasAllPerms(): Boolean {
+        val micGranted = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notifs = if (Build.VERSION.SDK_INT >= 33) {
+            nm.areNotificationsEnabled() &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        } else {
+            nm.areNotificationsEnabled()
+        }
+        return micGranted && notifs
+    }
+
     override fun onClick() {
         super.onClick()
         Log.d(TAG, "Tile clicked")
+        
+        if (!hasAllPerms()) {
+            Log.d(TAG, "Permissions missing - launching MainActivity")
+            val intent = Intent(this, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            startActivityAndCollapse(intent)
+            return
+        }
         
         val currentState = MicLockService.state.value
         val intent = Intent(this, MicLockService::class.java)

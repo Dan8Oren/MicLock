@@ -1,10 +1,13 @@
 package io.github.miclock.tile
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.service.quicksettings.Tile
 import io.github.miclock.service.MicLockService
 import io.github.miclock.service.model.ServiceState
+import io.github.miclock.ui.MainActivity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -76,30 +79,66 @@ class MicLockTileServiceUnitTest {
     }
 
     @Test
-    fun testOnClick_serviceRunning_sendsStopAction() {
-        // Given: Service is running
-        mockStateFlow.value = ServiceState(isRunning = true, isPausedBySilence = false)
+    fun testOnClick_missingPermissions_launchesMainActivity() {
+        // Given: Permissions are missing
+        mockStateFlow.value = ServiceState(isRunning = false, isPausedBySilence = false)
         tileService.setMockTile(mockTile)
+        tileService.setMockPermissions(hasRecordAudio = false, hasNotifications = true)
         
         // When: onClick is called
-        val capturedIntent = tileService.testOnClick()
+        val result = tileService.testOnClick()
         
-        // Then: Should send STOP action
-        assertEquals("Should send STOP action", MicLockService.ACTION_STOP, capturedIntent?.action)
+        // Then: Should launch MainActivity and not send service intent
+        assertTrue("Should have launched MainActivity", tileService.wasActivityLaunched())
+        assertEquals("Should launch MainActivity", MainActivity::class.java.name, tileService.getLaunchedActivityClass())
+        assertNull("Should not send service intent when permissions missing", result)
     }
 
     @Test
-    fun testOnClick_serviceStopped_sendsStartAction() {
-        // Given: Service is stopped
+    fun testOnClick_missingNotificationPermissions_launchesMainActivity() {
+        // Given: Notification permissions are missing
         mockStateFlow.value = ServiceState(isRunning = false, isPausedBySilence = false)
         tileService.setMockTile(mockTile)
+        tileService.setMockPermissions(hasRecordAudio = true, hasNotifications = false)
+        
+        // When: onClick is called
+        val result = tileService.testOnClick()
+        
+        // Then: Should launch MainActivity and not send service intent
+        assertTrue("Should have launched MainActivity", tileService.wasActivityLaunched())
+        assertEquals("Should launch MainActivity", MainActivity::class.java.name, tileService.getLaunchedActivityClass())
+        assertNull("Should not send service intent when permissions missing", result)
+    }
+
+    @Test
+    fun testOnClick_allPermissionsGranted_serviceRunning_sendsStopAction() {
+        // Given: All permissions granted and service is running
+        mockStateFlow.value = ServiceState(isRunning = true, isPausedBySilence = false)
+        tileService.setMockTile(mockTile)
+        tileService.setMockPermissions(hasRecordAudio = true, hasNotifications = true)
         
         // When: onClick is called
         val capturedIntent = tileService.testOnClick()
         
-        // Then: Should send START_USER_INITIATED action
+        // Then: Should send STOP action and not launch activity
+        assertEquals("Should send STOP action", MicLockService.ACTION_STOP, capturedIntent?.action)
+        assertFalse("Should not launch activity when permissions granted", tileService.wasActivityLaunched())
+    }
+
+    @Test
+    fun testOnClick_allPermissionsGranted_serviceStopped_sendsStartAction() {
+        // Given: All permissions granted and service is stopped
+        mockStateFlow.value = ServiceState(isRunning = false, isPausedBySilence = false)
+        tileService.setMockTile(mockTile)
+        tileService.setMockPermissions(hasRecordAudio = true, hasNotifications = true)
+        
+        // When: onClick is called
+        val capturedIntent = tileService.testOnClick()
+        
+        // Then: Should send START_USER_INITIATED action and not launch activity
         assertEquals("Should send START_USER_INITIATED action", 
             MicLockService.ACTION_START_USER_INITIATED, capturedIntent?.action)
+        assertFalse("Should not launch activity when permissions granted", tileService.wasActivityLaunched())
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -197,11 +236,27 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
     
     private var mockTile: Tile? = null
     private var lastIntent: Intent? = null
+    private var launchedActivityClass: String? = null
+    private var hasRecordAudioPermission = true
+    private var hasNotificationPermission = true
     var isStateCollectionActive = false
         private set
     
     fun setMockTile(tile: Tile) {
         mockTile = tile
+    }
+    
+    fun setMockPermissions(hasRecordAudio: Boolean, hasNotifications: Boolean) {
+        hasRecordAudioPermission = hasRecordAudio
+        hasNotificationPermission = hasNotifications
+    }
+    
+    fun wasActivityLaunched(): Boolean = launchedActivityClass != null
+    
+    fun getLaunchedActivityClass(): String? = launchedActivityClass
+    
+    private fun hasAllPerms(): Boolean {
+        return hasRecordAudioPermission && hasNotificationPermission
     }
     
     fun getQsTile(): Tile? = mockTile
@@ -217,6 +272,16 @@ class TestableMicLockTileService(private val mockStateFlow: StateFlow<ServiceSta
     }
     
     fun testOnClick(): Intent? {
+        // Reset activity launch tracking
+        launchedActivityClass = null
+        
+        // Check permissions first (mimicking the real tile service logic)
+        if (!hasAllPerms()) {
+            // Simulate launching MainActivity
+            launchedActivityClass = MainActivity::class.java.name
+            return null // No service intent when permissions are missing
+        }
+        
         val currentState = mockStateFlow.value
         val intent = Intent()
         intent.setClassName("io.github.miclock", "io.github.miclock.service.MicLockService")
