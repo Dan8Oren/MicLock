@@ -36,9 +36,8 @@ class MicLockTileService : TileService() {
         super.onStartListening()
         Log.d(TAG, "Tile started listening")
         
-        // Force immediate tile update when we start listening
-        // This ensures permissions are re-checked
-        updateTileState(MicLockService.state.value)
+        val actualState = getCurrentAppState()
+        updateTileState(actualState)
         
         // Start observing service state with fallback
         stateCollectionJob = scope.launch {
@@ -180,6 +179,26 @@ class MicLockTileService : TileService() {
         
         tile.updateTile()
         Log.d(TAG, "Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}, HasPerms: $hasPerms")
+    }
+
+    private fun getCurrentAppState(): ServiceState {
+        // Get current state from StateFlow
+        val currentState = MicLockService.state.value
+        
+        // If StateFlow says service isn't running, double-check with system services
+        val actualState = if (!currentState.isRunning) {
+            val systemState = checkServiceRunningState()
+            if (systemState.isRunning) {
+                Log.d(TAG, "StateFlow out of sync - service is actually running according to system")
+                systemState
+            } else {
+                currentState
+            }
+        } else {
+            currentState
+        }
+        
+        return actualState
     }
 
     private fun checkServiceRunningState(): ServiceState {
