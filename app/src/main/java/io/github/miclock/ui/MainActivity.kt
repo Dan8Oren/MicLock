@@ -120,7 +120,7 @@ class MainActivity : ComponentActivity() {
             Log.d("MainActivity", "Starting service from tile request")
             if (hasAllPerms()) {
                 startMicLock()
-                // Optionally finish activity to return to previous screen
+                // Finish activity to return to previous screen
                 finish()
             }
         }

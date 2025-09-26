@@ -3,6 +3,7 @@ package io.github.miclock.tile
 import android.Manifest
 import android.app.ActivityManager
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,6 +12,7 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
+import androidx.annotation.RequiresApi
 
 import androidx.core.content.ContextCompat
 import io.github.miclock.R
@@ -89,6 +91,7 @@ class MicLockTileService : TileService() {
         return hasPerms
     }
 
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onClick() {
         super.onClick()
         Log.d(TAG, "Tile clicked")
@@ -100,11 +103,11 @@ class MicLockTileService : TileService() {
         if (!currentPerms) {
             Log.d(TAG, "Permissions missing - forcing tile update to show unavailable state")
             // Force immediate tile update to reflect current permission state
-            updateTileState(MicLockService.state.value)
+            updateTileState(getCurrentAppState())
             return
         }
         
-        val currentState = MicLockService.state.value
+        val currentState = getCurrentAppState()
         val intent = Intent(this, MicLockService::class.java)
         
         if (currentState.isRunning) {
@@ -118,16 +121,24 @@ class MicLockTileService : TileService() {
                 Log.e(TAG, "Failed to send stop intent to service: ${e.message}", e)
             }
         } else {
-            // Launch MainActivity which will start the service
-            val activityIntent = Intent(this, MainActivity::class.java).apply {
+            // Launch MainActivity which will start the service - use startActivityAndCollapse with PendingIntent
+            val activityIntent = Intent(this, MicLockService::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra(EXTRA_START_SERVICE_FROM_TILE, true)
             }
             
+            val pendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                activityIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or
+                    (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+            )
+            
             Log.d(TAG, "Launching MainActivity from tile to start service")
             try {
-                startActivity(activityIntent)
-                Log.d(TAG, "Successfully launched MainActivity from tile")
+                startActivityAndCollapse(pendingIntent)
+                Log.d(TAG, "Successfully launched MainActivity from tile using startActivityAndCollapse with PendingIntent")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to launch MainActivity: ${e.message}", e)
                 updateTileState(ServiceState(isRunning = false))
