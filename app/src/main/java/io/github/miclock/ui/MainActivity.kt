@@ -30,6 +30,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import android.content.ComponentName
 import android.service.quicksettings.TileService
 import io.github.miclock.tile.MicLockTileService
+import io.github.miclock.tile.EXTRA_START_SERVICE_FROM_TILE
 
 /**
  * MainActivity provides the user interface for controlling the Mic-Lock service.
@@ -113,6 +114,16 @@ class MainActivity : ComponentActivity() {
         // Always enforce permissions on every app start
         enforcePermsOrRequest()
         updateAllUi()
+        
+        // Handle tile-initiated start
+        if (intent.getBooleanExtra(EXTRA_START_SERVICE_FROM_TILE, false)) {
+            Log.d("MainActivity", "Starting service from tile request")
+            if (hasAllPerms()) {
+                startMicLock()
+                // Optionally finish activity to return to previous screen
+                finish()
+            }
+        }
     }
 
     override fun onResume() {

@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 
 const val TILE_TEXT = "MicLock"
+const val EXTRA_START_SERVICE_FROM_TILE = "start_service_from_tile"
 
 class MicLockTileService : TileService() {
     
@@ -118,45 +119,19 @@ class MicLockTileService : TileService() {
                 Log.e(TAG, "Failed to send stop intent to service: ${e.message}", e)
             }
         } else {
-            // Start the service - use startForegroundService for new service start
-            intent.action = MicLockService.ACTION_START_USER_INITIATED
-            Log.d(TAG, "Starting MicLock service via tile")
+            // Launch MainActivity which will start the service
+            val activityIntent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(EXTRA_START_SERVICE_FROM_TILE, true)
+            }
+            
+            Log.d(TAG, "Launching MainActivity from tile to start service")
             try {
-                ContextCompat.startForegroundService(this, intent)
-                Log.d(TAG, "Successfully sent foreground start intent to service")
-                
-                // Schedule a delayed check to verify service actually started
-                scope.launch {
-                    delay(2000) // Wait 2 seconds for service to start
-                    val newState = MicLockService.state.value
-                    if (!newState.isRunning) {
-                        Log.w(TAG, "Service failed to start properly - updating tile to inactive")
-                        updateTileState(newState)
-                    } else {
-                        Log.d(TAG, "Service start verification successful")
-                    }
-                }
+                startActivity(activityIntent)
+                Log.d(TAG, "Successfully launched MainActivity from tile")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to send foreground start intent to service: ${e.message}", e)
-                // Update tile to show failure state
+                Log.e(TAG, "Failed to launch MainActivity: ${e.message}", e)
                 updateTileState(ServiceState(isRunning = false))
-                // Fallback: try regular startService if foreground start fails
-                try {
-                    startService(intent)
-                    Log.i(TAG, "Fallback to regular startService succeeded")
-                    // Schedule delayed check for fallback as well
-                    scope.launch {
-                        delay(2000)
-                        val newState = MicLockService.state.value
-                        if (!newState.isRunning) {
-                            Log.w(TAG, "Fallback service also failed to start properly")
-                            updateTileState(newState)
-                        }
-                    }
-                } catch (fallbackException: Exception) {
-                    Log.e(TAG, "Fallback startService also failed: ${fallbackException.message}", fallbackException)
-                    updateTileState(ServiceState(isRunning = false))
-                }
             }
         }
     }
