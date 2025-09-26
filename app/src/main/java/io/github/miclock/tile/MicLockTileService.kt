@@ -124,14 +124,38 @@ class MicLockTileService : TileService() {
             try {
                 ContextCompat.startForegroundService(this, intent)
                 Log.d(TAG, "Successfully sent foreground start intent to service")
+                
+                // Schedule a delayed check to verify service actually started
+                scope.launch {
+                    delay(2000) // Wait 2 seconds for service to start
+                    val newState = MicLockService.state.value
+                    if (!newState.isRunning) {
+                        Log.w(TAG, "Service failed to start properly - updating tile to inactive")
+                        updateTileState(newState)
+                    } else {
+                        Log.d(TAG, "Service start verification successful")
+                    }
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send foreground start intent to service: ${e.message}", e)
+                // Update tile to show failure state
+                updateTileState(ServiceState(isRunning = false))
                 // Fallback: try regular startService if foreground start fails
                 try {
                     startService(intent)
                     Log.i(TAG, "Fallback to regular startService succeeded")
+                    // Schedule delayed check for fallback as well
+                    scope.launch {
+                        delay(2000)
+                        val newState = MicLockService.state.value
+                        if (!newState.isRunning) {
+                            Log.w(TAG, "Fallback service also failed to start properly")
+                            updateTileState(newState)
+                        }
+                    }
                 } catch (fallbackException: Exception) {
                     Log.e(TAG, "Fallback startService also failed: ${fallbackException.message}", fallbackException)
+                    updateTileState(ServiceState(isRunning = false))
                 }
             }
         }

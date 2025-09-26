@@ -23,6 +23,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
+import android.content.pm.ServiceInfo
 import io.github.miclock.audio.AudioSelector
 import io.github.miclock.audio.MediaRecorderHolder
 import io.github.miclock.data.Prefs
@@ -87,6 +88,7 @@ class MicLockService : Service() {
     
     // Android 14+ foreground service restriction handling
     private var isStartedFromBoot = false
+    private var serviceHealthy = false
 
     @RequiresApi(Build.VERSION_CODES.O)
     /**
@@ -164,12 +166,30 @@ class MicLockService : Service() {
         Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
         if (!state.value.isRunning) {
             isStartedFromBoot = false
-            updateServiceState(running = true)
             Log.i(TAG, "Starting service from user action - immediate foreground activation")
             startMicHolding()
+            // Only update state to running if service started successfully
+            if (serviceHealthy) {
+                updateServiceState(running = true)
+            }
         } else {
             Log.i(TAG, "Service already running - activating foreground mode for user action")
-            startForeground(NOTIF_ID, buildNotification("Mic-Lock activated by user"))
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(NOTIF_ID, buildNotification("Mic-Lock activated by user"), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                } else {
+                    startForeground(NOTIF_ID, buildNotification("Mic-Lock activated by user"))
+                }
+                serviceHealthy = true
+                Log.d(TAG, "Foreground service started successfully")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not start foreground service: ${e.message}")
+                serviceHealthy = false
+                updateServiceState(running = false)
+                createRestartNotification()
+                stopSelf()
+                return
+            }
         }
     }
 
@@ -280,11 +300,20 @@ class MicLockService : Service() {
         // Try to start foreground service based on current conditions
         if (canStartForegroundService()) {
             try {
-                startForeground(NOTIF_ID, buildNotification("Starting…"))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(NOTIF_ID, buildNotification("Starting…"), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                } else {
+                    startForeground(NOTIF_ID, buildNotification("Starting…"))
+                }
+                serviceHealthy = true
                 Log.d(TAG, "Foreground service started successfully")
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service: ${e.message}")
-                // Continue with background operation - core functionality still works
+                serviceHealthy = false
+                updateServiceState(running = false)
+                createRestartNotification()
+                stopSelf()
+                return
             }
         } else {
             Log.d(TAG, "Delaying foreground service start due to boot restrictions")
@@ -292,8 +321,12 @@ class MicLockService : Service() {
         }
         
         stopFlag.set(false)
-        // Explicitly un-pause the state when starting to hold.
-        updateServiceState(paused = false) 
+        // Only update state if service is healthy
+        if (serviceHealthy) {
+            updateServiceState(paused = false, running = true)
+        } else {
+            updateServiceState(paused = false, running = false)
+        }
         loopJob = scope.launch { holdSelectedMicLoop() }
     }
 
@@ -333,10 +366,19 @@ class MicLockService : Service() {
             delay(10_000) // Wait 10 seconds
             if (state.value.isRunning && !stopFlag.get()) {
                 try {
-                    startForeground(NOTIF_ID, buildNotification("Recording active"))
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        startForeground(NOTIF_ID, buildNotification("Recording active"), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                    } else {
+                        startForeground(NOTIF_ID, buildNotification("Recording active"))
+                    }
+                    serviceHealthy = true
                     Log.i(TAG, "Delayed foreground service start successful")
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to start foreground service after delay: ${e.message}", e)
+                    serviceHealthy = false
+                    updateServiceState(running = false)
+                    createRestartNotification()
+                    stopSelf()
                 }
             }
         }
