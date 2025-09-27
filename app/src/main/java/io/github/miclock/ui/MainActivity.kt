@@ -117,11 +117,12 @@ class MainActivity : ComponentActivity() {
         
         // Handle tile-initiated start
         if (intent.getBooleanExtra(EXTRA_START_SERVICE_FROM_TILE, false)) {
-            Log.d("MainActivity", "Starting service from tile request")
+            Log.d("MainActivity", "Starting service from tile fallback request")
             if (hasAllPerms()) {
-                startMicLock()
-                // Finish activity to return to previous screen
-                finish()
+                startMicLockFromTileFallback()
+            } else {
+                Log.w("MainActivity", "Permissions missing for tile fallback - requesting permissions")
+                reqPerms.launch(audioPerms + notifPerms)
             }
         }
     }
@@ -274,10 +275,15 @@ class MainActivity : ComponentActivity() {
         }
     }
     
-    /**
-     * Requests the Quick Settings tile to update its state.
-     * This ensures the tile reflects current permission and service status.
-     */
+    private fun startMicLockFromTileFallback() {
+        Log.d("MainActivity", "Starting MicLock service as tile fallback")
+        val intent = Intent(this, MicLockService::class.java).apply {
+            action = MicLockService.ACTION_START_USER_INITIATED
+        }
+        ContextCompat.startForegroundService(this, intent)
+        finish()
+    }
+    
     private fun requestTileUpdate() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             try {

@@ -4,8 +4,10 @@ import android.Manifest
 import android.app.ActivityManager
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.os.Build
@@ -13,7 +15,7 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
 import androidx.annotation.RequiresApi
-
+import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import io.github.miclock.R
 import io.github.miclock.service.MicLockService
@@ -29,19 +31,36 @@ class MicLockTileService : TileService() {
     
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var stateCollectionJob: Job? = null
+    private var failureReceiver: BroadcastReceiver? = null
     
     companion object {
         private const val TAG = "MicLockTileService"
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onStartListening() {
         super.onStartListening()
         Log.d(TAG, "Tile started listening")
         
+        failureReceiver = object : BroadcastReceiver() {
+            @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == MicLockService.ACTION_TILE_START_FAILED) {
+                    val reason = intent.getStringExtra(MicLockService.EXTRA_FAILURE_REASON)
+                    if (reason == MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION) {
+                        Log.d(TAG, "Service failed due to foreground restrictions - launching MainActivity")
+                        launchMainActivityFallback()
+                    }
+                }
+            }
+        }
+        
+        val filter = IntentFilter(MicLockService.ACTION_TILE_START_FAILED)
+        registerReceiver(failureReceiver, filter, Context.RECEIVER_EXPORTED)
+        
         val actualState = getCurrentAppState()
         updateTileState(actualState)
         
-        // Start observing service state with fallback
         stateCollectionJob = scope.launch {
             try {
                 MicLockService.state.collect { state ->
@@ -49,7 +68,6 @@ class MicLockTileService : TileService() {
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to observe service state: ${e.message}")
-                // Fallback: Check if service is actually running
                 val fallbackState = checkServiceRunningState()
                 updateTileState(fallbackState)
             }
@@ -60,7 +78,15 @@ class MicLockTileService : TileService() {
         super.onStopListening()
         Log.d(TAG, "Tile stopped listening")
         
-        // Stop observing service state
+        failureReceiver?.let {
+            try {
+                unregisterReceiver(it)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error unregistering failure receiver: ${e.message}")
+            }
+        }
+        failureReceiver = null
+        
         stateCollectionJob?.cancel()
         stateCollectionJob = null
     }
@@ -91,27 +117,23 @@ class MicLockTileService : TileService() {
         return hasPerms
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onClick() {
         super.onClick()
         Log.d(TAG, "Tile clicked")
         
-        // Force permission re-check and tile update on every click
         val currentPerms = hasAllPerms()
         Log.d(TAG, "onClick permission check result: $currentPerms")
         
         if (!currentPerms) {
             Log.d(TAG, "Permissions missing - forcing tile update to show unavailable state")
-            // Force immediate tile update to reflect current permission state
             updateTileState(getCurrentAppState())
             return
         }
         
         val currentState = getCurrentAppState()
-        val intent = Intent(this, MicLockService::class.java)
         
         if (currentState.isRunning) {
-            // Stop the service - use regular startService since service is already running
+            val intent = Intent(this, MicLockService::class.java)
             intent.action = MicLockService.ACTION_STOP
             Log.d(TAG, "Stopping MicLock service via tile")
             try {
@@ -121,29 +143,68 @@ class MicLockTileService : TileService() {
                 Log.e(TAG, "Failed to send stop intent to service: ${e.message}", e)
             }
         } else {
-            // Launch MainActivity which will start the service - use startActivityAndCollapse with PendingIntent
-            val activityIntent = Intent(this, MicLockService::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra(EXTRA_START_SERVICE_FROM_TILE, true)
+            val intent = Intent(this, MicLockService::class.java).apply {
+                action = MicLockService.ACTION_START_USER_INITIATED
+                putExtra("from_tile", true)
             }
             
-            val pendingIntent = PendingIntent.getActivity(
-                this,
-                0,
-                activityIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or
-                    (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
-            )
-            
-            Log.d(TAG, "Launching MainActivity from tile to start service")
+            Log.d(TAG, "Attempting direct service start from tile")
             try {
-                startActivityAndCollapse(pendingIntent)
-                Log.d(TAG, "Successfully launched MainActivity from tile using startActivityAndCollapse with PendingIntent")
+                ContextCompat.startForegroundService(this, intent)
+                Log.d(TAG, "Direct service start request sent")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to launch MainActivity: ${e.message}", e)
-                updateTileState(ServiceState(isRunning = false))
+                Log.e(TAG, "Failed to start service directly: ${e.message}", e)
+                createTileFailureNotification("Service failed to start: ${e.message}")
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun launchMainActivityFallback() {
+        Log.d(TAG, "Launching MainActivity as fallback for service start")
+        val activityIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_START_SERVICE_FROM_TILE, true)
+        }
+        
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            activityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                    (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+        )
+        
+        try {
+            startActivityAndCollapse(pendingIntent)
+            Log.d(TAG, "MainActivity fallback launched successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "MainActivity fallback also failed: ${e.message}", e)
+            createTileFailureNotification("Both service start and app launch failed: ${e.message}")
+        }
+    }
+    
+    private fun createTileFailureNotification(reason: String) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val restartIntent = Intent(this, MainActivity::class.java)
+        val restartPI = PendingIntent.getActivity(
+            this, 6, restartIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                    (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+        )
+
+        val notification = NotificationCompat.Builder(this, MicLockService.RESTART_CHANNEL_ID)
+            .setContentTitle("MicLock Tile Failed Unexpectedly")
+            .setContentText("Tap to open app and start protection")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$reason. Tap to open app and start protection manually."))
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(restartPI)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        notificationManager.notify(45, notification)
+        Log.d(TAG, "Tile failure notification created: $reason")
     }
 
     private fun updateTileState(state: ServiceState) {

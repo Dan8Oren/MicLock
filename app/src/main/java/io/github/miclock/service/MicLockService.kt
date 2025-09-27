@@ -89,6 +89,9 @@ class MicLockService : Service() {
     // Android 14+ foreground service restriction handling
     private var isStartedFromBoot = false
     private var serviceHealthy = false
+    
+    private var startFailureReason: String? = null
+    private var suppressRestartNotification = false
 
     @RequiresApi(Build.VERSION_CODES.O)
     /**
@@ -130,6 +133,15 @@ class MicLockService : Service() {
         notifManager.notify(RESTART_NOTIF_ID, notification)
     }
 
+    private fun broadcastTileStartFailure(reason: String) {
+        val failureIntent = Intent(ACTION_TILE_START_FAILED).apply {
+            putExtra(EXTRA_FAILURE_REASON, reason)
+            setPackage(packageName)
+        }
+        sendBroadcast(failureIntent)
+        Log.d(TAG, "Broadcasted tile start failure: $reason")
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         val wasRunning = state.value.isRunning
@@ -141,7 +153,6 @@ class MicLockService : Service() {
         mediaRecorderHolder?.stopRecording()
         mediaRecorderHolder = null
         
-        // Unregister screen state receiver
         screenStateReceiver?.let {
             try {
                 unregisterReceiver(it)
@@ -154,23 +165,60 @@ class MicLockService : Service() {
         
         updateServiceState(running = false, paused = false, deviceAddr = null)
 
-        if (wasRunning) {
+        if (wasRunning && !suppressRestartNotification) {
             createRestartNotification()
+        } else if (suppressRestartNotification) {
+            Log.d(TAG, "Restart notification suppressed due to tile fallback scenario")
         }
     }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     @RequiresApi(Build.VERSION_CODES.P)
-    private fun handleStartUserInitiated() {
+    private fun handleStartUserInitiated(intent: Intent?) {
         notifManager.cancel(RESTART_NOTIF_ID)
         Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
+        
+        val isFromTile = intent?.getBooleanExtra("from_tile", false) ?: false
+        
         if (!state.value.isRunning) {
             isStartedFromBoot = false
             Log.i(TAG, "Starting service from user action - immediate foreground activation")
-            startMicHolding()
-            // Only update state to running if service started successfully
-            if (serviceHealthy) {
+            
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(NOTIF_ID, buildNotification("Starting…"), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                } else {
+                    startForeground(NOTIF_ID, buildNotification("Starting…"))
+                }
+                serviceHealthy = true
+                Log.d(TAG, "Foreground service started successfully")
+                
+                startFailureReason = null
+                suppressRestartNotification = false
+                
+                startMicHolding()
                 updateServiceState(running = true)
+                
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not start foreground service: ${e.message}")
+                serviceHealthy = false
+                
+                val errorMessage = e.message ?: ""
+                if (errorMessage.contains("FOREGROUND_SERVICE_MICROPHONE") ||
+                    errorMessage.contains("requires permissions") ||
+                    errorMessage.contains("eligible state")) {
+                    
+                    startFailureReason = FAILURE_REASON_FOREGROUND_RESTRICTION
+                    suppressRestartNotification = true
+                    
+                    if (isFromTile) {
+                        broadcastTileStartFailure(FAILURE_REASON_FOREGROUND_RESTRICTION)
+                    }
+                }
+                
+                updateServiceState(running = false)
+                stopSelf()
+                return
             }
         } else {
             Log.i(TAG, "Service already running - activating foreground mode for user action")
@@ -252,7 +300,7 @@ class MicLockService : Service() {
         }
 
         when (intent?.action) {
-            ACTION_START_USER_INITIATED -> handleStartUserInitiated()
+            ACTION_START_USER_INITIATED -> handleStartUserInitiated(intent)
             ACTION_START_HOLDING -> handleStartHolding()
             ACTION_STOP_HOLDING -> handleStopHolding()
             ACTION_STOP -> return handleStop()
@@ -747,7 +795,7 @@ class MicLockService : Service() {
         val state: StateFlow<ServiceState> = _state.asStateFlow()
         private const val TAG = "MicLockService"
         private const val CHANNEL_ID = "mic_lock_channel"
-        private const val RESTART_CHANNEL_ID = "mic_lock_restart_channel"
+        const val RESTART_CHANNEL_ID = "mic_lock_restart_channel"
         private const val NOTIF_ID = 42
         private const val RESTART_NOTIF_ID = 43
 
@@ -757,5 +805,9 @@ class MicLockService : Service() {
         const val ACTION_START_HOLDING = "io.github.miclock.ACTION_START_HOLDING"
         const val ACTION_STOP_HOLDING = "io.github.miclock.ACTION_STOP_HOLDING"
         const val ACTION_START_USER_INITIATED = "io.github.miclock.ACTION_START_USER_INITIATED"
+        
+        const val ACTION_TILE_START_FAILED = "io.github.miclock.TILE_START_FAILED"
+        const val EXTRA_FAILURE_REASON = "failure_reason"
+        const val FAILURE_REASON_FOREGROUND_RESTRICTION = "foreground_restriction"
     }
 }
