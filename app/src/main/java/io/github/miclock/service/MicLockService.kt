@@ -35,7 +35,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Represents the current state of the MicLockService.
@@ -72,6 +75,14 @@ class MicLockService : Service() {
 
     private var loopJob: Job? = null
     private val stopFlag = AtomicBoolean(false)
+
+    // === Race Condition Prevention Properties ===
+    private var screenOnDelayJob: Job? = null
+    private val screenOnDelayMs = 1300L // mic hold delay after screen was turned on again
+    private val micStateMutex = Mutex() // Single mutex for ALL mic-related operations
+    private val isDelayPending = AtomicBoolean(false)
+    private val lastScreenEvent = AtomicLong(0L)
+    // ===========================================
 
     // Silencing state (per run)
     @Volatile private var isSilenced: Boolean = false
@@ -131,13 +142,32 @@ class MicLockService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         val wasRunning = state.value.isRunning
-        stopFlag.set(true)
+        Log.i(TAG, "Service destroyed")
+        
+        // Ensure all cleanup happens under the mutex to prevent races during shutdown
+        runBlocking {
+            micStateMutex.withLock {
+                // Cancel any pending screen-on delay
+                screenOnDelayJob?.cancel()
+                screenOnDelayJob = null
+                isDelayPending.set(false)
+                
+                // Set stop flag and cancel main recording loop
+                stopFlag.set(true)
+                loopJob?.cancel()
+                loopJob = null
+                
+                // Release all resources and update state
+                wakeLockManager.release()
+                try { recCallback?.let { audioManager.unregisterAudioRecordingCallback(it) } } catch (_: Throwable) {}
+                recCallback = null
+                mediaRecorderHolder?.stopRecording()
+                mediaRecorderHolder = null
+                updateServiceState(running = false, paused = false, deviceAddr = null)
+            }
+        }
+        
         scope.cancel()
-        wakeLockManager.release()
-        try { recCallback?.let { audioManager.unregisterAudioRecordingCallback(it) } } catch (_: Throwable) {}
-        recCallback = null
-        mediaRecorderHolder?.stopRecording()
-        mediaRecorderHolder = null
         
         // Unregister screen state receiver
         screenStateReceiver?.let {
@@ -150,26 +180,36 @@ class MicLockService : Service() {
         }
         screenStateReceiver = null
         
-        updateServiceState(running = false, paused = false, deviceAddr = null)
-
         if (wasRunning) {
             createRestartNotification()
         }
+        
+        Log.i(TAG, "Service resources cleaned up.")
     }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     @RequiresApi(Build.VERSION_CODES.P)
     private fun handleStartUserInitiated() {
         notifManager.cancel(RESTART_NOTIF_ID)
-        Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
-        if (!state.value.isRunning) {
-            isStartedFromBoot = false
-            updateServiceState(running = true)
-            Log.i(TAG, "Starting service from user action - immediate foreground activation")
-            startMicHolding()
-        } else {
-            Log.i(TAG, "Service already running - activating foreground mode for user action")
-            startForeground(NOTIF_ID, buildNotification("Mic-Lock activated by user"))
+        Log.i(TAG, "Received ACTION_START_USER_INITIATED - immediate start")
+        
+        scope.launch {
+            micStateMutex.withLock {
+                // Cancel any pending screen-on delay since this is user-initiated
+                screenOnDelayJob?.cancel()
+                screenOnDelayJob = null
+                isDelayPending.set(false)
+                
+                if (!state.value.isRunning) {
+                    isStartedFromBoot = false
+                    updateServiceState(running = true)
+                    Log.i(TAG, "Starting service from user action - immediate activation")
+                } else {
+                    Log.i(TAG, "Service already running - activating foreground mode and ensuring mic holding")
+                }
+                
+                startMicHoldingInternal() // Immediate start for user actions
+            }
         }
     }
 
@@ -177,16 +217,66 @@ class MicLockService : Service() {
     @RequiresApi(Build.VERSION_CODES.P)
     private fun handleStartHolding() {
         Log.i(TAG, "Received ACTION_START_HOLDING, isRunning: ${state.value.isRunning}")
-        if (state.value.isRunning) {
-            startMicHolding()
-        } else {
-            Log.w(TAG, "Service not running, ignoring START_HOLDING action. (Consider starting service first)")
+        if (!state.value.isRunning) {
+            Log.w(TAG, "Service not running, ignoring START_HOLDING action.")
+            return
+        }
+
+        scope.launch {
+            micStateMutex.withLock {
+                val currentTime = System.currentTimeMillis()
+                lastScreenEvent.set(currentTime)
+
+                // Cancel existing delay without blocking
+                screenOnDelayJob?.cancel()
+
+                // Atomic flag prevents duplicate delays
+                if (!isDelayPending.compareAndSet(false, true)) {
+                    Log.d(TAG, "Delay already pending, ignoring duplicate request")
+                    return@withLock
+                }
+
+                Log.i(TAG, "Screen turned ON - starting ${screenOnDelayMs}ms delay")
+                updateNotification("Starting in ${screenOnDelayMs / 1000.0}s...")
+
+                screenOnDelayJob = scope.launch {
+                    try {
+                        // Delay happens *outside* the mutex lock
+                        delay(screenOnDelayMs)
+
+                        // Re-acquire mutex for actual mic operation check and start
+                        micStateMutex.withLock {
+                            val timeSinceEvent = System.currentTimeMillis() - lastScreenEvent.get()
+
+                            // Final validation before proceeding
+                            if (timeSinceEvent >= screenOnDelayMs &&
+                                state.value.isRunning &&
+                                !stopFlag.get()) {
+
+                                Log.i(TAG, "Delay completed successfully - starting mic holding")
+                                startMicHoldingInternal()
+                            } else {
+                                Log.d(TAG, "State changed during delay - skipping mic holding. " +
+                                        "Running: ${state.value.isRunning}, StopFlag: ${stopFlag.get()}, " +
+                                        "TimeSinceLastEvent: ${timeSinceEvent}ms")
+                            }
+                        }
+                    } catch (e: CancellationException) {
+                        Log.d(TAG, "Screen-on delay cancelled (likely screen turned off again or user action)")
+                        updateNotification("Paused (Screen off)")
+                    } finally {
+                        isDelayPending.set(false)
+                    }
+                }
+            }
         }
     }
 
     private fun handleStopHolding() {
         Log.i(TAG, "Received ACTION_STOP_HOLDING")
-        stopMicHolding()
+        scope.launch {
+            stopMicHoldingWithMutex()
+        }
     }
 
     private fun handleStop(): Int {
@@ -247,13 +337,17 @@ class MicLockService : Service() {
     @RequiresApi(Build.VERSION_CODES.P)
     private fun restartLoop(reason: String) {
         Log.i(TAG, "Restarting loop: $reason")
-        stopFlag.set(true)
-        loopJob?.cancel()
-        unregisterRecordingCallback(recCallback)
-        recCallback = null
-        isSilenced = false
-        stopFlag.set(false)
-        loopJob = scope.launch  { holdSelectedMicLoop() }
+        scope.launch {
+            micStateMutex.withLock {
+                stopFlag.set(true)
+                loopJob?.cancel()
+                unregisterRecordingCallback(recCallback)
+                recCallback = null
+                isSilenced = false
+                stopFlag.set(false)
+                loopJob = scope.launch { holdSelectedMicLoop() }
+            }
+        }
     }
 
     private fun hasAllRequirements(): Boolean {
@@ -264,6 +358,38 @@ class MicLockService : Service() {
 
     private fun registerRecordingCallback(cb: AudioManager.AudioRecordingCallback) {
         audioManager.registerAudioRecordingCallback(cb, Handler(Looper.getMainLooper()))
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    private suspend fun startMicHoldingInternal() {
+        // This method is always called *within* the micStateMutex lock
+        if (loopJob?.isActive == true) {
+            Log.d(TAG, "Mic holding is already active.")
+            return
+        }
+
+        if (stopFlag.get() || !state.value.isRunning) {
+            Log.d(TAG, "Stop flag set or service not running, aborting mic holding start")
+            return
+        }
+
+        Log.i(TAG, "Starting mic holding logic (internal, mutex protected)")
+
+        // Try to start foreground service
+        if (canStartForegroundService()) {
+            try {
+                startForeground(NOTIF_ID, buildNotification("Starting…"))
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not start foreground service: ${e.message}")
+            }
+        } else {
+            scheduleDelayedForegroundStart()
+        }
+        
+        stopFlag.set(false)
+        updateServiceState(paused = false)
+        loopJob = scope.launch { holdSelectedMicLoop() }
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
@@ -292,6 +418,35 @@ class MicLockService : Service() {
         // Explicitly un-pause the state when starting to hold.
         updateServiceState(paused = false) 
         loopJob = scope.launch { holdSelectedMicLoop() }
+    }
+
+    private suspend fun stopMicHoldingWithMutex() {
+        micStateMutex.withLock {
+            val currentTime = System.currentTimeMillis()
+            lastScreenEvent.set(currentTime)
+
+            Log.i(TAG, "Screen is OFF. Cancelling all pending operations and pausing mic holding.")
+
+            // Cancel screen-on delay with proper cleanup
+            screenOnDelayJob?.cancel()
+            screenOnDelayJob = null
+            isDelayPending.set(false)
+
+            // Set stop flag and cancel main recording loop
+            stopFlag.set(true)
+            loopJob?.cancel()
+            loopJob = null
+
+            // Release all resources and update state under mutex
+            wakeLockManager.release()
+            unregisterRecordingCallback(recCallback)
+            recCallback = null
+            mediaRecorderHolder?.stopRecording()
+            mediaRecorderHolder = null
+
+            updateServiceState(deviceAddr = null, paused = true)
+            updateNotification("Paused (Screen off)")
+        }
     }
 
     private fun stopMicHolding() {
