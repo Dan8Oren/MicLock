@@ -78,6 +78,8 @@ Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to
 
 ### 2.7 User Interface and Preferences
 
+*   **Quick Settings Tile**: A state-aware tile provides at-a-glance status and one-tap control. It must reflect the service's state (On, Off, Paused) and become unavailable if permissions are missing.
+
 * **Compatibility Mode Toggle:** Provide a runtime toggle between MediaRecorder and AudioRecord modes, with MediaRecorder as the default (higher battery usage but better route establishment).
 * **Enhanced Status Reporting:** The UI should clearly display status messages, such as:
   - "Mic-lock is ON" when actively holding microphone
@@ -94,6 +96,8 @@ To ensure the service remains active and is easy to manage, Mic-Lock implements 
 
 *   **Enhanced Foreground Service:** The foreground service notification is configured with a low priority and service category, making it "sticky" and less likely to be dismissed or have its associated service terminated by the Android system during low-memory situations.
 *   **User-Friendly Reactivation:** If the service is terminated for any reason (e.g., by the system), a "Mic-Lock Stopped" notification is displayed. A single tap on this notification immediately restarts the service, providing a quick and seamless way for the user to restore functionality. This restart notification is automatically dismissed upon a successful restart.
+
+*   **Robust Tile-Initiated Start**: To handle modern Android background start restrictions, initiating the service from the Quick Settings tile must follow a robust fallback mechanism. If a direct foreground service start fails, the application must automatically launch the `MainActivity` to complete the start request reliably.
 
 *   **Always-On Foreground Service:** As the primary resilience strategy, the service remains in the foreground even when the screen is off. This high-priority status drastically reduces the likelihood of the OS terminating the process.
 

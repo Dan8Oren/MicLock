@@ -65,7 +65,43 @@ Handles persistent storage of user settings and preferences.
 - Auto-restart preferences
 - User configuration choices
 
+### 5. MicLockTileService (Quick Settings Tile)
+A `TileService` that acts as a primary remote control for the `MicLockService`.
+
+**Key Responsibilities:**
+- **State-Aware UI**: Reflects the real-time status of the service (Active, Inactive, Paused, No Permission).
+- **One-Tap Control**: Allows the user to start and stop the service directly from the Quick Settings panel.
+- **Resilient Start Logic**: Implements a robust fallback mechanism to ensure service activation even when the app is in the background, by launching the main activity if a direct start fails.
+
+
 ## 🔄 Data Flow
+
+### Tile-Initiated Start-up Flow
+
+To ensure reliability on modern Android versions, the Quick Settings tile uses a multi-layered fallback system to handle foreground service start restrictions.
+
+```mermaid
+flowchart TD
+    subgraph Tile
+        A[User Clicks Tile] --> B{Service Running?};
+        B -->|No| C[Attempt Direct Service Start];
+    end
+    subgraph Service
+        C --> D{Start Allowed?};
+        D -->|No| E[Catch Exception];
+        E --> F[Broadcast Failure to Tile];
+    end
+    subgraph Tile
+        F --> G[Receive Failure Broadcast];
+        G --> H[Launch MainActivity as Fallback];
+    end
+    subgraph Activity
+        H --> I[MainActivity Starts];
+        I --> J[Initiate Service Start];
+        J --> K[Service Starts Successfully];
+    end
+    D -->|Yes| K;
+```
 
 ### Simplified Operation Flow
 

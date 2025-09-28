@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-01-24
+
+### Added
+- **Intelligent Quick Settings Tile**: A new state-aware Quick Settings tile that provides at-a-glance status (On, Off, Paused) and one-tap control of the MicLock service.
+- **Robust Service Start from Tile**: Implemented a multi-layered fallback system to ensure the service can be reliably started from the Quick Settings tile, even on modern Android versions with background start restrictions. If a direct start fails, the app briefly opens to securely start the service and then closes.
+
+### Enhanced
+- The tile now displays a "Paused" state when another app is using the microphone, providing clearer feedback to the user.
+- The tile shows an unavailable state with a "No Permission" label if required permissions have not been granted.
+
 ## [1.0.1] - 2025-01-23
 
 ### Enhanced
@@ -49,4 +59,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contributing guidelines for open source development
 - Issue templates for bug reports and feature requests
 
+[1.1.0]: https://github.com/yourusername/mic-lock/releases/tag/v1.1.0
 [1.0.0]: https://github.com/yourusername/mic-lock/releases/tag/v1.0.0
