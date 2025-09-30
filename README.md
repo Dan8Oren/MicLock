@@ -61,6 +61,15 @@ For full details, please see:
 
 If you have questions or wish to report a vulnerability, consult the guides above or open an issue in the repository.
 
+## ✨ Quick Settings Tile
+// TODO: add video here
+For even easier access, Mic-Lock includes a Quick Settings tile.
+
+1.  **Add the Tile**: Pull down your notification shade, enter edit mode, and drag the "MicLock" tile to your active tiles.
+2.  **One-Tap Control**:
+    - **Tap to Start/Stop**: Instantly activate or deactivate microphone protection.
+    - **See Status**: The tile's icon changes to show you if the service is **On** (active), **Off** (inactive), or **Paused** (another app is using the mic).
+
 
 ## ⚙️ Settings
 

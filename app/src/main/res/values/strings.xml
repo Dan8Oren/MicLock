@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">mic-lock</string>
+    <string name="tile_label">MicLock</string>
+    <string name="tile_description">Quick toggle for microphone protection</string>
 </resources>
