@@ -12,7 +12,7 @@ import android.util.Log
 import io.github.miclock.service.MicLockService
 import io.github.miclock.util.ApiGuard
 import androidx.core.content.ContextCompat
-// // // import android.app.ForegroundServiceStartNotAllowedException // Removed to avoid lint error // Removed to avoid lint error // Removed to avoid lint error
+
 
 class BootCompletedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -37,7 +37,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
                 } catch (e: Exception) {
                     ApiGuard.onApi31_S(
                         block = {
-                            if (e.javaClass.canonicalName == "android.app.ForegroundServiceStartNotAllowedException") {
+                            if (e.javaClass.simpleName == "ForegroundServiceStartNotAllowedException") {
                                 Log.w("BootCompletedReceiver", "Foreground service start blocked for MicLockService: ${e.message}.")
                             } else {
                                 Log.e("BootCompletedReceiver", "Unexpected error starting MicLockService on API 31+: ${e.message}", e)

@@ -12,6 +12,15 @@ import androidx.annotation.IntRange
 object ApiGuard {
 
     /**
+     * Checks if the current device is running on Android O (API 26) or higher.
+     */
+    @JvmStatic
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
+    fun isApi26_O_OrAbove(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+    }
+
+    /**
      * Checks if the current device is running on Android P (API 28) or higher.
      */
     @JvmStatic

@@ -62,10 +62,11 @@ class MicLockTileService : TileService() {
         }
         
         val filter = IntentFilter(MicLockService.ACTION_TILE_START_FAILED)
-        ApiGuard.onApiLevel(Build.VERSION_CODES.O, 
-            block = { registerReceiver(failureReceiver, filter, Context.RECEIVER_EXPORTED) },
-            onUnsupported = { registerReceiver(failureReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED) } // Fallback for API < O, explicitly not exported
-        )
+        if (ApiGuard.isApi26_O_OrAbove()) {
+            registerReceiver(failureReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            ContextCompat.registerReceiver(this, failureReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        }
         
         val actualState = getCurrentAppState()
         updateTileState(actualState)
