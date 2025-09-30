@@ -10,8 +10,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import io.github.miclock.service.MicLockService
+import io.github.miclock.util.ApiGuard
 import androidx.core.content.ContextCompat
-import android.app.ForegroundServiceStartNotAllowedException
+// // // import android.app.ForegroundServiceStartNotAllowedException // Removed to avoid lint error // Removed to avoid lint error // Removed to avoid lint error
 
 class BootCompletedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -31,18 +32,21 @@ class BootCompletedReceiver : BroadcastReceiver() {
                 val serviceIntent = Intent(context, MicLockService::class.java)
                 
                 try {
-                    // Try to start as foreground service if allowed by system
                     ContextCompat.startForegroundService(context, serviceIntent)
                     Log.d("BootCompletedReceiver", "MicLockService started as foreground service successfully.")
-                } catch (e: ForegroundServiceStartNotAllowedException) {
-                    // On Android 12+ (API 31+), foreground service starts from background are restricted.
-                    // This is expected behavior if the app is not in the foreground or recently used.
-                    Log.w("BootCompletedReceiver", "Foreground service start blocked for MicLockService: ${e.message}. Cannot start directly from BootCompletedReceiver on API 31+.")
-                    // For API 31+, it's often better to rely on user interaction (app launch, tile click)
-                    // for services that require foreground notification.
                 } catch (e: Exception) {
-                    // Catch any other unexpected exceptions during service start
-                    Log.e("BootCompletedReceiver", "Unexpected error starting MicLockService: ${e.message}", e)
+                    ApiGuard.onApi31_S(
+                        block = {
+                            if (e.javaClass.canonicalName == "android.app.ForegroundServiceStartNotAllowedException") {
+                                Log.w("BootCompletedReceiver", "Foreground service start blocked for MicLockService: ${e.message}.")
+                            } else {
+                                Log.e("BootCompletedReceiver", "Unexpected error starting MicLockService on API 31+: ${e.message}", e)
+                            }
+                        },
+                        onUnsupported = {
+                            Log.e("BootCompletedReceiver", "Unexpected error starting MicLockService on older API: ${e.message}", e)
+                        }
+                    )
                 }
             } else {
                 Log.d("BootCompletedReceiver", "Permissions not fully granted. MicLockService will not start automatically.")

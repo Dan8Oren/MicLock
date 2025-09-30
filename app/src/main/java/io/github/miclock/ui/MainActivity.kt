@@ -31,6 +31,7 @@ import android.content.ComponentName
 import android.service.quicksettings.TileService
 import io.github.miclock.tile.MicLockTileService
 import io.github.miclock.tile.EXTRA_START_SERVICE_FROM_TILE
+import io.github.miclock.util.ApiGuard
 
 /**
  * MainActivity provides the user interface for controlling the Mic-Lock service.
@@ -60,7 +61,6 @@ class MainActivity : ComponentActivity() {
     private val notifPerms = if (Build.VERSION.SDK_INT >= 33)
         arrayOf(Manifest.permission.POST_NOTIFICATIONS) else emptyArray()
 
-    @RequiresApi(Build.VERSION_CODES.P)
     private val reqPerms = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { _ ->
@@ -75,7 +75,6 @@ class MainActivity : ComponentActivity() {
      * 
      * @param savedInstanceState If the activity is being re-initialized after being shut down
      */
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -164,7 +163,7 @@ class MainActivity : ComponentActivity() {
         val micGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         
         var notifGranted = true
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (ApiGuard.isApi33_Tiramisu_OrAbove()) {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val postNotificationsGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
             notifGranted = notificationManager.areNotificationsEnabled() && postNotificationsGranted
@@ -176,25 +175,28 @@ class MainActivity : ComponentActivity() {
         return micGranted && notifGranted
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     private fun enforcePermsOrRequest() {
-        if (!hasAllPerms()) {
-            val permissionsToRequest = mutableListOf<String>()
-            
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
-            }
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED || !notificationManager.areNotificationsEnabled()) {
-                    permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+        if (ApiGuard.isApi28_P_OrAbove()) {
+            if (!hasAllPerms()) {
+                val permissionsToRequest = mutableListOf<String>()
+                
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+                }
+                
+                if (ApiGuard.isApi33_Tiramisu_OrAbove()) {
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED || !notificationManager.areNotificationsEnabled()) {
+                        permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+
+                if (permissionsToRequest.isNotEmpty()) {
+                    reqPerms.launch(permissionsToRequest.toTypedArray())
                 }
             }
-
-            if (permissionsToRequest.isNotEmpty()) {
-                reqPerms.launch(permissionsToRequest.toTypedArray())
-            }
+        } else {
+            Log.d("MainActivity", "Skipping enforcePermsOrRequest on pre-P device, standard checks apply.")
         }
     }
 

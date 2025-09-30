@@ -21,8 +21,9 @@ import io.github.miclock.R
 import io.github.miclock.service.MicLockService
 import io.github.miclock.service.model.ServiceState
 import io.github.miclock.ui.MainActivity
+import io.github.miclock.util.ApiGuard
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
+
 
 const val TILE_TEXT = "MicLock"
 const val EXTRA_START_SERVICE_FROM_TILE = "start_service_from_tile"
@@ -37,26 +38,34 @@ class MicLockTileService : TileService() {
         private const val TAG = "MicLockTileService"
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onStartListening() {
         super.onStartListening()
         Log.d(TAG, "Tile started listening")
         
         failureReceiver = object : BroadcastReceiver() {
-            @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == MicLockService.ACTION_TILE_START_FAILED) {
-                    val reason = intent.getStringExtra(MicLockService.EXTRA_FAILURE_REASON)
-                    if (reason == MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION) {
-                        Log.d(TAG, "Service failed due to foreground restrictions - launching MainActivity")
-                        launchMainActivityFallback()
+                ApiGuard.onApi34_UpsideDownCake(
+                    block = {
+                        if (intent.action == MicLockService.ACTION_TILE_START_FAILED) {
+                            val reason = intent.getStringExtra(MicLockService.EXTRA_FAILURE_REASON)
+                            if (reason == MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION) {
+                                Log.d(TAG, "Service failed due to foreground restrictions - launching MainActivity")
+                                launchMainActivityFallback()
+                            }
+                        }
+                    },
+                    onUnsupported = {
+                        Log.d(TAG, "Received onReceive on unsupported API. Doing nothing.")
                     }
-                }
+                )
             }
         }
         
         val filter = IntentFilter(MicLockService.ACTION_TILE_START_FAILED)
-        registerReceiver(failureReceiver, filter, Context.RECEIVER_EXPORTED)
+        ApiGuard.onApiLevel(Build.VERSION_CODES.O, 
+            block = { registerReceiver(failureReceiver, filter, Context.RECEIVER_EXPORTED) },
+            onUnsupported = { registerReceiver(failureReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED) } // Fallback for API < O, explicitly not exported
+        )
         
         val actualState = getCurrentAppState()
         updateTileState(actualState)
@@ -159,29 +168,39 @@ class MicLockTileService : TileService() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private fun launchMainActivityFallback() {
-        Log.d(TAG, "Launching MainActivity as fallback for service start")
-        val activityIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(EXTRA_START_SERVICE_FROM_TILE, true)
-        }
+        ApiGuard.onApi34_UpsideDownCake(
+            block = {
+                Log.d(TAG, "Launching MainActivity as fallback for service start")
+                val activityIntent = Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    putExtra(EXTRA_START_SERVICE_FROM_TILE, true)
+                }
         
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            activityIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or
-                    (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+                val pendingIntent = PendingIntent.getActivity(
+                    this,
+                    0,
+                    activityIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or
+                            (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+                )
+        
+                try {
+                    @Suppress("NewApi")
+                    ApiGuard.onApi34_UpsideDownCake(block = {
+                        startActivityAndCollapse(pendingIntent)
+                    })
+                    Log.d(TAG, "MainActivity fallback launched successfully")
+                } catch (e: Exception) {
+                    Log.e(TAG, "MainActivity fallback also failed: ${e.message}", e)
+                    createTileFailureNotification("Both service start and app launch failed: ${e.message}")
+                }
+            },
+            onUnsupported = {
+                Log.e(TAG, "launchMainActivityFallback called on unsupported device. This should not happen.")
+                createTileFailureNotification("MainActivity fallback not supported on this Android version.")
+            }
         )
-        
-        try {
-            startActivityAndCollapse(pendingIntent)
-            Log.d(TAG, "MainActivity fallback launched successfully")
-        } catch (e: Exception) {
-            Log.e(TAG, "MainActivity fallback also failed: ${e.message}", e)
-            createTileFailureNotification("Both service start and app launch failed: ${e.message}")
-        }
     }
     
     private fun createTileFailureNotification(reason: String) {
