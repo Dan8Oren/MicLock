@@ -83,7 +83,9 @@ For even easier access, Mic-Lock includes a Quick Settings tile.
 ## 🛠️ Troubleshooting
 
 **Q: The app doesn't seem to work, or audio is still silent.**
-A: Try switching between **MediaRecorder Mode** and **AudioRecord Mode** in the app's settings. Some device configurations might prefer one over the other.
+A: The most common fix is to switch between **MediaRecorder Mode** and **AudioRecord Mode** in the app's settings.
+
+For more detailed solutions, device-specific fixes, and advanced diagnostics, please see the full **[Troubleshooting Guide](docs/troubleshooting.md)**.
 
 ## 🤝 Contributing
 

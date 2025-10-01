@@ -1,34 +1,34 @@
-# Troubleshooting Guide for Mic-Lock
+# Troubleshooting Guide for MicLock
 
-This guide provides solutions to common problems you might encounter with Mic-Lock.
+This guide provides solutions to common problems you might encounter with MicLock.
 
 ## 🚨 Quick Fixes
 
-### App doesn't seem to work / Audio is still silent
+### MicLock doesn't seem to work / Audio is still silent
 
-**Most Common Solution**: Switch recording modes
-1. Open Mic-Lock settings
-2. Try switching between **MediaRecorder Mode** and **AudioRecord Mode**
-3. Stop and restart the service after changing modes
-4. Test again with WhatsApp or another recording app
+**Most Common Solution**: Switch recording modes.
+1. Open MicLock settings.
+2. Try switching between **MediaRecorder Mode** and **AudioRecord Mode**. For an explanation of what these modes do, see the **[Recording Modes section in the Setup Guide](setup.md#recording-modes)**.
+3. Stop and restart the service after changing modes.
+4. Test again with WhatsApp or another recording app.
 
 ### High battery usage
 
-1. **Switch to AudioRecord Mode** in Mic-Lock settings
+1. **Switch to AudioRecord Mode** in MicLock settings
 2. **Verify battery optimization** is disabled (see [Setup Guide](setup.md#3-disable-battery-optimizations-critical))
 3. **Restart the device** after making changes
 
 ### App stops working after device restart
 
 1. **Check battery optimization settings** - they may have been reset
-2. **Manually restart Mic-Lock** after reboot
+2. **Manually restart MicLock** after reboot
 3. **Enable auto-start** in your device's app management settings
 
 ## 📱 Device-Specific Issues
 
 ### Google Pixel Devices
 
-**Issue**: Mic-Lock designed for Pixel devices but still not working
+**Issue**: MicLock designed for Pixel devices but still not working
 - **Solution**: Ensure you're using the correct recording mode for your specific Pixel model
 - **Note**: Pixel 7 Pro is confirmed working; other Pixel models may need different settings
 
@@ -41,26 +41,26 @@ This guide provides solutions to common problems you might encounter with Mic-Lo
 **Issue**: App keeps getting killed by system
 - **Solution**: Samsung has aggressive battery management
 - **Actions**:
-  1. Settings → Device care → Battery → App power management → Apps that won't be put to sleep → Add Mic-Lock
-  2. Settings → Apps → Mic-Lock → Battery → Optimize battery usage → Turn off
-  3. Disable "Adaptive battery" for Mic-Lock
+  1. Settings → Device care → Battery → App power management → Apps that won't be put to sleep → Add MicLock
+  2. Settings → Apps → MicLock → Battery → Optimize battery usage → Turn off
+  3. Disable "Adaptive battery" for MicLock
 
 ### OnePlus Devices
 
 **Issue**: Service stops after screen off
 - **Solution**: OnePlus has strict background app management
 - **Actions**:
-  1. Settings → Apps → Mic-Lock → Battery → Battery optimization → Don't optimize
-  2. Settings → Apps → Mic-Lock → App launch → Manage manually → Enable all options
+  1. Settings → Apps → MicLock → Battery → Battery optimization → Don't optimize
+  2. Settings → Apps → MicLock → App launch → Manage manually → Enable all options
 
 ### Xiaomi/MIUI Devices
 
 **Issue**: App doesn't start automatically
 - **Solution**: MIUI requires explicit autostart permission
 - **Actions**:
-  1. Settings → Apps → Manage apps → Mic-Lock → Autostart → Enable
-  2. Settings → Apps → Manage apps → Mic-Lock → Battery saver → No restrictions
-  3. Security app → Permissions → Autostart → Enable for Mic-Lock
+  1. Settings → Apps → Manage apps → MicLock → Autostart → Enable
+  2. Settings → Apps → Manage apps → MicLock → Battery saver → No restrictions
+  3. Security app → Permissions → Autostart → Enable for MicLock
 
 ## 🔧 Technical Troubleshooting
 
@@ -69,14 +69,14 @@ This guide provides solutions to common problems you might encounter with Mic-Lo
 **Problem**: App starts but audio routing doesn't work
 
 **Diagnosis Steps**:
-1. Check if Mic-Lock status shows "ON" (not "PAUSED")
+1. Check if MicLock status shows "ON" (not "PAUSED")
 2. Try recording with different apps (WhatsApp, Voice Recorder, etc.)
 3. Test both recording modes
 4. Restart the device and try again
 
 **Advanced Solutions**:
-- Clear app cache: Settings → Apps → Mic-Lock → Storage → Clear Cache
-- Reset app data (will lose settings): Settings → Apps → Mic-Lock → Storage → Clear Data
+- Clear app cache: Settings → Apps → MicLock → Storage → Clear Cache
+- Reset app data (will lose settings): Settings → Apps → MicLock → Storage → Clear Data
 
 ### App Crashes or Won't Start
 
@@ -86,17 +86,17 @@ This guide provides solutions to common problems you might encounter with Mic-Lo
 - Notification permission granted
 
 **Solutions**:
-1. **Reinstall the app**: Uninstall and reinstall Mic-Lock
+1. **Reinstall the app**: Uninstall and reinstall MicLock
 2. **Check APK integrity**: Re-download from official source
 3. **Free up storage**: Ensure device has adequate free space
 4. **Restart device**: Simple reboot can resolve many issues
 
 ### Compatibility with Other Apps
 
-**Issue**: Specific apps still don't work with Mic-Lock
+**Issue**: Specific apps still don't work with MicLock
 
 **Troubleshooting**:
-1. **Test app order**: Start Mic-Lock first, then the recording app
+1. **Test app order**: Start MicLock first, then the recording app
 2. **Check app permissions**: Ensure the recording app has microphone permission
 3. **Try different recording mode**: Switch between MediaRecorder/AudioRecord
 4. **Report compatibility**: Use our [Device Compatibility Report](https://github.com/yourusername/mic-lock/issues/new?template=device_compatibility.md)
@@ -105,7 +105,7 @@ This guide provides solutions to common problems you might encounter with Mic-Lo
 
 ### Check Service Status
 
-1. Open Mic-Lock app
+1. Open MicLock app
 2. Observe the status display:
    - **"ON"**: Service running and holding microphone
    - **"PAUSED"**: Service running but yielding to another app (normal)
@@ -124,11 +124,11 @@ Look for:
 - Audio system errors
 - Service lifecycle issues
 
-### Test Without Mic-Lock
+### Test Without MicLock
 
-1. Stop Mic-Lock service
+1. Stop MicLock service
 2. Test recording apps to confirm the original problem exists
-3. Start Mic-Lock and test again to verify it's working
+3. Start MicLock and test again to verify it's working
 
 ## 📞 When to Seek Help
 
@@ -142,14 +142,14 @@ Use our [Bug Report template](https://github.com/yourusername/mic-lock/issues/ne
 ### Include This Information
 
 1. **Device details**: Model, Android version, manufacturer
-2. **Mic-Lock version**: Found in app settings
+2. **MicLock version**: Found in app settings
 3. **Steps taken**: What troubleshooting you've already tried
 4. **Specific symptoms**: Exact behavior you're experiencing
 5. **Hardware context**: Any screen replacements or damage
 
 ### Device Compatibility Report
 
-If Mic-Lock works (or doesn't work) on an untested device, please submit a [Device Compatibility Report](https://github.com/yourusername/mic-lock/issues/new?template=device_compatibility.md) to help other users.
+If MicLock works (or doesn't work) on an untested device, please submit a [Device Compatibility Report](https://github.com/yourusername/mic-lock/issues/new?template=device_compatibility.md) to help other users.
 
 ## 💡 Tips for Best Results
 
@@ -165,4 +165,4 @@ If Mic-Lock works (or doesn't work) on an untested device, please submit a [Devi
 - Review the [Technical Documentation](../DEV_SPECS.md) for advanced details
 - Join community discussions in the Issues section
 
-Remember: Mic-Lock addresses a specific hardware problem (damaged bottom microphone), so it may not solve all audio issues on all devices.
+Remember: MicLock addresses a specific hardware problem (damaged bottom microphone), so it may not solve all audio issues on all devices.
