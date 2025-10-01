@@ -62,7 +62,11 @@ For full details, please see:
 If you have questions or wish to report a vulnerability, consult the guides above or open an issue in the repository.
 
 ## ✨ Quick Settings Tile
-// TODO: add video here
+<div align="center">
+<br>
+  <img src="https://github.com/user-attachments/assets/8aba6137-c16a-4df5-97d4-531b9d667ae5" alt="Quick Settings Demo">
+</div>
+<br>
 For even easier access, Mic-Lock includes a Quick Settings tile.
 
 1.  **Add the Tile**: Pull down your notification shade, enter edit mode, and drag the "MicLock" tile to your active tiles.
@@ -79,11 +83,22 @@ For even easier access, Mic-Lock includes a Quick Settings tile.
 ## 🛠️ Troubleshooting
 
 **Q: The app doesn't seem to work, or audio is still silent.**
-A: Try switching between **MediaRecorder Mode** and **AudioRecord Mode** in the app's settings. Some device configurations might prefer one over the other.
+A: The most common fix is to switch between **MediaRecorder Mode** and **AudioRecord Mode** in the app's settings.
+
+For more detailed solutions, device-specific fixes, and advanced diagnostics, please see the full **[Troubleshooting Guide](docs/troubleshooting.md)**.
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Whether it's bug reports, feature suggestions, or code contributions, your help is valuable. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+We welcome all contributions from the community! Your help is valuable, whether you're a developer or a user providing feedback.
+### How You Can Help
+Here are a few ways you can contribute to making MicLock better for everyone:
+
+-   **Report a Bug**: If you find something that isn't working correctly, please [submit a bug report](https://github.com/Dan8Oren/MicLock/issues/new?template=bug_report.md).
+-   **Share Device Feedback**: Does MicLock work on your phone? Help us build a compatibility list by [submitting a device report](https://github.com/Dan8Oren/MicLock/issues/new?template=device_compatibility.md).
+-   **Suggest a Feature**: Have a great idea for a new feature? We'd love to hear it! [Suggest a new feature](https://github.com/Dan8Oren/MicLock/issues/new?template=feature_request.md).
+-   **Improve Documentation**: If you find a typo or think a section in our documentation could be clearer, feel free to open an issue or submit a pull request.
+
+For code contributions and more detailed guidelines, please see our [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📄 License
 
@@ -96,4 +111,9 @@ For developers and those interested in the technical implementation, architectur
 ---
 
 **Supported Android Versions**: Android 7.0 (API 24) and above  
-**Tested Devices**: **Google Pixel 7 Pro** (primary development and testing device). Compatibility with other devices is expected but may require adjustments or specific mode selections (AudioRecord/MediaRecorder).
+**Tested Devices**: 
+ - **Google Pixel 7 Pro** (primary development and testing device).
+ - **Google Pixel 7**
+ - **Google Pixel 8**
+ 
+ Compatibility with other devices is expected but may require adjustments or specific mode selections (AudioRecord/MediaRecorder).

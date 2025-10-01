@@ -74,7 +74,7 @@ After starting the service, test its functionality:
 
 You can adjust Mic-Lock's behavior in the app settings:
 
-### Recording Modes
+### Recording Modes {#recording-modes}
 - **MediaRecorder Mode** (Default): Better compatibility, slightly higher battery usage
 - **AudioRecord Mode**: More battery-efficient, works well on most modern devices
 
