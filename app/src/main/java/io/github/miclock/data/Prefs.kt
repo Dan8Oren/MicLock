@@ -11,7 +11,6 @@ object Prefs {
 
     const val VALUE_AUTO = "auto"
 
-
     fun getUseMediaRecorder(ctx: Context): Boolean =
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
             .getBoolean(KEY_USE_MEDIA_RECORDER, false)

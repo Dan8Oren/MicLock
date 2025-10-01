@@ -6,46 +6,42 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.media.*
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
-import io.github.miclock.R
-import io.github.miclock.ui.MainActivity
 import android.os.Looper
-import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
-import android.content.pm.ServiceInfo
+import androidx.core.content.ContextCompat
+import io.github.miclock.R
 import io.github.miclock.audio.AudioSelector
 import io.github.miclock.audio.MediaRecorderHolder
 import io.github.miclock.data.Prefs
 import io.github.miclock.receiver.ScreenStateReceiver
 import io.github.miclock.service.model.ServiceState
+import io.github.miclock.ui.MainActivity
 import io.github.miclock.util.WakeLockManager
-import androidx.core.content.ContextCompat
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Represents the current state of the MicLockService.
- * 
- * @property isRunning Whether the service is currently active
+ * * @property isRunning Whether the service is currently active
  * @property isPausedBySilence Whether the service is paused because another app is using the microphone
  * @property currentDeviceAddress The address of the currently held microphone device
  */
-
 
 /**
  * MicLockService is the core background service that manages microphone access to work around
@@ -79,17 +75,17 @@ class MicLockService : Service() {
     private var markCooldownStart: Long? = null
     private var backoffMs: Long = 500L
     private var recCallback: AudioManager.AudioRecordingCallback? = null
-    
+
     // MediaRecorder fallback
     private var mediaRecorderHolder: MediaRecorderHolder? = null
-    
+
     // Dynamic screen state receiver
     private var screenStateReceiver: ScreenStateReceiver? = null
-    
+
     // Android 14+ foreground service restriction handling
     private var isStartedFromBoot = false
     private var serviceHealthy = false
-    
+
     private var startFailureReason: String? = null
     private var suppressRestartNotification = false
 
@@ -101,7 +97,7 @@ class MicLockService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannels()
-        
+
         // Register screen state receiver dynamically
         screenStateReceiver = ScreenStateReceiver()
         val filter = IntentFilter().apply {
@@ -117,9 +113,11 @@ class MicLockService : Service() {
             action = ACTION_START_USER_INITIATED
         }
         val restartPI = PendingIntent.getService(
-            this, 4, restartIntent,
+            this,
+            4,
+            restartIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or
-                    (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+                (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0),
         )
 
         val notification = NotificationCompat.Builder(this, RESTART_CHANNEL_ID)
@@ -152,7 +150,7 @@ class MicLockService : Service() {
         recCallback = null
         mediaRecorderHolder?.stopRecording()
         mediaRecorderHolder = null
-        
+
         screenStateReceiver?.let {
             try {
                 unregisterReceiver(it)
@@ -162,7 +160,7 @@ class MicLockService : Service() {
             }
         }
         screenStateReceiver = null
-        
+
         updateServiceState(running = false, paused = false, deviceAddr = null)
 
         if (wasRunning && !suppressRestartNotification) {
@@ -177,45 +175,48 @@ class MicLockService : Service() {
     private fun handleStartUserInitiated(intent: Intent?) {
         notifManager.cancel(RESTART_NOTIF_ID)
         Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
-        
+
         val isFromTile = intent?.getBooleanExtra("from_tile", false) ?: false
-        
+
         if (!state.value.isRunning) {
             isStartedFromBoot = false
             Log.i(TAG, "Starting service from user action - immediate foreground activation")
-            
+
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(NOTIF_ID, buildNotification("Starting…"), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                    startForeground(
+                        NOTIF_ID,
+                        buildNotification("Starting…"),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                    )
                 } else {
                     startForeground(NOTIF_ID, buildNotification("Starting…"))
                 }
                 serviceHealthy = true
                 Log.d(TAG, "Foreground service started successfully")
-                
+
                 startFailureReason = null
                 suppressRestartNotification = false
-                
+
                 startMicHolding()
                 updateServiceState(running = true)
-                
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service: ${e.message}")
                 serviceHealthy = false
-                
+
                 val errorMessage = e.message ?: ""
                 if (errorMessage.contains("FOREGROUND_SERVICE_MICROPHONE") ||
                     errorMessage.contains("requires permissions") ||
-                    errorMessage.contains("eligible state")) {
-                    
+                    errorMessage.contains("eligible state")
+                ) {
                     startFailureReason = FAILURE_REASON_FOREGROUND_RESTRICTION
                     suppressRestartNotification = true
-                    
+
                     if (isFromTile) {
                         broadcastTileStartFailure(FAILURE_REASON_FOREGROUND_RESTRICTION)
                     }
                 }
-                
+
                 updateServiceState(running = false)
                 stopSelf()
                 return
@@ -224,7 +225,11 @@ class MicLockService : Service() {
             Log.i(TAG, "Service already running - activating foreground mode for user action")
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(NOTIF_ID, buildNotification("Mic-Lock activated by user"), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                    startForeground(
+                        NOTIF_ID,
+                        buildNotification("Mic-Lock activated by user"),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                    )
                 } else {
                     startForeground(NOTIF_ID, buildNotification("Mic-Lock activated by user"))
                 }
@@ -284,15 +289,14 @@ class MicLockService : Service() {
     @RequiresApi(Build.VERSION_CODES.P)
     /**
      * Handles incoming intents to control the service behavior.
-     * 
-     * @param intent The Intent supplied to start the service
+     * * @param intent The Intent supplied to start the service
      * @param flags Additional data about this start request
      * @param startId A unique integer representing this specific request to start
      * @return START_STICKY to indicate the service should be restarted if killed
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(TAG, "onStartCommand called with action: ${intent?.action}, isRunning: ${state.value.isRunning}")
-        
+
         if (!hasAllRequirements()) {
             Log.w(TAG, "Missing permission or notifications disabled. Stopping.")
             stopSelf()
@@ -311,6 +315,7 @@ class MicLockService : Service() {
 
         return START_STICKY
     }
+
     @androidx.annotation.RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     @RequiresApi(Build.VERSION_CODES.P)
     private fun restartLoop(reason: String) {
@@ -321,11 +326,14 @@ class MicLockService : Service() {
         recCallback = null
         isSilenced = false
         stopFlag.set(false)
-        loopJob = scope.launch  { holdSelectedMicLoop() }
+        loopJob = scope.launch { holdSelectedMicLoop() }
     }
 
     private fun hasAllRequirements(): Boolean {
-        val mic = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        val mic = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO,
+        ) == PackageManager.PERMISSION_GRANTED
         val notifs = notifManager.areNotificationsEnabled()
         return mic && notifs
     }
@@ -349,7 +357,11 @@ class MicLockService : Service() {
         if (canStartForegroundService()) {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(NOTIF_ID, buildNotification("Starting…"), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                    startForeground(
+                        NOTIF_ID,
+                        buildNotification("Starting…"),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                    )
                 } else {
                     startForeground(NOTIF_ID, buildNotification("Starting…"))
                 }
@@ -367,7 +379,7 @@ class MicLockService : Service() {
             Log.d(TAG, "Delaying foreground service start due to boot restrictions")
             scheduleDelayedForegroundStart()
         }
-        
+
         stopFlag.set(false)
         // Only update state if service is healthy
         if (serviceHealthy) {
@@ -401,21 +413,24 @@ class MicLockService : Service() {
             try { audioManager.unregisterAudioRecordingCallback(cb) } catch (_: Throwable) {}
         }
     }
-    
+
     private fun canStartForegroundService(): Boolean {
         // Allow foreground service if enough time has passed since boot
         // or if not started from BOOT_COMPLETED
-        return !isStartedFromBoot || 
-               (SystemClock.elapsedRealtime() > 10_000) // 10 seconds after boot
+        return !isStartedFromBoot || (SystemClock.elapsedRealtime() > 10_000) // 10 seconds after boot
     }
-    
+
     private fun scheduleDelayedForegroundStart() {
         scope.launch {
             delay(10_000) // Wait 10 seconds
             if (state.value.isRunning && !stopFlag.get()) {
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        startForeground(NOTIF_ID, buildNotification("Recording active"), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+                        startForeground(
+                            NOTIF_ID,
+                            buildNotification("Recording active"),
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                        )
                     } else {
                         startForeground(NOTIF_ID, buildNotification("Recording active"))
                     }
@@ -469,7 +484,7 @@ class MicLockService : Service() {
                 }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && othersRecording()) {
-                    Log.d(TAG, "Other active recorders detected. Applying backoff. Current backoff: ${backoffMs} ms.")
+                    Log.d(TAG, "Other active recorders detected. Applying backoff. Current backoff: $backoffMs ms.")
                     delay(backoffMs)
                     backoffMs = (backoffMs * 2).coerceAtMost(5000L)
                     continue
@@ -554,11 +569,11 @@ class MicLockService : Service() {
             delay(300)
         }
     }
-    
+
     private enum class AudioRecordResult {
         SUCCESS, BAD_ROUTE, FAILED
     }
-    
+
     @RequiresApi(Build.VERSION_CODES.P)
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private suspend fun tryAudioRecordMode(): AudioRecordResult {
@@ -568,9 +583,18 @@ class MicLockService : Service() {
         for (candidate in candidates) {
             var recorder: AudioRecord? = null
             try {
-                val minBuf = AudioRecord.getMinBufferSize(candidate.sampleRate, candidate.channelMask, candidate.encoding)
+                val minBuf = AudioRecord.getMinBufferSize(
+                    candidate.sampleRate,
+                    candidate.channelMask,
+                    candidate.encoding,
+                )
                 if (minBuf <= 0) {
-                    Log.w(TAG, "Unsupported format: ${candidate.sampleRate}Hz, ${AudioSelector.channelName(candidate.channelMask)}")
+                    Log.w(
+                        TAG,
+                        "Unsupported format: ${candidate.sampleRate}Hz, ${AudioSelector.channelName(
+                            candidate.channelMask,
+                        )}",
+                    )
                     continue
                 }
                 val bufferBytes = (minBuf * 2).coerceAtLeast(4096)
@@ -603,7 +627,8 @@ class MicLockService : Service() {
                 val actualChannelCount = recorder.format.channelCount
                 Log.d(
                     TAG,
-                    "AudioRecord actual channel count: $actualChannelCount (requested: ${if (candidate.channelMask == AudioFormat.CHANNEL_IN_STEREO) 2 else 1})"
+                    "AudioRecord actual channel count: $actualChannelCount " +
+                        "(requested: ${if (candidate.channelMask == AudioFormat.CHANNEL_IN_STEREO) 2 else 1})",
                 )
 
                 delay(100)
@@ -617,21 +642,37 @@ class MicLockService : Service() {
                         val isBottomMic = routeInfo.micInfo?.let {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && it.position != null) {
                                 it.position.y < 0.0f
-                            } else false
+                            } else {
+                                false
+                            }
                         } ?: false
 
-                        Log.d(TAG, "Route validation details: channels=$actualChannelCount, isOnPrimaryArray=${routeInfo.isOnPrimaryArray}, isBottomMic=$isBottomMic")
+                        Log.d(
+                            TAG,
+                            "Route validation details: channels=$actualChannelCount, " +
+                                "isOnPrimaryArray=${routeInfo.isOnPrimaryArray}, " +
+                                "isBottomMic=$isBottomMic",
+                        )
 
-                        val isBadRoute = AudioSelector.isRouteBad(routeInfo, candidate.channelMask == AudioFormat.CHANNEL_IN_STEREO, actualChannelCount)
+                        val isBadRoute = AudioSelector.isRouteBad(
+                            routeInfo,
+                            candidate.channelMask == AudioFormat.CHANNEL_IN_STEREO,
+                            actualChannelCount,
+                        )
 
                         if (isBadRoute) {
                             val reason = when {
-                                !routeInfo.isOnPrimaryArray && isBottomMic -> "Bottom microphone detected (Y=${routeInfo.micInfo?.position?.y})"
+                                !routeInfo.isOnPrimaryArray && isBottomMic ->
+                                    "Bottom microphone detected (Y=${routeInfo.micInfo?.position?.y})"
                                 !routeInfo.isOnPrimaryArray -> "Non-primary array microphone"
                                 actualChannelCount < 2 -> "Single-channel route when multi-channel was requested"
                                 else -> "Unknown bad route condition"
                             }
-                            Log.w(TAG, "Bad route detected with ${candidate.sampleRate}Hz config: $reason - trying next candidate")
+                            Log.w(
+                                TAG,
+                                "Bad route detected with ${candidate.sampleRate}Hz config: " +
+                                    "$reason - trying next candidate",
+                            )
 
                             wakeLockManager.release()
                             recorder.release()
@@ -660,19 +701,31 @@ class MicLockService : Service() {
                 registerRecordingCallback(recCallback!!)
 
                 val deviceDesc = "AudioRecord | Auto selection"
-                updateNotification("Recording @${recorder.sampleRate/1000}kHz ${AudioSelector.channelName(recorder.format.channelMask)} — $deviceDesc")
+                updateNotification(
+                    "Recording @${recorder.sampleRate / 1000}kHz " +
+                        "${AudioSelector.channelName(recorder.format.channelMask)} — $deviceDesc",
+                )
 
                 val buf = ShortArray(bufferBytes / 2)
                 while (!stopFlag.get()) {
                     if (isSilenced) break
-                    val n = recorder.read(buf, 0, buf.size, AudioRecord.READ_BLOCKING)
+                    val n = recorder.read(
+                        buf,
+                        0,
+                        buf.size,
+                        AudioRecord.READ_BLOCKING,
+                    )
                     if (n < 0) {
                         Log.w(TAG, "AudioRecord read() returned $n")
                         delay(40)
                     }
                 }
-                
-                Log.i(TAG, "Good route found with ${candidate.sampleRate}Hz, ${AudioSelector.channelName(candidate.channelMask)}")
+
+                Log.i(
+                    TAG,
+                    "Good route found with ${candidate.sampleRate}Hz, " +
+                        AudioSelector.channelName(candidate.channelMask),
+                )
                 return AudioRecordResult.SUCCESS
             } catch (e: CancellationException) {
                 throw e
@@ -689,10 +742,14 @@ class MicLockService : Service() {
         updateNotification("Mic-Lock idle (AudioRecord error: ${lastError?.javaClass?.simpleName}). Retrying…")
         return AudioRecordResult.FAILED
     }
-    
+
     private suspend fun tryMediaRecorderMode(): Boolean {
         return try {
-            mediaRecorderHolder = MediaRecorderHolder(this, audioManager, wakeLockManager = WakeLockManager(this, "MediaRecorderHolder")) { silenced ->
+            mediaRecorderHolder = MediaRecorderHolder(
+                this,
+                audioManager,
+                wakeLockManager = WakeLockManager(this, "MediaRecorderHolder"),
+            ) { silenced ->
                 if (silenced && !isSilenced) {
                     isSilenced = true
                     updateServiceState(paused = true)
@@ -703,18 +760,17 @@ class MicLockService : Service() {
                     Log.i(TAG, "MediaRecorder unsilenced; will resume (handled by main loop).")
                 }
             }
-            
+
             mediaRecorderHolder!!.startRecording()
             updateServiceState(deviceAddr = "MediaRecorder")
-            
+
             updateNotification("Recording (MediaRecorder compatibility mode)")
-            
+
             while (!stopFlag.get() && !isSilenced) {
                 delay(100)
             }
-            
+
             true
-            
         } catch (e: CancellationException) {
             throw e
         } catch (t: Throwable) {
@@ -732,32 +788,35 @@ class MicLockService : Service() {
         val statusChannel = NotificationChannel(
             CHANNEL_ID,
             "Mic Lock Status",
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_LOW,
         ).apply { setShowBadge(false) }
         notifManager.createNotificationChannel(statusChannel)
 
         val restartChannel = NotificationChannel(
             RESTART_CHANNEL_ID,
             "Mic Lock Alerts",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_HIGH,
         ).apply { setShowBadge(true) }
         notifManager.createNotificationChannel(restartChannel)
     }
 
     private fun buildNotification(text: String): Notification {
         val openIntent = Intent(this, MainActivity::class.java)
-        val flags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or
+            (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
         val pi = PendingIntent.getActivity(this, 1, openIntent, flags)
 
         val reconfigPI = PendingIntent.getService(
-            this, 2,
+            this,
+            2,
             Intent(this, MicLockService::class.java).setAction(ACTION_RECONFIGURE),
-            flags
+            flags,
         )
         val stopPI = PendingIntent.getService(
-            this, 3,
+            this,
+            3,
             Intent(this, MicLockService::class.java).setAction(ACTION_STOP),
-            flags
+            flags,
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -778,16 +837,15 @@ class MicLockService : Service() {
     private fun updateNotification(text: String) {
         notifManager.notify(NOTIF_ID, buildNotification(text))
     }
-    
+
     private fun updateServiceState(running: Boolean? = null, paused: Boolean? = null, deviceAddr: String? = null) {
         _state.update { currentState ->
             currentState.copy(
                 isRunning = running ?: currentState.isRunning,
                 isPausedBySilence = paused ?: currentState.isPausedBySilence,
-                currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress
+                currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress,
             )
         }
-
     }
 
     companion object {
@@ -805,7 +863,7 @@ class MicLockService : Service() {
         const val ACTION_START_HOLDING = "io.github.miclock.ACTION_START_HOLDING"
         const val ACTION_STOP_HOLDING = "io.github.miclock.ACTION_STOP_HOLDING"
         const val ACTION_START_USER_INITIATED = "io.github.miclock.ACTION_START_USER_INITIATED"
-        
+
         const val ACTION_TILE_START_FAILED = "io.github.miclock.TILE_START_FAILED"
         const val EXTRA_FAILURE_REASON = "failure_reason"
         const val FAILURE_REASON_FOREGROUND_RESTRICTION = "foreground_restriction"

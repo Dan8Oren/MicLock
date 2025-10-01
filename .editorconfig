@@ -1,8 +1,36 @@
-[*.{kt,kts}]
+# .editorconfig
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
 insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
+ij_kotlin_packages_to_use_import_on_demand = kotlinx.coroutines.*,android.media.*
+
+
 indent_style = space
 indent_size = 4
-trim_trailing_whitespace = true
 max_line_length = 120
 ij_kotlin_allow_trailing_comma = true
 ij_kotlin_allow_trailing_comma_on_call_site = true
+
+# Allow longer lines and wildcard imports in unit tests
+[**/test/**.{kt,kts}]
+max_line_length = 160
+ij_kotlin_packages_to_use_import_on_demand = kotlinx.coroutines.**,org.junit.Assert.**,org.mockito.kotlin.**,androidx.test.espresso.matcher.ViewMatchers.*
+
+
+# Same for Android instrumented tests
+[**/androidTest/**.{kt,kts}]
+max_line_length = 160
+ij_kotlin_packages_to_use_import_on_demand = kotlinx.coroutines.**,org.junit.Assert.**,org.mockito.kotlin.**,androidx.test.espresso.matcher.ViewMatchers.*
+
+
+# Build scripts can be a bit looser
+[**/*.gradle.kts]
+indent_size = 2
+max_line_length = 160

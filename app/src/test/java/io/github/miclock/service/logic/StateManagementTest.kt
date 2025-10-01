@@ -2,9 +2,7 @@
 package io.github.miclock.service.logic
 
 import io.github.miclock.TestableStateManager
-import io.github.miclock.service.model.ServiceState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before

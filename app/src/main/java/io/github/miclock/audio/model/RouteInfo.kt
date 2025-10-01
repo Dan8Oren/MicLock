@@ -9,5 +9,5 @@ data class RouteInfo(
     val sessionId: Int,
     val isOnPrimaryArray: Boolean,
     val deviceAddress: String?,
-    val micPosition: MicrophoneInfo.Coordinate3F?
+    val micPosition: MicrophoneInfo.Coordinate3F?,
 )

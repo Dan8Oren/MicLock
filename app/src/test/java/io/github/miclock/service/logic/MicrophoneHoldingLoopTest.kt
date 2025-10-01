@@ -18,8 +18,11 @@ import org.mockito.kotlin.*
 class MicrophoneHoldingLoopTest {
 
     @Mock private lateinit var mockAudioSelector: MockableAudioSelector
+
     @Mock private lateinit var mockMediaRecorderHolder: MockableMediaRecorderHolder
+
     @Mock private lateinit var mockPrefs: MockablePrefs
+
     @Mock private lateinit var mockAudioManager: MockableAudioManager
 
     private lateinit var holdingLogic: TestableHoldingLogic
@@ -32,7 +35,7 @@ class MicrophoneHoldingLoopTest {
             mockAudioSelector,
             mockMediaRecorderHolder,
             mockPrefs,
-            mockAudioManager
+            mockAudioManager,
         )
     }
 
@@ -47,7 +50,7 @@ class MicrophoneHoldingLoopTest {
         // Given: AudioRecord mode preferred and good route available
         whenever(mockPrefs.getUseMediaRecorder()).thenReturn(false)
         whenever(mockAudioSelector.validateCurrentRoute(any(), any())).thenReturn(
-            createGoodRouteInfo()
+            createGoodRouteInfo(),
         )
         whenever(mockAudioSelector.isRouteBad(any(), any(), any())).thenReturn(false)
 
@@ -65,7 +68,7 @@ class MicrophoneHoldingLoopTest {
         // Given: AudioRecord preferred but lands on bad route
         whenever(mockPrefs.getUseMediaRecorder()).thenReturn(false)
         whenever(mockAudioSelector.validateCurrentRoute(any(), any())).thenReturn(
-            createBadRouteInfo()
+            createBadRouteInfo(),
         )
         whenever(mockAudioSelector.isRouteBad(any(), any(), any())).thenReturn(true)
         whenever(mockMediaRecorderHolder.startRecording()).thenReturn(true)
@@ -101,7 +104,7 @@ class MicrophoneHoldingLoopTest {
         return MockRouteInfo(
             isOnPrimaryArray = true,
             deviceAddress = "@:primary",
-            actualChannelCount = 2
+            actualChannelCount = 2,
         )
     }
 
@@ -109,7 +112,7 @@ class MicrophoneHoldingLoopTest {
         return MockRouteInfo(
             isOnPrimaryArray = false,
             deviceAddress = "@:bottom",
-            actualChannelCount = 1
+            actualChannelCount = 1,
         )
     }
 }
@@ -132,32 +135,32 @@ interface MockablePrefs {
 enum class HoldingResult {
     SUCCESS_AUDIO_RECORD,
     SUCCESS_MEDIA_RECORDER,
-    FAILED
+    FAILED,
 }
 
 data class HoldingAttemptResult(
     val method: HoldingResult,
     val success: Boolean,
     val shouldRetry: Boolean = false,
-    val retryDelayMs: Long = 0L
+    val retryDelayMs: Long = 0L,
 )
 
 class TestableHoldingLogic(
     private val audioSelector: MockableAudioSelector,
     private val mediaRecorderHolder: MockableMediaRecorderHolder,
     private val prefs: MockablePrefs,
-    private val audioManager: MockableAudioManager
+    private val audioManager: MockableAudioManager,
 ) {
     fun executeHoldingAttempt(): HoldingAttemptResult {
         val useMediaRecorderPref = prefs.getUseMediaRecorder()
-        
+
         return if (useMediaRecorderPref) {
             tryMediaRecorderFirst()
         } else {
             tryAudioRecordFirst()
         }
     }
-    
+
     private fun tryMediaRecorderFirst(): HoldingAttemptResult {
         return if (mediaRecorderHolder.startRecording()) {
             prefs.setLastRecordingMethod("MediaRecorder")
@@ -167,7 +170,7 @@ class TestableHoldingLogic(
             tryAudioRecordFallback()
         }
     }
-    
+
     private fun tryAudioRecordFirst(): HoldingAttemptResult {
         // Simulate route validation logic
         val routeInfo = audioSelector.validateCurrentRoute(audioManager, 12345)
@@ -185,7 +188,7 @@ class TestableHoldingLogic(
             }
         }
     }
-    
+
     private fun tryAudioRecordFallback(): HoldingAttemptResult {
         val routeInfo = audioSelector.validateCurrentRoute(audioManager, 12345)
         return if (routeInfo != null && !audioSelector.isRouteBad(routeInfo, true, routeInfo.actualChannelCount)) {

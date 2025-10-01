@@ -6,10 +6,10 @@ import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.junit.jupiter.api.assertDoesNotThrow
 
 /**
  * Unit tests for WakeLockManager utility.
@@ -191,7 +191,7 @@ class WakeLockManagerTest {
         // Given: WakeLockManager with valid context
         assertDoesNotThrow("WakeLockManager creation should not throw") {
             val wakeLockManager = WakeLockManager(context, "ErrorTestWakeLock")
-            
+
             // When: Normal operations
             wakeLockManager.acquire()
             wakeLockManager.release()
@@ -204,7 +204,7 @@ class WakeLockManagerTest {
         assertDoesNotThrow("Multiple instances should not interfere") {
             val wakeLockManager1 = WakeLockManager(context, "TestWakeLock1")
             val wakeLockManager2 = WakeLockManager(context, "TestWakeLock2")
-            
+
             wakeLockManager1.acquire()
             wakeLockManager2.acquire()
             wakeLockManager1.release()

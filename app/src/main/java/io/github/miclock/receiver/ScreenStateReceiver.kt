@@ -3,19 +3,19 @@ package io.github.miclock.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.github.miclock.service.MicLockService
 import android.util.Log
+import io.github.miclock.service.MicLockService
 
 class ScreenStateReceiver : BroadcastReceiver() {
     companion object {
         private const val TAG = "ScreenStateReceiver"
     }
-    
+
     override fun onReceive(context: Context, intent: Intent) {
         Log.i(TAG, "Received broadcast: ${intent.action}")
-        
+
         val serviceIntent = Intent(context, MicLockService::class.java)
-        
+
         when (intent.action) {
             Intent.ACTION_SCREEN_ON -> {
                 Log.i(TAG, "Screen turned ON - sending START_HOLDING action")
@@ -30,7 +30,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
                 return
             }
         }
-        
+
         try {
             context.startService(serviceIntent)
             Log.d(TAG, "Successfully sent action to running service: ${serviceIntent.action}")

@@ -14,7 +14,6 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import io.github.miclock.R
@@ -24,16 +23,15 @@ import io.github.miclock.ui.MainActivity
 import io.github.miclock.util.ApiGuard
 import kotlinx.coroutines.*
 
-
 const val TILE_TEXT = "MicLock"
 const val EXTRA_START_SERVICE_FROM_TILE = "start_service_from_tile"
 
 class MicLockTileService : TileService() {
-    
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var stateCollectionJob: Job? = null
     private var failureReceiver: BroadcastReceiver? = null
-    
+
     companion object {
         private const val TAG = "MicLockTileService"
     }
@@ -41,7 +39,7 @@ class MicLockTileService : TileService() {
     override fun onStartListening() {
         super.onStartListening()
         Log.d(TAG, "Tile started listening")
-        
+
         failureReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 ApiGuard.onApi34_UpsideDownCake(
@@ -56,21 +54,21 @@ class MicLockTileService : TileService() {
                     },
                     onUnsupported = {
                         Log.d(TAG, "Received onReceive on unsupported API. Doing nothing.")
-                    }
+                    },
                 )
             }
         }
-        
+
         val filter = IntentFilter(MicLockService.ACTION_TILE_START_FAILED)
         if (ApiGuard.isApi26_O_OrAbove()) {
             registerReceiver(failureReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
             ContextCompat.registerReceiver(this, failureReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         }
-        
+
         val actualState = getCurrentAppState()
         updateTileState(actualState)
-        
+
         stateCollectionJob = scope.launch {
             try {
                 MicLockService.state.collect { state ->
@@ -87,7 +85,7 @@ class MicLockTileService : TileService() {
     override fun onStopListening() {
         super.onStopListening()
         Log.d(TAG, "Tile stopped listening")
-        
+
         failureReceiver?.let {
             try {
                 unregisterReceiver(it)
@@ -96,7 +94,7 @@ class MicLockTileService : TileService() {
             }
         }
         failureReceiver = null
-        
+
         stateCollectionJob?.cancel()
         stateCollectionJob = null
     }
@@ -108,12 +106,12 @@ class MicLockTileService : TileService() {
             Log.w(TAG, "Error checking RECORD_AUDIO permission: ${e.message}")
             false
         }
-        
+
         val notifs = try {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (Build.VERSION.SDK_INT >= 33) {
                 nm.areNotificationsEnabled() &&
-                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
             } else {
                 nm.areNotificationsEnabled()
             }
@@ -121,7 +119,7 @@ class MicLockTileService : TileService() {
             Log.w(TAG, "Error checking notification permissions: ${e.message}")
             false
         }
-        
+
         val hasPerms = micGranted && notifs
         Log.d(TAG, "Permission check: mic=$micGranted, notifs=$notifs, hasAll=$hasPerms")
         return hasPerms
@@ -130,18 +128,18 @@ class MicLockTileService : TileService() {
     override fun onClick() {
         super.onClick()
         Log.d(TAG, "Tile clicked")
-        
+
         val currentPerms = hasAllPerms()
         Log.d(TAG, "onClick permission check result: $currentPerms")
-        
+
         if (!currentPerms) {
             Log.d(TAG, "Permissions missing - forcing tile update to show unavailable state")
             updateTileState(getCurrentAppState())
             return
         }
-        
+
         val currentState = getCurrentAppState()
-        
+
         if (currentState.isRunning) {
             val intent = Intent(this, MicLockService::class.java)
             intent.action = MicLockService.ACTION_STOP
@@ -157,7 +155,7 @@ class MicLockTileService : TileService() {
                 action = MicLockService.ACTION_START_USER_INITIATED
                 putExtra("from_tile", true)
             }
-            
+
             Log.d(TAG, "Attempting direct service start from tile")
             try {
                 ContextCompat.startForegroundService(this, intent)
@@ -177,20 +175,20 @@ class MicLockTileService : TileService() {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                     putExtra(EXTRA_START_SERVICE_FROM_TILE, true)
                 }
-        
+
                 val pendingIntent = PendingIntent.getActivity(
                     this,
                     0,
                     activityIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or
-                            (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+                        (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0),
                 )
-        
+
                 try {
                     @Suppress("NewApi")
                     ApiGuard.onApi34_UpsideDownCake(block = {
                         startActivityAndCollapse(pendingIntent)
-                    })
+                    },)
                     Log.d(TAG, "MainActivity fallback launched successfully")
                 } catch (e: Exception) {
                     Log.e(TAG, "MainActivity fallback also failed: ${e.message}", e)
@@ -200,23 +198,27 @@ class MicLockTileService : TileService() {
             onUnsupported = {
                 Log.e(TAG, "launchMainActivityFallback called on unsupported device. This should not happen.")
                 createTileFailureNotification("MainActivity fallback not supported on this Android version.")
-            }
+            },
         )
     }
-    
+
     private fun createTileFailureNotification(reason: String) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val restartIntent = Intent(this, MainActivity::class.java)
         val restartPI = PendingIntent.getActivity(
-            this, 6, restartIntent,
+            this,
+            6,
+            restartIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or
-                    (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+                (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0),
         )
 
         val notification = NotificationCompat.Builder(this, MicLockService.RESTART_CHANNEL_ID)
             .setContentTitle("MicLock Tile Failed Unexpectedly")
             .setContentText("Tap to open app and start protection")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$reason. Tap to open app and start protection manually."))
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText("$reason. Tap to open app and start protection manually."),
+            )
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(restartPI)
             .setAutoCancel(true)
@@ -229,11 +231,14 @@ class MicLockTileService : TileService() {
 
     private fun updateTileState(state: ServiceState) {
         val tile = qsTile ?: return
-        
+
         // Always re-check permissions fresh
         val hasPerms = hasAllPerms()
-        Log.d(TAG, "updateTileState: hasPerms=$hasPerms, isRunning=${state.isRunning}, isPaused=${state.isPausedBySilence}")
-        
+        Log.d(
+            TAG,
+            "updateTileState: hasPerms=$hasPerms, isRunning=${state.isRunning}, isPaused=${state.isPausedBySilence}",
+        )
+
         when {
             !hasPerms -> {
                 // Permissions missing - show unavailable state
@@ -268,15 +273,18 @@ class MicLockTileService : TileService() {
                 Log.d(TAG, "Tile set to ACTIVE state")
             }
         }
-        
+
         tile.updateTile()
-        Log.d(TAG, "Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}, HasPerms: $hasPerms")
+        Log.d(
+            TAG,
+            "Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}, HasPerms: $hasPerms",
+        )
     }
 
     private fun getCurrentAppState(): ServiceState {
         // Get current state from StateFlow
         val currentState = MicLockService.state.value
-        
+
         // If StateFlow says service isn't running, double-check with system services
         val actualState = if (!currentState.isRunning) {
             val systemState = checkServiceRunningState()
@@ -289,7 +297,7 @@ class MicLockTileService : TileService() {
         } else {
             currentState
         }
-        
+
         return actualState
     }
 
@@ -304,8 +312,6 @@ class MicLockTileService : TileService() {
             ServiceState(isRunning = false, isPausedBySilence = false)
         }
     }
-
-
 
     override fun onDestroy() {
         super.onDestroy()

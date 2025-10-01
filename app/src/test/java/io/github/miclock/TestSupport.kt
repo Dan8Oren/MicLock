@@ -17,11 +17,11 @@ class TestableStateManager {
             ServiceState(
                 isRunning = running ?: currentState.isRunning,
                 isPausedBySilence = paused ?: currentState.isPausedBySilence,
-                currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress
+                currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress,
             )
         }
     }
-    
+
     // Separate method for explicit null assignment
     fun resetDeviceAddress() {
         _state.update { currentState ->
@@ -32,11 +32,11 @@ class TestableStateManager {
 
 class TestableYieldingLogic(
     private val callback: MockableAudioRecordingCallback,
-    private val audioManager: MockableAudioManager
+    private val audioManager: MockableAudioManager,
 ) {
     private val _state = MutableStateFlow(ServiceState())
     val state: StateFlow<ServiceState> = _state.asStateFlow()
-    
+
     var isSilenced = false
         private set
     var currentBackoffMs = 500L
@@ -61,15 +61,13 @@ class TestableYieldingLogic(
     }
 
     fun canAttemptReacquisition(currentTime: Long): Boolean {
-        val cooldownComplete = silencedTimestamp?.let { 
-            currentTime - it >= 3000L 
-        } ?: false
-        
+        val cooldownComplete = silencedTimestamp?.let { currentTime - it >= 3000L } ?: false
+
         return cooldownComplete && !audioManager.othersRecording()
     }
 
     fun getRemainingCooldownMs(currentTime: Long): Long {
-        return silencedTimestamp?.let { 
+        return silencedTimestamp?.let {
             maxOf(0L, 3000L - (currentTime - it))
         } ?: 0L
     }
@@ -101,5 +99,5 @@ interface MockableAudioManager {
 data class MockRouteInfo(
     val isOnPrimaryArray: Boolean,
     val deviceAddress: String,
-    val actualChannelCount: Int
+    val actualChannelCount: Int,
 )

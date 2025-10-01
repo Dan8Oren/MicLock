@@ -13,7 +13,7 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.matcher.BoundedMatcher
-import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
@@ -46,13 +46,13 @@ class MainActivityTest {
     @get:Rule
     val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
         Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.POST_NOTIFICATIONS
+        Manifest.permission.POST_NOTIFICATIONS,
     )
 
     private lateinit var context: Context
 
     @Before
-    fun setUp() = runTest{
+    fun setUp() = runTest {
         Intents.init()
         context = ApplicationProvider.getApplicationContext<Context>()
 
@@ -115,7 +115,7 @@ class MainActivityTest {
     fun testCompatibilityModeToggle_serviceOn_updatesPrefsAndTriggersReconfigure() = runTest {
         // Start the service
         onView(withId(R.id.startBtn)).perform(click())
-//        
+//
         waitForServiceState { it.isRunning }
 
         // Pref is initially false

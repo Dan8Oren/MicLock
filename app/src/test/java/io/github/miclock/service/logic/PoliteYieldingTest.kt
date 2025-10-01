@@ -1,10 +1,10 @@
 // app/src/test/java/io/github/miclock/service/logic/PoliteYieldingTest.kt
 package io.github.miclock.service.logic
 
-import io.github.miclock.TestableYieldingLogic
-import io.github.miclock.MockableAudioRecordingCallback
-import io.github.miclock.MockableAudioManager
 import io.github.miclock.MockRouteInfo
+import io.github.miclock.MockableAudioManager
+import io.github.miclock.MockableAudioRecordingCallback
+import io.github.miclock.TestableYieldingLogic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -22,6 +22,7 @@ import org.mockito.kotlin.*
 class PoliteYieldingTest {
 
     @Mock private lateinit var mockCallback: MockableAudioRecordingCallback
+
     @Mock private lateinit var mockAudioManager: MockableAudioManager
 
     private lateinit var yieldingLogic: TestableYieldingLogic
@@ -42,7 +43,7 @@ class PoliteYieldingTest {
     private fun createGoodRouteInfo() = MockRouteInfo(
         isOnPrimaryArray = true,
         deviceAddress = "@:primary",
-        actualChannelCount = 2
+        actualChannelCount = 2,
     )
 
     @Test

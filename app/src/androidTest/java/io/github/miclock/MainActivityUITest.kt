@@ -41,14 +41,14 @@ class MainActivityUITest {
     @get:Rule
     val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
         Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.POST_NOTIFICATIONS
+        Manifest.permission.POST_NOTIFICATIONS,
     )
 
     private lateinit var context: Context
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Before
-    fun setUp() = runTest{
+    fun setUp() = runTest {
         Intents.init()
         context = ApplicationProvider.getApplicationContext<Context>()
         // Stop service and clear preferences before each test to ensure a clean slate
@@ -86,29 +86,27 @@ class MainActivityUITest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun testUIStatusUpdates() = runTest {
+        // Initial state: OFF
+        onView(withId(R.id.statusText)).check(matches(withText("OFF")))
+        onView(withId(R.id.startBtn)).check(matches(isEnabled()))
+        onView(withId(R.id.stopBtn)).check(matches(not(isEnabled())))
 
-            // Initial state: OFF
-            onView(withId(R.id.statusText)).check(matches(withText("OFF")))
-            onView(withId(R.id.startBtn)).check(matches(isEnabled()))
-            onView(withId(R.id.stopBtn)).check(matches(not(isEnabled())))
-
-            // Click Start
-            onView(withId(R.id.startBtn)).perform(click())
+        // Click Start
+        onView(withId(R.id.startBtn)).perform(click())
         waitForServiceState { it.isRunning }
 
-            // Running state: ON
-            onView(withId(R.id.statusText)).check(matches(withText("ON")))
-            onView(withId(R.id.startBtn)).check(matches(not(isEnabled())))
-            onView(withId(R.id.stopBtn)).check(matches(isEnabled()))
+        // Running state: ON
+        onView(withId(R.id.statusText)).check(matches(withText("ON")))
+        onView(withId(R.id.startBtn)).check(matches(not(isEnabled())))
+        onView(withId(R.id.stopBtn)).check(matches(isEnabled()))
 
-            // Click Stop
-            onView(withId(R.id.stopBtn)).perform(click())
-            waitForServiceState { !it.isRunning }
+        // Click Stop
+        onView(withId(R.id.stopBtn)).perform(click())
+        waitForServiceState { !it.isRunning }
 
-            // Final state: OFF
-            onView(withId(R.id.statusText)).check(matches(withText("OFF")))
-            onView(withId(R.id.startBtn)).check(matches(isEnabled()))
-            onView(withId(R.id.stopBtn)).check(matches(not(isEnabled())))
+        // Final state: OFF
+        onView(withId(R.id.statusText)).check(matches(withText("OFF")))
+        onView(withId(R.id.startBtn)).check(matches(isEnabled()))
+        onView(withId(R.id.stopBtn)).check(matches(not(isEnabled())))
     }
-
 }
