@@ -1,4 +1,5 @@
 [versions]
+ktlint = "11.6.1"
 agp = "8.12.3"
 kotlin = "2.0.21"
 coreKtx = "1.10.1"
@@ -21,4 +22,5 @@ androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
