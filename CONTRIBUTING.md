@@ -14,7 +14,7 @@ Here are the best ways to get involved:
 
 #### 📝 Reporting and Feedback (Non-Code)
 - **Report a Bug**: Help us find and fix issues by creating a detailed [Bug Report](https://github.com/Dan8Oren/MicLock/issues/new?template=bug_report.md).
-- **Submit a Device Compatibility Report**: Let us and other users know how Mic-Lock performs on your device by filling out our [Device Compatibility Report](https://github.com/Dan8Oren/MicLock/issues/new?template=device_compatibility.md). This is incredibly helpful for new users.
+- **Submit a Device Compatibility Report**: Let us and other users know how MicLock performs on your device by filling out our [Device Compatibility Report](https://github.com/Dan8Oren/MicLock/issues/new?template=device_compatibility.md). This is incredibly helpful for new users.
 - **Suggest a New Feature**: Share your ideas for improving the app by creating a [Feature Request](https://github.com/Dan8Oren/MicLock/issues/new?template=feature_request.md).
 - **Improve Documentation**: If you see a typo, find something confusing, or have an idea to improve our guides, please open an issue or submit a pull request with your changes.
 
