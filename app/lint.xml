@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Disable the built-in lint baseline warning -->
+    <issue id="LintBaseline" severity="ignore" />
+    
+    <!-- Enforce naming conventions -->
+    <issue id="MethodName" severity="error" />
+    <issue id="ClassNameFormat" severity="error" />
+    
+    <!-- Code quality -->
+    <issue id="UnusedImport" severity="error" />
+    <issue id="RedundantModifier" severity="warning" />
+    
+    <!-- Performance -->
+    <issue id="UselessCallOnNotNull" severity="warning" />
+    <issue id="UnnecessaryApply" severity="warning" />
+</lint>

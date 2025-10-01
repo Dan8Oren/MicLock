@@ -13,7 +13,6 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.*
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Unit tests for MicLockService intent handling logic.
@@ -24,13 +23,16 @@ class MicLockServiceLogicTest {
 
     // Mock Android dependencies
     @Mock private lateinit var mockAudioRecord: MockableAudioRecord
+
     @Mock private lateinit var mockMediaRecorder: MockableMediaRecorder
+
     @Mock private lateinit var mockAudioManager: MockableAudioManager
+
     @Mock private lateinit var mockCallback: MockableAudioRecordingCallback
 
     // Testable service logic wrapper
     private lateinit var serviceLogic: TestableServiceLogic
-    
+
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
@@ -38,7 +40,7 @@ class MicLockServiceLogicTest {
             mockAudioRecord,
             mockMediaRecorder,
             mockAudioManager,
-            mockCallback
+            mockCallback,
         )
     }
 
@@ -74,7 +76,7 @@ class MicLockServiceLogicTest {
         // Given: Service is running and holding
         serviceLogic.handleIntent("ACTION_START_USER_INITIATED")
         serviceLogic.handleIntent("ACTION_START_HOLDING")
-        
+
         // When: ACTION_STOP_HOLDING is processed (screen off)
         serviceLogic.handleIntent("ACTION_STOP_HOLDING")
 
@@ -229,7 +231,7 @@ interface MockableAudioRecordingCallback {
 data class MockRouteInfo(
     val isOnPrimaryArray: Boolean,
     val deviceAddress: String,
-    val actualChannelCount: Int
+    val actualChannelCount: Int,
 )
 
 // Testable logic wrappers
@@ -237,11 +239,11 @@ class TestableServiceLogic(
     private val audioRecord: MockableAudioRecord,
     private val mediaRecorder: MockableMediaRecorder,
     private val audioManager: MockableAudioManager,
-    private val callback: MockableAudioRecordingCallback
+    private val callback: MockableAudioRecordingCallback,
 ) {
     private val _state = MutableStateFlow(ServiceState())
     val state: StateFlow<ServiceState> = _state.asStateFlow()
-    
+
     var loopRestartCount = 0
         private set
 

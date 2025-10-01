@@ -28,7 +28,7 @@ class AudioSelectorTest {
             sessionId = 12345,
             isOnPrimaryArray = false,
             deviceAddress = "@:secondary",
-            micPosition = null
+            micPosition = null,
         )
 
         // When: Checking if route is bad
@@ -47,7 +47,7 @@ class AudioSelectorTest {
             sessionId = 12345,
             isOnPrimaryArray = true,
             deviceAddress = "@:bottom",
-            micPosition = null
+            micPosition = null,
         )
 
         // When: Checking if route is bad
@@ -66,7 +66,7 @@ class AudioSelectorTest {
             sessionId = 12345,
             isOnPrimaryArray = true,
             deviceAddress = "@:primary",
-            micPosition = null
+            micPosition = null,
         )
 
         // When: Requesting stereo but only getting mono
@@ -85,7 +85,7 @@ class AudioSelectorTest {
             sessionId = 12345,
             isOnPrimaryArray = true,
             deviceAddress = "@:primary",
-            micPosition = null
+            micPosition = null,
         )
 
         // When: Checking good route
@@ -118,13 +118,13 @@ class AudioSelectorTest {
 
         // Then: Should return expected formats
         assertEquals("Should return 3 candidates", 3, candidates.size)
-        
+
         // Verify specific candidates
         val rates = candidates.map { it.sampleRate }
         assertTrue("Should include 8kHz", rates.contains(8000))
         assertTrue("Should include 16kHz", rates.contains(16000))
         assertTrue("Should include 48kHz", rates.contains(48000))
-        
+
         // All should be stereo PCM 16-bit
         candidates.forEach { candidate ->
             assertEquals("Should use stereo channel mask", AudioFormat.CHANNEL_IN_STEREO, candidate.channelMask)
@@ -143,7 +143,7 @@ class AudioSelectorTest {
             sessionId = 12345,
             isOnPrimaryArray = true,
             deviceAddress = "@:primary",
-            micPosition = null
+            micPosition = null,
         )
 
         // When: Getting debug info
@@ -165,7 +165,7 @@ class AudioSelectorTest {
             sessionId = 12345,
             isOnPrimaryArray = false, // Bad condition 1
             deviceAddress = "@:bottom", // Bad condition 2
-            micPosition = null
+            micPosition = null,
         )
 
         // When: Checking if route is bad

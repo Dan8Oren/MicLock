@@ -1,0 +1,25 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ktlint
+        name: ktlint
+        description: Check Kotlin code style.
+        entry: ./gradlew ktlintCheck
+        language: system
+        files: \.kt$
+        pass_filenames: false
+      - id: ktlint-format
+        name: ktlint-format
+        description: Format Kotlin code.
+        entry: ./gradlew ktlintFormat
+        language: system
+        files: \.kt$
+        pass_filenames: false
+        stages: [manual]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-added-large-files

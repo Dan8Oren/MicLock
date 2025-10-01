@@ -2,47 +2,41 @@ package io.github.miclock.ui
 
 import android.Manifest
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.net.Uri
-import android.os.PowerManager
-import android.provider.Settings
 import android.content.pm.PackageManager
-import android.media.AudioManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import io.github.miclock.R
-import io.github.miclock.data.Prefs
-import io.github.miclock.service.MicLockService
+import android.os.PowerManager
+import android.provider.Settings
+import android.service.quicksettings.TileService
 import android.util.Log
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
-import android.content.ComponentName
-import android.service.quicksettings.TileService
-import io.github.miclock.tile.MicLockTileService
+import io.github.miclock.R
+import io.github.miclock.data.Prefs
+import io.github.miclock.service.MicLockService
 import io.github.miclock.tile.EXTRA_START_SERVICE_FROM_TILE
+import io.github.miclock.tile.MicLockTileService
 import io.github.miclock.util.ApiGuard
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 /**
  * MainActivity provides the user interface for controlling the Mic-Lock service.
- * 
- * This activity allows users to:
+ * * This activity allows users to:
  * - Start and stop the microphone protection service
  * - Configure recording modes (MediaRecorder vs AudioRecord)
  * - Monitor service status in real-time
  * - Manage battery optimization settings
- * 
- * The activity communicates with MicLockService through intents and observes
+ * * The activity communicates with MicLockService through intents and observes
  * service state changes via StateFlow to update the UI accordingly.
  */
 class MainActivity : ComponentActivity() {
@@ -51,18 +45,18 @@ class MainActivity : ComponentActivity() {
     private lateinit var startBtn: MaterialButton
     private lateinit var stopBtn: MaterialButton
 
-
     private lateinit var mediaRecorderToggle: SwitchMaterial
     private lateinit var mediaRecorderBatteryWarningText: TextView
-    
-
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
-    private val notifPerms = if (Build.VERSION.SDK_INT >= 33)
-        arrayOf(Manifest.permission.POST_NOTIFICATIONS) else emptyArray()
+    private val notifPerms = if (Build.VERSION.SDK_INT >= 33) {
+        arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+    } else {
+        emptyArray()
+    }
 
     private val reqPerms = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
+        ActivityResultContracts.RequestMultiplePermissions(),
     ) { _ ->
         updateAllUi()
         // Request tile update after permission changes
@@ -72,8 +66,7 @@ class MainActivity : ComponentActivity() {
     /**
      * Called when the activity is first created. Sets up the UI components,
      * initializes event listeners, and requests necessary permissions.
-     * 
-     * @param savedInstanceState If the activity is being re-initialized after being shut down
+     * * @param savedInstanceState If the activity is being re-initialized after being shut down
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,7 +106,7 @@ class MainActivity : ComponentActivity() {
         // Always enforce permissions on every app start
         enforcePermsOrRequest()
         updateAllUi()
-        
+
         // Handle tile-initiated start
         if (intent.getBooleanExtra(EXTRA_START_SERVICE_FROM_TILE, false)) {
             Log.d("MainActivity", "Starting service from tile fallback request")
@@ -138,11 +131,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    
+
     override fun onPause() {
         super.onPause()
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
     }
@@ -160,18 +153,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun hasAllPerms(): Boolean {
-        val micGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        
+        val micGranted = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO,
+        ) == PackageManager.PERMISSION_GRANTED
+
         var notifGranted = true
         if (ApiGuard.isApi33_Tiramisu_OrAbove()) {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val postNotificationsGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            val postNotificationsGranted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
             notifGranted = notificationManager.areNotificationsEnabled() && postNotificationsGranted
         } else {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notifGranted = notificationManager.areNotificationsEnabled()
         }
-        
+
         return micGranted && notifGranted
     }
 
@@ -179,14 +178,24 @@ class MainActivity : ComponentActivity() {
         if (ApiGuard.isApi28_P_OrAbove()) {
             if (!hasAllPerms()) {
                 val permissionsToRequest = mutableListOf<String>()
-                
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.RECORD_AUDIO,
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
                     permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
                 }
-                
+
                 if (ApiGuard.isApi33_Tiramisu_OrAbove()) {
-                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED || !notificationManager.areNotificationsEnabled()) {
+                    val notificationManager =
+                        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    if (ContextCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.POST_NOTIFICATIONS,
+                        ) != PackageManager.PERMISSION_GRANTED ||
+                        !notificationManager.areNotificationsEnabled()
+                    ) {
                         permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }
@@ -208,7 +217,7 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, MicLockService::class.java)
         intent.action = MicLockService.ACTION_START_USER_INITIATED
         ContextCompat.startForegroundService(this, intent)
-        
+
         // Request tile update to reflect service start
         requestTileUpdate()
     }
@@ -221,7 +230,7 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, MicLockService::class.java)
         intent.action = MicLockService.ACTION_STOP
         startService(intent) // Send stop command to service
-        
+
         // Request tile update after service stop
         requestTileUpdate()
     }
@@ -259,8 +268,6 @@ class MainActivity : ComponentActivity() {
         stopBtn.isEnabled = running
     }
 
-
-
     private fun updateCompatibilityModeUi() {
         val useMediaRecorder = Prefs.getUseMediaRecorder(this)
         val lastMethod = Prefs.getLastRecordingMethod(this)
@@ -276,7 +283,7 @@ class MainActivity : ComponentActivity() {
             mediaRecorderBatteryWarningText.text = "AudioRecord mode (optimized battery usage)"
         }
     }
-    
+
     private fun startMicLockFromTileFallback() {
         Log.d("MainActivity", "Starting MicLock service as tile fallback")
         val intent = Intent(this, MicLockService::class.java).apply {
@@ -285,7 +292,7 @@ class MainActivity : ComponentActivity() {
         ContextCompat.startForegroundService(this, intent)
         finish()
     }
-    
+
     private fun requestTileUpdate() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             try {
@@ -296,12 +303,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    
-
-    
-
-    
-
-
-
 }

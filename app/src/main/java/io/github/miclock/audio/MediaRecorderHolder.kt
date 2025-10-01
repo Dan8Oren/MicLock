@@ -7,23 +7,22 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-
-import io.github.miclock.util.WakeLockManager
 import android.util.Log
 import androidx.annotation.RequiresApi
+import io.github.miclock.util.WakeLockManager
 import java.io.File
 
 class MediaRecorderHolder(
     private val context: Context,
     private val audioManager: AudioManager,
     private val wakeLockManager: WakeLockManager = WakeLockManager(context, "MediaRecorderHolder"),
-    private val onSilencedChanged: (Boolean) -> Unit
+    private val onSilencedChanged: (Boolean) -> Unit,
 ) {
     private val TAG = "MediaRecorderHolder"
     private var mediaRecorder: MediaRecorder? = null
     private var recordingCallback: AudioManager.AudioRecordingCallback? = null
     private var discardFile: File? = null
-    
+
     @Volatile
     var isSilenced: Boolean = false
         private set
@@ -44,9 +43,9 @@ class MediaRecorderHolder(
                 prepare()
                 start()
             }
-            
+
             wakeLockManager.acquire()
-            
+
             // Register callback to detect silencing
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 recordingCallback = object : AudioManager.AudioRecordingCallback() {
@@ -62,7 +61,7 @@ class MediaRecorderHolder(
                                 false
                             }
                         }
-                        
+
                         val silenced = myConfig?.isClientSilenced ?: false
                         if (silenced != isSilenced) {
                             isSilenced = silenced
@@ -73,9 +72,8 @@ class MediaRecorderHolder(
                 }
                 audioManager.registerAudioRecordingCallback(recordingCallback!!, Handler(Looper.getMainLooper()))
             }
-            
+
             Log.d(TAG, "MediaRecorder started successfully")
-            
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start MediaRecorder: ${e.message}", e)
             cleanup()
@@ -87,7 +85,7 @@ class MediaRecorderHolder(
         Log.d(TAG, "Stopping MediaRecorder")
         cleanup()
     }
-    
+
     private fun cleanup() {
         try {
             mediaRecorder?.apply {
@@ -98,9 +96,9 @@ class MediaRecorderHolder(
             Log.w(TAG, "Error stopping MediaRecorder: ${e.message}")
         }
         mediaRecorder = null
-        
+
         wakeLockManager.release()
-        
+
         recordingCallback?.let {
             try {
                 audioManager.unregisterAudioRecordingCallback(it)
@@ -109,7 +107,7 @@ class MediaRecorderHolder(
             }
         }
         recordingCallback = null
-        
+
         // Clean up temporary file
         discardFile?.let {
             try {
@@ -119,9 +117,7 @@ class MediaRecorderHolder(
             }
         }
         discardFile = null
-        
+
         isSilenced = false
     }
-    
-            
 }

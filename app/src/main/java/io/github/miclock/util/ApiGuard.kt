@@ -72,7 +72,11 @@ object ApiGuard {
      * @param block The lambda to execute for supported APIs.
      * @param onUnsupported The lambda to execute on older devices.
      */
-    inline fun onApiLevel(@IntRange(from = 1) minApi: Int, block: () -> Unit, noinline onUnsupported: (() -> Unit)? = null) {
+    inline fun onApiLevel(
+        @IntRange(from = 1) minApi: Int,
+        block: () -> Unit,
+        noinline onUnsupported: (() -> Unit)? = null,
+    ) {
         if (Build.VERSION.SDK_INT >= minApi) {
             block()
         } else {

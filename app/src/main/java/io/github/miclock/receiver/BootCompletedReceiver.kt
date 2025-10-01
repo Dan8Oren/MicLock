@@ -9,20 +9,25 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
+import androidx.core.content.ContextCompat
 import io.github.miclock.service.MicLockService
 import io.github.miclock.util.ApiGuard
-import androidx.core.content.ContextCompat
-
 
 class BootCompletedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             Log.d("BootCompletedReceiver", "Received ${intent.action}")
 
-            val micGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+            val micGranted = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO,
+            ) == PackageManager.PERMISSION_GRANTED
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val notifsGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 33+
-                nm.areNotificationsEnabled() && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                nm.areNotificationsEnabled() && ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) == PackageManager.PERMISSION_GRANTED
             } else {
                 nm.areNotificationsEnabled()
             }
@@ -30,7 +35,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
             if (micGranted && notifsGranted) {
                 Log.d("BootCompletedReceiver", "Permissions granted, attempting to start MicLockService.")
                 val serviceIntent = Intent(context, MicLockService::class.java)
-                
+
                 try {
                     ContextCompat.startForegroundService(context, serviceIntent)
                     Log.d("BootCompletedReceiver", "MicLockService started as foreground service successfully.")
@@ -38,18 +43,32 @@ class BootCompletedReceiver : BroadcastReceiver() {
                     ApiGuard.onApi31_S(
                         block = {
                             if (e.javaClass.simpleName == "ForegroundServiceStartNotAllowedException") {
-                                Log.w("BootCompletedReceiver", "Foreground service start blocked for MicLockService: ${e.message}.")
+                                Log.w(
+                                    "BootCompletedReceiver",
+                                    "Foreground service start blocked for MicLockService: ${e.message}.",
+                                )
                             } else {
-                                Log.e("BootCompletedReceiver", "Unexpected error starting MicLockService on API 31+: ${e.message}", e)
+                                Log.e(
+                                    "BootCompletedReceiver",
+                                    "Unexpected error starting MicLockService on API 31+: ${e.message}",
+                                    e,
+                                )
                             }
                         },
                         onUnsupported = {
-                            Log.e("BootCompletedReceiver", "Unexpected error starting MicLockService on older API: ${e.message}", e)
-                        }
+                            Log.e(
+                                "BootCompletedReceiver",
+                                "Unexpected error starting MicLockService on older API: ${e.message}",
+                                e,
+                            )
+                        },
                     )
                 }
             } else {
-                Log.d("BootCompletedReceiver", "Permissions not fully granted. MicLockService will not start automatically.")
+                Log.d(
+                    "BootCompletedReceiver",
+                    "Permissions not fully granted. MicLockService will not start automatically.",
+                )
             }
         }
     }

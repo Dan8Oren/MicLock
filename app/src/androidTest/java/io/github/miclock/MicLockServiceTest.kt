@@ -1,9 +1,9 @@
 package io.github.miclock
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
-import android.Manifest
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
 import io.github.miclock.service.MicLockService
@@ -17,9 +17,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Rule
 import org.mockito.MockitoAnnotations
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -33,7 +33,7 @@ class MicLockServiceTest {
     val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.POST_NOTIFICATIONS,
-        Manifest.permission.WAKE_LOCK
+        Manifest.permission.WAKE_LOCK,
     )
 
     @Before

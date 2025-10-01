@@ -5,6 +5,7 @@ import android.media.AudioManager
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import io.github.miclock.util.WakeLockManager
+import java.lang.reflect.Field
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -15,7 +16,6 @@ import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.*
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.lang.reflect.Field
 
 /**
  * Unit tests for MediaRecorderHolder utility.
@@ -27,6 +27,7 @@ class MediaRecorderHolderTest {
 
     private lateinit var context: Context // Real Robolectric context
     @Mock private lateinit var mockAudioManager: AudioManager
+
     @Mock private lateinit var mockWakeLockManager: WakeLockManager
 
     private lateinit var onSilencedChangedCallback: (Boolean) -> Unit
@@ -185,8 +186,11 @@ class MediaRecorderHolderTest {
         simulateSilencingEvent(holder, true) // Same state - should not trigger callback
 
         // Then: Should not trigger additional callbacks for same state
-        assertEquals("Should not trigger duplicate callbacks",
-            firstCallbackCount, callbackInvocations.size)
+        assertEquals(
+            "Should not trigger duplicate callbacks",
+            firstCallbackCount,
+            callbackInvocations.size,
+        )
     }
 
     // ===== Integration Tests =====
@@ -213,8 +217,10 @@ class MediaRecorderHolderTest {
         assertFalse("Should reset silenced state on stop", holder.isSilenced)
 
         // Then: Should have proper callback sequence
-        assertTrue("Should have received silencing callback",
-            callbackInvocations.contains(true))
+        assertTrue(
+            "Should have received silencing callback",
+            callbackInvocations.contains(true),
+        )
     }
 
     // ===== Error Handling Tests =====
@@ -335,17 +341,17 @@ class MediaRecorderHolderTest {
     private fun simulateSilencingEvent(holder: MediaRecorderHolder, silenced: Boolean) {
         // Get current state to implement proper state change detection
         val currentState = holder.isSilenced
-        
+
         // Only trigger callback and update state if there's actually a change
         if (silenced != currentState) {
             // Update internal state using reflection (since isSilenced is private set)
             updateInternalSilencedState(holder, silenced)
-            
+
             // Invoke the callback to simulate the AudioRecordingCallback behavior
             onSilencedChangedCallback(silenced)
         }
     }
-    
+
     /**
      * Updates the internal isSilenced state using reflection.
      * This is necessary because the property has a private setter.
@@ -361,5 +367,4 @@ class MediaRecorderHolderTest {
             throw AssertionError("Could not update internal silenced state: ${e.message}", e)
         }
     }
-
 }
