@@ -122,4 +122,4 @@ If you have questions about contributing, feel free to:
 - Check existing issues and discussions
 - Review the [DEV_SPECS.md](DEV_SPECS.md) for technical details
 
-Thank you for contributing to Mic-Lock!
+Thank you for contributing to MicLock!
