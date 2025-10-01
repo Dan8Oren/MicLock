@@ -1,10 +1,25 @@
-# Contributing to Mic-Lock
+# Contributing to MicLock
 
 Thank you for your interest in contributing to Mic-Lock! We welcome contributions from the community and appreciate your help in making this project better.
 
 ## Code of Conduct
 
 By participating in this project, you agree to maintain a respectful and inclusive environment for all contributors. Please be kind, professional, and constructive in all interactions.
+
+## Ways to Contribute
+
+We welcome contributions from everyone, and you don't need to be a developer to help! Some of the most valuable contributions come from users who help us understand how the app works on different devices.
+
+Here are the best ways to get involved:
+
+#### 📝 Reporting and Feedback (Non-Code)
+- **Report a Bug**: Help us find and fix issues by creating a detailed [Bug Report](https://github.com/Dan8Oren/MicLock/issues/new?template=bug_report.md).
+- **Submit a Device Compatibility Report**: Let us and other users know how Mic-Lock performs on your device by filling out our [Device Compatibility Report](https://github.com/Dan8Oren/MicLock/issues/new?template=device_compatibility.md). This is incredibly helpful for new users.
+- **Suggest a New Feature**: Share your ideas for improving the app by creating a [Feature Request](https://github.com/Dan8Oren/MicLock/issues/new?template=feature_request.md).
+- **Improve Documentation**: If you see a typo, find something confusing, or have an idea to improve our guides, please open an issue or submit a pull request with your changes.
+
+#### 💻 Code Contributions
+If you're a developer looking to contribute code, that's fantastic! Please follow the process outlined below, starting with the development setup.
 
 ## How to Report Bugs
 
