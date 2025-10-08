@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ComponentName
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -14,6 +15,7 @@ import android.media.*
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import android.service.quicksettings.TileService
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
@@ -28,6 +30,7 @@ import io.github.miclock.data.Prefs
 import io.github.miclock.receiver.ScreenStateReceiver
 import io.github.miclock.service.DelayedActivationManager
 import io.github.miclock.service.model.ServiceState
+import io.github.miclock.tile.MicLockTileService
 import io.github.miclock.ui.MainActivity
 import io.github.miclock.util.WakeLockManager
 import java.util.concurrent.atomic.AtomicBoolean
@@ -190,6 +193,12 @@ class MicLockService : Service(), MicActivationService {
     private fun handleStartUserInitiated(intent: Intent?) {
         notifManager.cancel(RESTART_NOTIF_ID)
         Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
+
+        // Check if this is a manual override from tile during delay
+        val isCancelDelay = intent?.getBooleanExtra("cancel_delay", false) ?: false
+        if (isCancelDelay) {
+            Log.i(TAG, "Manual override requested - cancelling delay and starting immediately")
+        }
 
         // Cancel any pending delayed activation when user manually starts service
         if (::delayedActivationManager.isInitialized) {
@@ -978,6 +987,21 @@ class MicLockService : Service(), MicActivationService {
                 isDelayedActivationPending = delayPending ?: currentState.isDelayedActivationPending,
                 delayedActivationRemainingMs = delayRemainingMs ?: currentState.delayedActivationRemainingMs,
             )
+        }
+        
+        // Request tile update whenever service state changes
+        requestTileUpdate()
+    }
+
+    private fun requestTileUpdate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            try {
+                val componentName = ComponentName(this, MicLockTileService::class.java)
+                TileService.requestListeningState(this, componentName)
+                Log.d(TAG, "Requested tile update")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to request tile update: ${e.message}")
+            }
         }
     }
 

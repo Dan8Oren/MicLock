@@ -36,9 +36,23 @@ class MicLockTileService : TileService() {
         private const val TAG = "MicLockTileService"
     }
 
+    override fun onCreate() {
+        super.onCreate()
+        Log.d(TAG, "Tile service created")
+        
+        // Initialize tile state immediately when service is created
+        // This helps with initial state display
+        val initialState = getCurrentAppState()
+        updateTileState(initialState)
+    }
+
     override fun onStartListening() {
         super.onStartListening()
         Log.d(TAG, "Tile started listening")
+        
+        // Force immediate state update when listening starts
+        val currentState = getCurrentAppState()
+        updateTileState(currentState)
 
         failureReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -140,29 +154,48 @@ class MicLockTileService : TileService() {
 
         val currentState = getCurrentAppState()
 
-        if (currentState.isRunning) {
-            val intent = Intent(this, MicLockService::class.java)
-            intent.action = MicLockService.ACTION_STOP
-            Log.d(TAG, "Stopping MicLock service via tile")
-            try {
-                startService(intent)
-                Log.d(TAG, "Successfully sent stop intent to running service")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to send stop intent to service: ${e.message}", e)
+        when {
+            currentState.isDelayedActivationPending -> {
+                // Manual override: cancel delay and activate immediately
+                val intent = Intent(this, MicLockService::class.java).apply {
+                    action = MicLockService.ACTION_START_USER_INITIATED
+                    putExtra("from_tile", true)
+                    putExtra("cancel_delay", true) // Signal to cancel any pending delay
+                }
+                Log.d(TAG, "Cancelling delay and starting service immediately via tile")
+                try {
+                    ContextCompat.startForegroundService(this, intent)
+                    Log.d(TAG, "Manual override request sent - delay cancelled, service starting")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to override delay and start service: ${e.message}", e)
+                    createTileFailureNotification("Service failed to start: ${e.message}")
+                }
             }
-        } else {
-            val intent = Intent(this, MicLockService::class.java).apply {
-                action = MicLockService.ACTION_START_USER_INITIATED
-                putExtra("from_tile", true)
+            currentState.isRunning -> {
+                val intent = Intent(this, MicLockService::class.java)
+                intent.action = MicLockService.ACTION_STOP
+                Log.d(TAG, "Stopping MicLock service via tile")
+                try {
+                    startService(intent)
+                    Log.d(TAG, "Successfully sent stop intent to running service")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to send stop intent to service: ${e.message}", e)
+                }
             }
+            else -> {
+                val intent = Intent(this, MicLockService::class.java).apply {
+                    action = MicLockService.ACTION_START_USER_INITIATED
+                    putExtra("from_tile", true)
+                }
 
-            Log.d(TAG, "Attempting direct service start from tile")
-            try {
-                ContextCompat.startForegroundService(this, intent)
-                Log.d(TAG, "Direct service start request sent")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start service directly: ${e.message}", e)
-                createTileFailureNotification("Service failed to start: ${e.message}")
+                Log.d(TAG, "Attempting direct service start from tile")
+                try {
+                    ContextCompat.startForegroundService(this, intent)
+                    Log.d(TAG, "Direct service start request sent")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to start service directly: ${e.message}", e)
+                    createTileFailureNotification("Service failed to start: ${e.message}")
+                }
             }
         }
     }
@@ -236,7 +269,7 @@ class MicLockTileService : TileService() {
         val hasPerms = hasAllPerms()
         Log.d(
             TAG,
-            "updateTileState: hasPerms=$hasPerms, isRunning=${state.isRunning}, isPaused=${state.isPausedBySilence}",
+            "updateTileState: hasPerms=$hasPerms, isRunning=${state.isRunning}, isPaused=${state.isPausedBySilence}, isDelayPending=${state.isDelayedActivationPending}",
         )
 
         when {
@@ -247,6 +280,14 @@ class MicLockTileService : TileService() {
                 tile.contentDescription = "Tap to grant microphone and notification permissions"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_off)
                 Log.d(TAG, "Tile set to 'No Permission' state")
+            }
+            state.isDelayedActivationPending -> {
+                // Delayed activation is pending - show activating state
+                tile.state = Tile.STATE_UNAVAILABLE
+                tile.label = "Activating..."
+                tile.contentDescription = "Tap to cancel delay and activate immediately"
+                tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_pause)
+                Log.d(TAG, "Tile set to 'Activating...' state (delay pending)")
             }
             !state.isRunning -> {
                 // Service is OFF
@@ -277,7 +318,7 @@ class MicLockTileService : TileService() {
         tile.updateTile()
         Log.d(
             TAG,
-            "Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}, HasPerms: $hasPerms",
+            "Tile updated - Running: ${state.isRunning}, Paused: ${state.isPausedBySilence}, DelayPending: ${state.isDelayedActivationPending}, HasPerms: $hasPerms",
         )
     }
 
@@ -306,7 +347,17 @@ class MicLockTileService : TileService() {
             val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
             val isRunning = activityManager.getRunningServices(Integer.MAX_VALUE)
                 .any { it.service.className == MicLockService::class.java.name }
-            ServiceState(isRunning = isRunning, isPausedBySilence = false)
+            
+            // Preserve delay state from current StateFlow when checking system state
+            val currentState = MicLockService.state.value
+            ServiceState(
+                isRunning = isRunning, 
+                isPausedBySilence = false,
+                isPausedByScreenOff = currentState.isPausedByScreenOff,
+                currentDeviceAddress = currentState.currentDeviceAddress,
+                isDelayedActivationPending = currentState.isDelayedActivationPending,
+                delayedActivationRemainingMs = currentState.delayedActivationRemainingMs
+            )
         } catch (e: Exception) {
             Log.w(TAG, "Failed to check service running state: ${e.message}")
             ServiceState(isRunning = false, isPausedBySilence = false)
