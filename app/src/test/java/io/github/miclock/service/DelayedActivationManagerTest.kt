@@ -39,6 +39,7 @@ class DelayedActivationManagerTest {
         // Setup default mock behavior
         whenever(mockService.getCurrentState()).thenReturn(ServiceState())
         whenever(mockService.isManuallyStoppedByUser()).thenReturn(false)
+        whenever(mockService.isMicActivelyHeld()).thenReturn(false)
         
         delayedActivationManager = TestableDelayedActivationManager(context, mockService, testScope)
     }
@@ -74,14 +75,14 @@ class DelayedActivationManagerTest {
 
     @Test
     fun testScheduleDelayedActivation_serviceAlreadyRunning_doesNotSchedule() = testScope.runTest {
-        // Given: Service is already running
-        whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = true))
+        // Given: Mic is actively being held
+        whenever(mockService.isMicActivelyHeld()).thenReturn(true)
 
         // When: Attempting to schedule delay
         val result = delayedActivationManager.scheduleDelayedActivation(1000L)
 
         // Then: Should not schedule
-        assertFalse("Should not schedule when service already running", result)
+        assertFalse("Should not schedule when mic is actively held", result)
         assertFalse("Should not have pending activation", delayedActivationManager.isActivationPending())
     }
 
@@ -214,17 +215,18 @@ class DelayedActivationManagerTest {
         // Given: Initial state allows delay
         whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = false))
         whenever(mockService.isManuallyStoppedByUser()).thenReturn(false)
+        whenever(mockService.isMicActivelyHeld()).thenReturn(false)
         delayedActivationManager.scheduleDelayedActivation(1000L)
 
-        // When: Service becomes active during delay
+        // When: Mic becomes actively held during delay
         advanceTimeBy(500L) // Halfway through delay
-        whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = true))
+        whenever(mockService.isMicActivelyHeld()).thenReturn(true)
 
         // Complete the delay
         advanceTimeBy(500L)
         runCurrent() // Execute any pending coroutines
 
-        // Then: Should not activate microphone since service is already active
+        // Then: Should not activate microphone since mic is already actively held
         verify(mockService, never()).startMicHolding()
         // Note: The pending activation flag may still be true until the coroutine completes and checks state
     }
@@ -273,11 +275,12 @@ class DelayedActivationManagerTest {
 
     @Test
     fun testShouldRespectExistingState_variousStates() = testScope.runTest {
-        // Test case 1: Service running
-        whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = true))
-        assertTrue("Should respect state when service is running", delayedActivationManager.shouldRespectExistingState())
+        // Test case 1: Mic actively held
+        whenever(mockService.isMicActivelyHeld()).thenReturn(true)
+        assertTrue("Should respect state when mic is actively held", delayedActivationManager.shouldRespectExistingState())
 
         // Test case 2: Service paused by silence
+        whenever(mockService.isMicActivelyHeld()).thenReturn(false)
         whenever(mockService.getCurrentState()).thenReturn(ServiceState(isPausedBySilence = true))
         assertTrue("Should respect state when paused by silence", delayedActivationManager.shouldRespectExistingState())
 
@@ -286,7 +289,8 @@ class DelayedActivationManagerTest {
         whenever(mockService.isManuallyStoppedByUser()).thenReturn(true)
         assertTrue("Should respect state when manually stopped", delayedActivationManager.shouldRespectExistingState())
 
-        // Test case 4: Normal state (not running, not paused, not manually stopped)
+        // Test case 4: Normal state (not actively held, not paused, not manually stopped)
+        whenever(mockService.isMicActivelyHeld()).thenReturn(false)
         whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = false))
         whenever(mockService.isManuallyStoppedByUser()).thenReturn(false)
         assertFalse("Should not respect state in normal conditions", delayedActivationManager.shouldRespectExistingState())
@@ -298,12 +302,13 @@ class DelayedActivationManagerTest {
         Prefs.setScreenOnDelayMs(context, 0L)
         assertFalse("Should not apply delay when disabled", delayedActivationManager.shouldApplyDelay())
 
-        // Test case 2: Valid delay but existing state should be respected
+        // Test case 2: Valid delay but existing state should be respected (mic actively held)
         Prefs.setScreenOnDelayMs(context, 1000L)
-        whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = true))
+        whenever(mockService.isMicActivelyHeld()).thenReturn(true)
         assertFalse("Should not apply delay when existing state should be respected", delayedActivationManager.shouldApplyDelay())
 
         // Test case 3: Valid delay and normal state
+        whenever(mockService.isMicActivelyHeld()).thenReturn(false)
         whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = false))
         whenever(mockService.isManuallyStoppedByUser()).thenReturn(false)
         assertTrue("Should apply delay in normal conditions", delayedActivationManager.shouldApplyDelay())
@@ -314,11 +319,12 @@ class DelayedActivationManagerTest {
         // This test verifies that the conflict handler doesn't crash and handles different states
         // Since it mainly logs, we test that it executes without exceptions
 
-        // Test with running service
-        whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = true))
+        // Test with mic actively held
+        whenever(mockService.isMicActivelyHeld()).thenReturn(true)
         assertDoesNotThrow { delayedActivationManager.handleServiceStateConflict() }
 
         // Test with paused service
+        whenever(mockService.isMicActivelyHeld()).thenReturn(false)
         whenever(mockService.getCurrentState()).thenReturn(ServiceState(isPausedBySilence = true))
         assertDoesNotThrow { delayedActivationManager.handleServiceStateConflict() }
 

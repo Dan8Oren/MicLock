@@ -149,9 +149,10 @@ open class DelayedActivationManager(
         val currentState = service.getCurrentState()
         
         return when {
-            // Service is already running - no need for delay
-            currentState.isRunning -> {
-                Log.d(TAG, "Service already running, respecting existing state")
+            // Check if mic is actively being held (not just service running)
+            // This allows delay when service is running but paused (screen off scenario)
+            service.isMicActivelyHeld() -> {
+                Log.d(TAG, "Mic is actively being held, respecting existing state")
                 true
             }
             
@@ -178,11 +179,11 @@ open class DelayedActivationManager(
     fun handleServiceStateConflict() {
         val currentState = service.getCurrentState()
         
-        Log.d(TAG, "Handling service state conflict - isRunning: ${currentState.isRunning}, isPaused: ${currentState.isPausedBySilence}")
+        Log.d(TAG, "Handling service state conflict - isMicActivelyHeld: ${service.isMicActivelyHeld()}, isPaused: ${currentState.isPausedBySilence}")
         
         when {
-            currentState.isRunning -> {
-                Log.d(TAG, "Service is already active, no action needed")
+            service.isMicActivelyHeld() -> {
+                Log.d(TAG, "Mic is actively being held, no action needed")
             }
             
             currentState.isPausedBySilence -> {

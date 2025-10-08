@@ -962,6 +962,16 @@ class MicLockService : Service() {
         return !currentState.isRunning && !currentState.isPausedBySilence
     }
 
+    /**
+     * Checks if the microphone is actively being held (recording loop is active).
+     * This is different from service running - service can be running but paused (screen off).
+     * 
+     * @return true if mic is actively held, false otherwise
+     */
+    fun isMicActivelyHeld(): Boolean {
+        return loopJob?.isActive == true
+    }
+
     companion object {
         private val _state = MutableStateFlow(ServiceState())
         val state: StateFlow<ServiceState> = _state.asStateFlow()
