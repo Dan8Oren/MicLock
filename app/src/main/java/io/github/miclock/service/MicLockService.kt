@@ -67,6 +67,9 @@ class MicLockService : Service() {
     // Optional: light CPU wake while actively recording
     private val wakeLockManager by lazy { WakeLockManager(this, "MicLockService") }
 
+    // Delayed activation manager for screen-on delay handling
+    private lateinit var delayedActivationManager: DelayedActivationManager
+
     private var loopJob: Job? = null
     private val stopFlag = AtomicBoolean(false)
 
@@ -97,6 +100,10 @@ class MicLockService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannels()
+
+        // Initialize delayed activation manager
+        delayedActivationManager = DelayedActivationManager(this, this, scope)
+        Log.d(TAG, "DelayedActivationManager initialized")
 
         // Register screen state receiver dynamically
         screenStateReceiver = ScreenStateReceiver()
@@ -144,6 +151,13 @@ class MicLockService : Service() {
         super.onDestroy()
         val wasRunning = state.value.isRunning
         stopFlag.set(true)
+        
+        // Cleanup delayed activation manager
+        if (::delayedActivationManager.isInitialized) {
+            delayedActivationManager.cleanup()
+            Log.d(TAG, "DelayedActivationManager cleaned up")
+        }
+        
         scope.cancel()
         wakeLockManager.release()
         try { recCallback?.let { audioManager.unregisterAudioRecordingCallback(it) } } catch (_: Throwable) {}
@@ -175,6 +189,15 @@ class MicLockService : Service() {
     private fun handleStartUserInitiated(intent: Intent?) {
         notifManager.cancel(RESTART_NOTIF_ID)
         Log.i(TAG, "Received ACTION_START_USER_INITIATED - user-initiated start")
+
+        // Cancel any pending delayed activation when user manually starts service
+        if (::delayedActivationManager.isInitialized) {
+            val wasCancelled = delayedActivationManager.cancelDelayedActivation()
+            if (wasCancelled) {
+                Log.d(TAG, "Cancelled pending delayed activation due to manual user start")
+                updateServiceState(delayPending = false, delayRemainingMs = 0)
+            }
+        }
 
         val isFromTile = intent?.getBooleanExtra("from_tile", false) ?: false
 
@@ -251,7 +274,33 @@ class MicLockService : Service() {
     private fun handleStartHolding() {
         Log.i(TAG, "Received ACTION_START_HOLDING, isRunning: ${state.value.isRunning}")
         if (state.value.isRunning) {
-            startMicHolding()
+            // Get configured delay
+            val delayMs = Prefs.getScreenOnDelayMs(this)
+            
+            // Check if delay should be applied
+            if (delayMs > 0 && delayedActivationManager.shouldApplyDelay()) {
+                Log.d(TAG, "Applying screen-on delay of ${delayMs}ms")
+                
+                // Schedule delayed activation
+                val scheduled = delayedActivationManager.scheduleDelayedActivation(delayMs)
+                
+                if (scheduled) {
+                    // Update state to reflect pending activation
+                    updateServiceState(
+                        delayPending = true,
+                        delayRemainingMs = delayMs
+                    )
+                    Log.d(TAG, "Delayed activation scheduled successfully")
+                } else {
+                    // Delay not applicable, start immediately
+                    Log.d(TAG, "Delay not applicable, starting immediately")
+                    startMicHolding()
+                }
+            } else {
+                // No delay configured or delay not applicable, start immediately
+                Log.d(TAG, "No delay configured (${delayMs}ms), starting immediately")
+                startMicHolding()
+            }
         } else {
             Log.w(TAG, "Service not running, ignoring START_HOLDING action. (Consider starting service first)")
         }
@@ -259,11 +308,32 @@ class MicLockService : Service() {
 
     private fun handleStopHolding() {
         Log.i(TAG, "Received ACTION_STOP_HOLDING")
+        
+        // Cancel any pending delayed activation
+        if (::delayedActivationManager.isInitialized) {
+            val wasCancelled = delayedActivationManager.cancelDelayedActivation()
+            if (wasCancelled) {
+                Log.d(TAG, "Cancelled pending delayed activation due to screen-off")
+                updateServiceState(
+                    delayPending = false,
+                    delayRemainingMs = 0
+                )
+            }
+        }
+        
         stopMicHolding()
     }
 
     private fun handleStop(): Int {
-        updateServiceState(running = false)
+        // Cancel any pending delayed activation when service is manually stopped
+        if (::delayedActivationManager.isInitialized) {
+            val wasCancelled = delayedActivationManager.cancelDelayedActivation()
+            if (wasCancelled) {
+                Log.d(TAG, "Cancelled pending delayed activation due to manual stop")
+            }
+        }
+        
+        updateServiceState(running = false, delayPending = false, delayRemainingMs = 0)
         stopMicHolding()
         stopSelf() // Full stop from user
         return START_NOT_STICKY
@@ -352,6 +422,12 @@ class MicLockService : Service() {
         }
         // Change the log message to be more generic for screen on or user start
         Log.i(TAG, "Starting or resuming mic holding logic.")
+        
+        // Clear any delay state since we're actually starting now
+        if (::delayedActivationManager.isInitialized && delayedActivationManager.isActivationPending()) {
+            Log.d(TAG, "Clearing delay state as mic holding is starting")
+            updateServiceState(delayPending = false, delayRemainingMs = 0)
+        }
 
         // Try to start foreground service based on current conditions
         if (canStartForegroundService()) {
@@ -838,12 +914,20 @@ class MicLockService : Service() {
         notifManager.notify(NOTIF_ID, buildNotification(text))
     }
 
-    private fun updateServiceState(running: Boolean? = null, paused: Boolean? = null, deviceAddr: String? = null) {
+    private fun updateServiceState(
+        running: Boolean? = null, 
+        paused: Boolean? = null, 
+        deviceAddr: String? = null,
+        delayPending: Boolean? = null,
+        delayRemainingMs: Long? = null
+    ) {
         _state.update { currentState ->
             currentState.copy(
                 isRunning = running ?: currentState.isRunning,
                 isPausedBySilence = paused ?: currentState.isPausedBySilence,
                 currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress,
+                isDelayedActivationPending = delayPending ?: currentState.isDelayedActivationPending,
+                delayedActivationRemainingMs = delayRemainingMs ?: currentState.delayedActivationRemainingMs,
             )
         }
     }
