@@ -271,8 +271,10 @@ class MicLockService : Service() {
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     @RequiresApi(Build.VERSION_CODES.P)
-    private fun handleStartHolding() {
-        Log.i(TAG, "Received ACTION_START_HOLDING, isRunning: ${state.value.isRunning}")
+    private fun handleStartHolding(intent: Intent? = null) {
+        val eventTimestamp = intent?.getLongExtra(ScreenStateReceiver.EXTRA_EVENT_TIMESTAMP, 0L) ?: 0L
+        Log.i(TAG, "Received ACTION_START_HOLDING, isRunning: ${state.value.isRunning}, timestamp: $eventTimestamp")
+        
         if (state.value.isRunning) {
             // Get configured delay
             val delayMs = Prefs.getScreenOnDelayMs(this)
@@ -280,6 +282,12 @@ class MicLockService : Service() {
             // Check if delay should be applied
             if (delayMs > 0 && delayedActivationManager.shouldApplyDelay()) {
                 Log.d(TAG, "Applying screen-on delay of ${delayMs}ms")
+                
+                // Cancel any existing pending activation (latest-event-wins strategy)
+                if (delayedActivationManager.isActivationPending()) {
+                    Log.d(TAG, "Cancelling previous pending activation - restarting delay from beginning")
+                    delayedActivationManager.cancelDelayedActivation()
+                }
                 
                 // Schedule delayed activation
                 val scheduled = delayedActivationManager.scheduleDelayedActivation(delayMs)
@@ -306,8 +314,9 @@ class MicLockService : Service() {
         }
     }
 
-    private fun handleStopHolding() {
-        Log.i(TAG, "Received ACTION_STOP_HOLDING")
+    private fun handleStopHolding(intent: Intent? = null) {
+        val eventTimestamp = intent?.getLongExtra(ScreenStateReceiver.EXTRA_EVENT_TIMESTAMP, 0L) ?: 0L
+        Log.i(TAG, "Received ACTION_STOP_HOLDING, timestamp: $eventTimestamp")
         
         // Cancel any pending delayed activation
         if (::delayedActivationManager.isInitialized) {
@@ -375,8 +384,8 @@ class MicLockService : Service() {
 
         when (intent?.action) {
             ACTION_START_USER_INITIATED -> handleStartUserInitiated(intent)
-            ACTION_START_HOLDING -> handleStartHolding()
-            ACTION_STOP_HOLDING -> handleStopHolding()
+            ACTION_START_HOLDING -> handleStartHolding(intent)
+            ACTION_STOP_HOLDING -> handleStopHolding(intent)
             ACTION_STOP -> return handleStop()
             ACTION_RECONFIGURE -> handleReconfigure()
             null -> handleBootStart()
