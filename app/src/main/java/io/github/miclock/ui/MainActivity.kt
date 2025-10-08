@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import io.github.miclock.R
 import io.github.miclock.data.Prefs
@@ -47,6 +48,9 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var mediaRecorderToggle: SwitchMaterial
     private lateinit var mediaRecorderBatteryWarningText: TextView
+
+    private lateinit var screenOnDelaySlider: Slider
+    private lateinit var screenOnDelaySummary: TextView
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
     private val notifPerms = if (Build.VERSION.SDK_INT >= 33) {
@@ -79,6 +83,9 @@ class MainActivity : ComponentActivity() {
         mediaRecorderToggle = findViewById(R.id.mediaRecorderToggle)
         mediaRecorderBatteryWarningText = findViewById(R.id.mediaRecorderBatteryWarningText)
 
+        screenOnDelaySlider = findViewById(R.id.screenOnDelaySlider)
+        screenOnDelaySummary = findViewById(R.id.screenOnDelaySummary)
+
         // Initialize compatibility mode toggle
         mediaRecorderToggle.isChecked = Prefs.getUseMediaRecorder(this)
         mediaRecorderToggle.setOnCheckedChangeListener { _, isChecked ->
@@ -89,6 +96,18 @@ class MainActivity : ComponentActivity() {
                 ContextCompat.startForegroundService(this, intent)
             }
             updateCompatibilityModeUi()
+        }
+
+        // Initialize screen-on delay slider
+        val currentDelay = Prefs.getScreenOnDelayMs(this)
+        screenOnDelaySlider.value = currentDelay.toFloat()
+        updateDelayConfigurationUi(currentDelay)
+
+        screenOnDelaySlider.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                val delayMs = value.toLong()
+                handleDelayPreferenceChange(delayMs)
+            }
         }
 
         startBtn.setOnClickListener {
@@ -238,6 +257,7 @@ class MainActivity : ComponentActivity() {
     private fun updateAllUi() {
         updateMainStatus()
         updateCompatibilityModeUi()
+        updateDelayConfigurationUi(Prefs.getScreenOnDelayMs(this))
     }
 
     private fun updateMainStatus() {
@@ -301,6 +321,51 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 Log.w("MainActivity", "Failed to request tile update: ${e.message}")
             }
+        }
+    }
+
+    /**
+     * Updates the delay configuration UI to reflect the current delay value.
+     * Shows appropriate summary text based on whether delay is enabled or disabled.
+     */
+    private fun updateDelayConfigurationUi(delayMs: Long) {
+        if (delayMs <= 0L) {
+            screenOnDelaySummary.text = getString(R.string.screen_on_delay_disabled)
+        } else {
+            val delaySeconds = delayMs / 1000.0
+            screenOnDelaySummary.text = getString(R.string.screen_on_delay_summary, delaySeconds)
+        }
+    }
+
+    /**
+     * Handles changes to the delay preference from the UI.
+     * Validates the input, saves the preference, and updates any pending delay operations.
+     * Provides user feedback for configuration changes.
+     */
+    private fun handleDelayPreferenceChange(delayMs: Long) {
+        try {
+            // Validate the delay value
+            if (!Prefs.isValidScreenOnDelay(delayMs)) {
+                Log.w("MainActivity", "Invalid delay value: ${delayMs}ms")
+                return
+            }
+
+            // Save the preference
+            Prefs.setScreenOnDelayMs(this, delayMs)
+
+            // Update UI to reflect the change
+            updateDelayConfigurationUi(delayMs)
+
+            Log.d("MainActivity", "Screen-on delay updated to ${delayMs}ms")
+
+            // Preference changes take effect immediately:
+            // - The new delay value will be used for the next screen-on event
+            // - Any currently pending delay operation will complete with its original delay
+            // - No service restart is required
+            // - This provides predictable behavior where in-flight operations complete as scheduled
+
+        } catch (e: IllegalArgumentException) {
+            Log.e("MainActivity", "Failed to set screen-on delay: ${e.message}")
         }
     }
 }

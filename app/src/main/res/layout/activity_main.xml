@@ -146,6 +146,52 @@
 
                     </LinearLayout>
 
+                    <!-- Screen-On Delay Configuration -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/outline"
+                        android:alpha="0.3"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/screen_on_delay_title"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/secondary_green"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/screenOnDelaySummary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/screen_on_delay_disabled"
+                            android:textSize="12sp"
+                            android:textColor="@color/on_surface_variant"
+                            android:layout_marginBottom="8dp" />
+
+                        <com.google.android.material.slider.Slider
+                            android:id="@+id/screenOnDelaySlider"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:valueFrom="0"
+                            android:valueTo="5000"
+                            android:stepSize="100"
+                            app:thumbColor="@color/secondary_green"
+                            app:trackColorActive="@color/secondary_green"
+                            app:trackColorInactive="@color/outline"
+                            app:labelBehavior="gone" />
+
+                    </LinearLayout>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
