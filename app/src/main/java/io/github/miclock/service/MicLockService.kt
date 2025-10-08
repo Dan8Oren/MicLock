@@ -472,8 +472,8 @@ class MicLockService : Service(), MicActivationService {
         Log.i(TAG, "Starting or resuming mic holding logic. fromDelayCompletion=$fromDelayCompletion")
         
         // Clear any delay state since we're actually starting now
-        if (::delayedActivationManager.isInitialized && delayedActivationManager.isActivationPending()) {
-            Log.d(TAG, "Clearing delay state as mic holding is starting")
+        if (fromDelayCompletion || (::delayedActivationManager.isInitialized && delayedActivationManager.isActivationPending())) {
+            Log.d(TAG, "Clearing delay state as mic holding is starting (fromDelayCompletion=$fromDelayCompletion)")
             updateServiceState(delayPending = false, delayRemainingMs = 0)
         }
 
