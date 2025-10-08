@@ -344,7 +344,7 @@ class MicLockService : Service() {
 
     @RequiresApi(Build.VERSION_CODES.P)
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    private fun startMicHolding() {
+    internal fun startMicHolding() {
         // This check is important. If the loop is active, we don't need to do anything.
         if (loopJob?.isActive == true) {
             Log.d(TAG, "Mic holding is already active.")
@@ -846,6 +846,27 @@ class MicLockService : Service() {
                 currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress,
             )
         }
+    }
+
+    /**
+     * Gets the current service state.
+     * Used by DelayedActivationManager for state validation.
+     * 
+     * @return current ServiceState
+     */
+    fun getCurrentState(): ServiceState = state.value
+
+    /**
+     * Checks if the service was manually stopped by the user.
+     * This is determined by checking if the service is not running and was explicitly stopped.
+     * 
+     * @return true if manually stopped by user, false otherwise
+     */
+    fun isManuallyStoppedByUser(): Boolean {
+        val currentState = state.value
+        // Service is considered manually stopped if it's not running and not paused by silence
+        // This indicates user intentionally stopped it rather than system pausing it
+        return !currentState.isRunning && !currentState.isPausedBySilence
     }
 
     companion object {
