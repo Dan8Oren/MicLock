@@ -1,7 +1,11 @@
 package io.github.miclock.service
 
+import android.Manifest
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import io.github.miclock.data.Prefs
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -13,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong
  */
 open class DelayedActivationManager(
     private val context: Context,
-    private val service: MicLockService,
+    private val service: MicActivationService,
     private val scope: CoroutineScope
 ) {
     companion object {
@@ -33,6 +37,8 @@ open class DelayedActivationManager(
      * @param delayMs delay in milliseconds before activation
      * @return true if delay was scheduled, false if conditions don't allow delay
      */
+    @RequiresApi(Build.VERSION_CODES.P)
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun scheduleDelayedActivation(delayMs: Long): Boolean {
         val currentTime = getCurrentTimeMs()
         lastScreenOnTime.set(currentTime)
@@ -73,7 +79,8 @@ open class DelayedActivationManager(
                     isActivationPending.set(false)
                     
                     // Activate microphone functionality
-                    service.startMicHolding()
+                    // Pass fromDelayCompletion=true to skip startForeground (already started in handleStartHolding)
+                    service.startMicHolding(fromDelayCompletion = true)
                 } else {
                     Log.d(TAG, "Delay operation superseded by newer event, not activating")
                     isActivationPending.set(false)
@@ -162,6 +169,12 @@ open class DelayedActivationManager(
                 true
             }
             
+            // Service is paused by screen-off - this is normal and delay should be applied
+            currentState.isPausedByScreenOff -> {
+                Log.d(TAG, "Service paused by screen-off, delay can be applied")
+                false
+            }
+            
             // Check if service was manually stopped by user
             service.isManuallyStoppedByUser() -> {
                 Log.d(TAG, "Service manually stopped by user, respecting manual stop")
@@ -179,7 +192,7 @@ open class DelayedActivationManager(
     fun handleServiceStateConflict() {
         val currentState = service.getCurrentState()
         
-        Log.d(TAG, "Handling service state conflict - isMicActivelyHeld: ${service.isMicActivelyHeld()}, isPaused: ${currentState.isPausedBySilence}")
+        Log.d(TAG, "Handling service state conflict - isMicActivelyHeld: ${service.isMicActivelyHeld()}, isPausedBySilence: ${currentState.isPausedBySilence}, isPausedByScreenOff: ${currentState.isPausedByScreenOff}")
         
         when {
             service.isMicActivelyHeld() -> {
@@ -188,6 +201,10 @@ open class DelayedActivationManager(
             
             currentState.isPausedBySilence -> {
                 Log.d(TAG, "Service is paused by another app, maintaining pause state")
+            }
+            
+            currentState.isPausedByScreenOff -> {
+                Log.d(TAG, "Service is paused by screen-off, this is expected")
             }
             
             service.isManuallyStoppedByUser() -> {

@@ -26,6 +26,7 @@ import io.github.miclock.audio.AudioSelector
 import io.github.miclock.audio.MediaRecorderHolder
 import io.github.miclock.data.Prefs
 import io.github.miclock.receiver.ScreenStateReceiver
+import io.github.miclock.service.DelayedActivationManager
 import io.github.miclock.service.model.ServiceState
 import io.github.miclock.ui.MainActivity
 import io.github.miclock.util.WakeLockManager
@@ -55,7 +56,7 @@ import kotlinx.coroutines.flow.update
  *
  * This solves the problem where apps default to a broken bottom microphone and record silence.
  */
-class MicLockService : Service() {
+class MicLockService : Service(), MicActivationService {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -175,7 +176,7 @@ class MicLockService : Service() {
         }
         screenStateReceiver = null
 
-        updateServiceState(running = false, paused = false, deviceAddr = null)
+        updateServiceState(running = false, paused = false, pausedByScreenOff = false, deviceAddr = null)
 
         if (wasRunning && !suppressRestartNotification) {
             createRestartNotification()
@@ -221,7 +222,7 @@ class MicLockService : Service() {
                 startFailureReason = null
                 suppressRestartNotification = false
 
-                startMicHolding()
+                startMicHolding(fromDelayCompletion = false)
                 updateServiceState(running = true)
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service: ${e.message}")
@@ -289,6 +290,35 @@ class MicLockService : Service() {
                     delayedActivationManager.cancelDelayedActivation()
                 }
                 
+                // CRITICAL: Start foreground service BEFORE delay to satisfy Android 14+ FGS restrictions
+                // The service must be started from an eligible state/context (screen-on event)
+                if (canStartForegroundService()) {
+                    try {
+                        val countdownText = "Starting in ${delayMs / 1000.0}s…"
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            startForeground(
+                                NOTIF_ID,
+                                buildNotification(countdownText),
+                                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                            )
+                        } else {
+                            startForeground(NOTIF_ID, buildNotification(countdownText))
+                        }
+                        serviceHealthy = true
+                        Log.d(TAG, "Foreground service started with countdown notification")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Could not start foreground service during delay: ${e.message}")
+                        serviceHealthy = false
+                        updateServiceState(running = false)
+                        createRestartNotification()
+                        stopSelf()
+                        return
+                    }
+                } else {
+                    Log.d(TAG, "Delaying foreground service start due to boot restrictions")
+                    scheduleDelayedForegroundStart()
+                }
+                
                 // Schedule delayed activation
                 val scheduled = delayedActivationManager.scheduleDelayedActivation(delayMs)
                 
@@ -302,12 +332,12 @@ class MicLockService : Service() {
                 } else {
                     // Delay not applicable, start immediately
                     Log.d(TAG, "Delay not applicable, starting immediately")
-                    startMicHolding()
+                    startMicHolding(fromDelayCompletion = false)
                 }
             } else {
                 // No delay configured or delay not applicable, start immediately
                 Log.d(TAG, "No delay configured (${delayMs}ms), starting immediately")
-                startMicHolding()
+                startMicHolding(fromDelayCompletion = false)
             }
         } else {
             Log.w(TAG, "Service not running, ignoring START_HOLDING action. (Consider starting service first)")
@@ -423,14 +453,14 @@ class MicLockService : Service() {
 
     @RequiresApi(Build.VERSION_CODES.P)
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    internal fun startMicHolding() {
+    override fun startMicHolding(fromDelayCompletion: Boolean) {
         // This check is important. If the loop is active, we don't need to do anything.
         if (loopJob?.isActive == true) {
             Log.d(TAG, "Mic holding is already active.")
             return
         }
         // Change the log message to be more generic for screen on or user start
-        Log.i(TAG, "Starting or resuming mic holding logic.")
+        Log.i(TAG, "Starting or resuming mic holding logic. fromDelayCompletion=$fromDelayCompletion")
         
         // Clear any delay state since we're actually starting now
         if (::delayedActivationManager.isInitialized && delayedActivationManager.isActivationPending()) {
@@ -438,39 +468,47 @@ class MicLockService : Service() {
             updateServiceState(delayPending = false, delayRemainingMs = 0)
         }
 
-        // Try to start foreground service based on current conditions
-        if (canStartForegroundService()) {
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(
-                        NOTIF_ID,
-                        buildNotification("Starting…"),
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
-                    )
-                } else {
-                    startForeground(NOTIF_ID, buildNotification("Starting…"))
+        // Only start foreground service if NOT called from delay completion
+        // When called from delay completion, foreground service was already started in handleStartHolding
+        if (!fromDelayCompletion) {
+            // Try to start foreground service based on current conditions
+            if (canStartForegroundService()) {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        startForeground(
+                            NOTIF_ID,
+                            buildNotification("Starting…"),
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                        )
+                    } else {
+                        startForeground(NOTIF_ID, buildNotification("Starting…"))
+                    }
+                    serviceHealthy = true
+                    Log.d(TAG, "Foreground service started successfully")
+                } catch (e: Exception) {
+                    Log.w(TAG, "Could not start foreground service: ${e.message}")
+                    serviceHealthy = false
+                    updateServiceState(running = false)
+                    createRestartNotification()
+                    stopSelf()
+                    return
                 }
-                serviceHealthy = true
-                Log.d(TAG, "Foreground service started successfully")
-            } catch (e: Exception) {
-                Log.w(TAG, "Could not start foreground service: ${e.message}")
-                serviceHealthy = false
-                updateServiceState(running = false)
-                createRestartNotification()
-                stopSelf()
-                return
+            } else {
+                Log.d(TAG, "Delaying foreground service start due to boot restrictions")
+                scheduleDelayedForegroundStart()
             }
         } else {
-            Log.d(TAG, "Delaying foreground service start due to boot restrictions")
-            scheduleDelayedForegroundStart()
+            Log.d(TAG, "Skipping startForeground call - service already in foreground from delay scheduling")
+            // Update notification to show activation is complete
+            updateNotification("Recording active")
         }
 
         stopFlag.set(false)
         // Only update state if service is healthy
         if (serviceHealthy) {
-            updateServiceState(paused = false, running = true)
+            updateServiceState(paused = false, pausedByScreenOff = false, running = true)
         } else {
-            updateServiceState(paused = false, running = false)
+            updateServiceState(paused = false, pausedByScreenOff = false, running = false)
         }
         loopJob = scope.launch { holdSelectedMicLoop() }
     }
@@ -488,7 +526,7 @@ class MicLockService : Service() {
         recCallback = null
         mediaRecorderHolder?.stopRecording()
         mediaRecorderHolder = null
-        updateServiceState(deviceAddr = null, paused = true) // Mark as paused
+        updateServiceState(deviceAddr = null, pausedByScreenOff = true) // Mark as paused by screen-off
 
         updateNotification("Paused (Screen off)")
     }
@@ -926,6 +964,7 @@ class MicLockService : Service() {
     private fun updateServiceState(
         running: Boolean? = null, 
         paused: Boolean? = null, 
+        pausedByScreenOff: Boolean? = null,
         deviceAddr: String? = null,
         delayPending: Boolean? = null,
         delayRemainingMs: Long? = null
@@ -934,6 +973,7 @@ class MicLockService : Service() {
             currentState.copy(
                 isRunning = running ?: currentState.isRunning,
                 isPausedBySilence = paused ?: currentState.isPausedBySilence,
+                isPausedByScreenOff = pausedByScreenOff ?: currentState.isPausedByScreenOff,
                 currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress,
                 isDelayedActivationPending = delayPending ?: currentState.isDelayedActivationPending,
                 delayedActivationRemainingMs = delayRemainingMs ?: currentState.delayedActivationRemainingMs,
@@ -947,7 +987,7 @@ class MicLockService : Service() {
      * 
      * @return current ServiceState
      */
-    fun getCurrentState(): ServiceState = state.value
+    override fun getCurrentState(): ServiceState = state.value
 
     /**
      * Checks if the service was manually stopped by the user.
@@ -955,7 +995,7 @@ class MicLockService : Service() {
      * 
      * @return true if manually stopped by user, false otherwise
      */
-    fun isManuallyStoppedByUser(): Boolean {
+    override fun isManuallyStoppedByUser(): Boolean {
         val currentState = state.value
         // Service is considered manually stopped if it's not running and not paused by silence
         // This indicates user intentionally stopped it rather than system pausing it
@@ -968,7 +1008,7 @@ class MicLockService : Service() {
      * 
      * @return true if mic is actively held, false otherwise
      */
-    fun isMicActivelyHeld(): Boolean {
+    override fun isMicActivelyHeld(): Boolean {
         return loopJob?.isActive == true
     }
 

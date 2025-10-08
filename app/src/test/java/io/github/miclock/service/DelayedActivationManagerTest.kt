@@ -24,7 +24,7 @@ import org.robolectric.RuntimeEnvironment
 class DelayedActivationManagerTest {
 
     @Mock
-    private lateinit var mockService: MicLockService
+    private lateinit var mockService: MicActivationService
 
     private lateinit var context: Context
     private lateinit var testScope: TestScope
@@ -127,8 +127,8 @@ class DelayedActivationManagerTest {
         advanceTimeBy(100L)
         runCurrent() // Execute any pending coroutines
 
-        // Then: Should activate microphone
-        verify(mockService).startMicHolding()
+        // Then: Should activate microphone with fromDelayCompletion=true
+        verify(mockService).startMicHolding(fromDelayCompletion = true)
         assertFalse("Should not have pending activation after completion", delayedActivationManager.isActivationPending())
     }
 
@@ -206,7 +206,7 @@ class DelayedActivationManagerTest {
         runCurrent() // Execute any pending coroutines
 
         // Then: Should not activate microphone due to state change
-        verify(mockService, never()).startMicHolding()
+        verify(mockService, never()).startMicHolding(any())
         // Note: The pending activation flag may still be true until the coroutine completes and checks state
     }
 
@@ -227,7 +227,7 @@ class DelayedActivationManagerTest {
         runCurrent() // Execute any pending coroutines
 
         // Then: Should not activate microphone since mic is already actively held
-        verify(mockService, never()).startMicHolding()
+        verify(mockService, never()).startMicHolding(any())
         // Note: The pending activation flag may still be true until the coroutine completes and checks state
     }
 
@@ -386,7 +386,7 @@ class DelayedActivationManagerTest {
  */
 class TestableDelayedActivationManager(
     context: Context,
-    service: MicLockService,
+    service: MicActivationService,
     private val testScope: TestScope
 ) : DelayedActivationManager(context, service, testScope) {
     
