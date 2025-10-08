@@ -55,3 +55,6 @@ captures/
 
 # External libraries
 libs/ # If you are not managing libraries through Gradle dependencies
+
+.kiro
+.vscode

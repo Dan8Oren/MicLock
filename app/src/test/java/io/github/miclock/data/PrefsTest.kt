@@ -72,4 +72,74 @@ class PrefsTest {
         // Then
         assertThat(Prefs.getLastRecordingMethod(context)).isNull()
     }
+
+    @Test
+    fun `getScreenOnDelayMs default value should be 1300ms`() {
+        // Given: Fresh preferences (cleared in setUp)
+
+        // Then
+        assertThat(Prefs.getScreenOnDelayMs(context)).isEqualTo(1300L)
+    }
+
+    @Test
+    fun `setScreenOnDelayMs valid value should getScreenOnDelayMs return same value`() {
+        // When
+        Prefs.setScreenOnDelayMs(context, 2000L)
+
+        // Then
+        assertThat(Prefs.getScreenOnDelayMs(context)).isEqualTo(2000L)
+    }
+
+    @Test
+    fun `setScreenOnDelayMs minimum value 0 should work`() {
+        // When
+        Prefs.setScreenOnDelayMs(context, 0L)
+
+        // Then
+        assertThat(Prefs.getScreenOnDelayMs(context)).isEqualTo(0L)
+    }
+
+    @Test
+    fun `setScreenOnDelayMs maximum value 5000 should work`() {
+        // When
+        Prefs.setScreenOnDelayMs(context, 5000L)
+
+        // Then
+        assertThat(Prefs.getScreenOnDelayMs(context)).isEqualTo(5000L)
+    }
+
+    @Test
+    fun `setScreenOnDelayMs negative value should throw IllegalArgumentException`() {
+        // When/Then
+        try {
+            Prefs.setScreenOnDelayMs(context, -1L)
+            assertThat(false).isTrue() // Should not reach here
+        } catch (e: IllegalArgumentException) {
+            assertThat(e.message).contains("Screen-on delay must be between 0ms and 5000ms")
+        }
+    }
+
+    @Test
+    fun `setScreenOnDelayMs value above maximum should throw IllegalArgumentException`() {
+        // When/Then
+        try {
+            Prefs.setScreenOnDelayMs(context, 5001L)
+            assertThat(false).isTrue() // Should not reach here
+        } catch (e: IllegalArgumentException) {
+            assertThat(e.message).contains("Screen-on delay must be between 0ms and 5000ms")
+        }
+    }
+
+    @Test
+    fun `isValidScreenOnDelay should return true for valid values`() {
+        assertThat(Prefs.isValidScreenOnDelay(0L)).isTrue()
+        assertThat(Prefs.isValidScreenOnDelay(1300L)).isTrue()
+        assertThat(Prefs.isValidScreenOnDelay(5000L)).isTrue()
+    }
+
+    @Test
+    fun `isValidScreenOnDelay should return false for invalid values`() {
+        assertThat(Prefs.isValidScreenOnDelay(-1L)).isFalse()
+        assertThat(Prefs.isValidScreenOnDelay(5001L)).isFalse()
+    }
 }
