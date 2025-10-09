@@ -155,13 +155,13 @@ class MicLockService : Service(), MicActivationService {
         super.onDestroy()
         val wasRunning = state.value.isRunning
         stopFlag.set(true)
-        
+
         // Cleanup delayed activation manager
         if (::delayedActivationManager.isInitialized) {
             delayedActivationManager.cleanup()
             Log.d(TAG, "DelayedActivationManager cleaned up")
         }
-        
+
         scope.cancel()
         wakeLockManager.release()
         try { recCallback?.let { audioManager.unregisterAudioRecordingCallback(it) } } catch (_: Throwable) {}
@@ -284,21 +284,21 @@ class MicLockService : Service(), MicActivationService {
     private fun handleStartHolding(intent: Intent? = null) {
         val eventTimestamp = intent?.getLongExtra(ScreenStateReceiver.EXTRA_EVENT_TIMESTAMP, 0L) ?: 0L
         Log.i(TAG, "Received ACTION_START_HOLDING, isRunning: ${state.value.isRunning}, timestamp: $eventTimestamp")
-        
+
         if (state.value.isRunning) {
             // Get configured delay
             val delayMs = Prefs.getScreenOnDelayMs(this)
-            
+
             // Check if delay should be applied
             if (delayMs > 0 && delayedActivationManager.shouldApplyDelay()) {
                 Log.d(TAG, "Applying screen-on delay of ${delayMs}ms")
-                
+
                 // Cancel any existing pending activation (latest-event-wins strategy)
                 if (delayedActivationManager.isActivationPending()) {
                     Log.d(TAG, "Cancelling previous pending activation - restarting delay from beginning")
                     delayedActivationManager.cancelDelayedActivation()
                 }
-                
+
                 // CRITICAL: Start foreground service BEFORE delay to satisfy Android 14+ FGS restrictions
                 // The service must be started from an eligible state/context (screen-on event)
                 if (canStartForegroundService()) {
@@ -327,10 +327,10 @@ class MicLockService : Service(), MicActivationService {
                     Log.d(TAG, "Delaying foreground service start due to boot restrictions")
                     scheduleDelayedForegroundStart()
                 }
-                
+
                 // Schedule delayed activation
                 val scheduled = delayedActivationManager.scheduleDelayedActivation(delayMs)
-                
+
                 if (scheduled) {
                     // Update state to reflect pending activation
                     updateServiceState(
@@ -344,9 +344,12 @@ class MicLockService : Service(), MicActivationService {
                     startMicHolding(fromDelayCompletion = false)
                 }
             } else {
-                // No delay configured or delay not applicable, start immediately
-                Log.d(TAG, "No delay configured (${delayMs}ms), starting immediately")
-                startMicHolding(fromDelayCompletion = false)
+                if (delayMs == 0L){
+                    Log.d(TAG, "No delay configured (${delayMs}ms), starting immediately")
+                    startMicHolding(fromDelayCompletion = false)
+                }
+                // Always on Or Never
+                Log.d(TAG, "Always-On or Never configured, skipping reactivation")
             }
         } else {
             Log.w(TAG, "Service not running, ignoring START_HOLDING action. (Consider starting service first)")
@@ -356,13 +359,13 @@ class MicLockService : Service(), MicActivationService {
     private fun handleStopHolding(intent: Intent? = null) {
         val eventTimestamp = intent?.getLongExtra(ScreenStateReceiver.EXTRA_EVENT_TIMESTAMP, 0L) ?: 0L
         Log.i(TAG, "Received ACTION_STOP_HOLDING, timestamp: $eventTimestamp")
-        
+
         // Check if always-on mode is enabled
         if (::delayedActivationManager.isInitialized && delayedActivationManager.isAlwaysOnMode()) {
             Log.d(TAG, "Always-on mode enabled, ignoring screen-off event")
             return
         }
-        
+
         // Cancel any pending delayed activation
         if (::delayedActivationManager.isInitialized) {
             val wasCancelled = delayedActivationManager.cancelDelayedActivation()
@@ -374,7 +377,7 @@ class MicLockService : Service(), MicActivationService {
                 )
             }
         }
-        
+
         stopMicHolding()
     }
 
@@ -386,7 +389,7 @@ class MicLockService : Service(), MicActivationService {
                 Log.d(TAG, "Cancelled pending delayed activation due to manual stop")
             }
         }
-        
+
         updateServiceState(running = false, delayPending = false, delayRemainingMs = 0)
         stopMicHolding()
         stopSelf() // Full stop from user
@@ -476,7 +479,7 @@ class MicLockService : Service(), MicActivationService {
         }
         // Change the log message to be more generic for screen on or user start
         Log.i(TAG, "Starting or resuming mic holding logic. fromDelayCompletion=$fromDelayCompletion")
-        
+
         // Clear any delay state since we're actually starting now
         if (fromDelayCompletion || (::delayedActivationManager.isInitialized && delayedActivationManager.isActivationPending())) {
             Log.d(TAG, "Clearing delay state as mic holding is starting (fromDelayCompletion=$fromDelayCompletion)")
@@ -977,8 +980,8 @@ class MicLockService : Service(), MicActivationService {
     }
 
     private fun updateServiceState(
-        running: Boolean? = null, 
-        paused: Boolean? = null, 
+        running: Boolean? = null,
+        paused: Boolean? = null,
         pausedByScreenOff: Boolean? = null,
         deviceAddr: String? = null,
         delayPending: Boolean? = null,
@@ -994,7 +997,7 @@ class MicLockService : Service(), MicActivationService {
                 delayedActivationRemainingMs = delayRemainingMs ?: currentState.delayedActivationRemainingMs,
             )
         }
-        
+
         // Request tile update whenever service state changes
         requestTileUpdate()
     }
@@ -1014,7 +1017,7 @@ class MicLockService : Service(), MicActivationService {
     /**
      * Gets the current service state.
      * Used by DelayedActivationManager for state validation.
-     * 
+     *
      * @return current ServiceState
      */
     override fun getCurrentState(): ServiceState = state.value
@@ -1022,7 +1025,7 @@ class MicLockService : Service(), MicActivationService {
     /**
      * Checks if the service was manually stopped by the user.
      * This is determined by checking if the service is not running and was explicitly stopped.
-     * 
+     *
      * @return true if manually stopped by user, false otherwise
      */
     override fun isManuallyStoppedByUser(): Boolean {
@@ -1035,7 +1038,7 @@ class MicLockService : Service(), MicActivationService {
     /**
      * Checks if the microphone is actively being held (recording loop is active).
      * This is different from service running - service can be running but paused (screen off).
-     * 
+     *
      * @return true if mic is actively held, false otherwise
      */
     override fun isMicActivelyHeld(): Boolean {

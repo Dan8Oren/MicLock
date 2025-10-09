@@ -92,10 +92,10 @@ object Prefs {
     fun sliderToDelayMs(sliderValue: Float): Long {
         return when {
             // Snap zone for "Always on" (0-5) - far left
-            sliderValue <= 5f -> ALWAYS_KEEP_ON_VALUE
+            sliderValue <= 9f -> ALWAYS_KEEP_ON_VALUE
 
             // Snap zone for "Never re-enable" (95-100) - far right
-            sliderValue >= 95f -> NEVER_REACTIVATE_VALUE
+            sliderValue >= 91f -> NEVER_REACTIVATE_VALUE
 
             // Delay range (10-90) with snapping to nearest valid position
             else -> {
