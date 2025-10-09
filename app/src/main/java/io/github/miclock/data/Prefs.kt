@@ -79,8 +79,8 @@ object Prefs {
     // Slider mapping constants
     const val SLIDER_MIN = 0f
     const val SLIDER_MAX = 100f
-    const val SLIDER_NEVER_REACTIVATE = 0f // Far left
-    const val SLIDER_ALWAYS_ON = 100f // Far right
+    const val SLIDER_ALWAYS_ON = 0f // Far left (immediate/no delay)
+    const val SLIDER_NEVER_REACTIVATE = 100f // Far right (maximum restriction)
     const val SLIDER_DELAY_START = 10f // Start of delay range
     const val SLIDER_DELAY_END = 90f // End of delay range
 
@@ -91,11 +91,11 @@ object Prefs {
      */
     fun sliderToDelayMs(sliderValue: Float): Long {
         return when {
-            // Snap zone for "Never re-enable" (0-5)
-            sliderValue <= 5f -> NEVER_REACTIVATE_VALUE
+            // Snap zone for "Always on" (0-5) - far left
+            sliderValue <= 5f -> ALWAYS_KEEP_ON_VALUE
 
-            // Snap zone for "Always on" (95-100)
-            sliderValue >= 95f -> ALWAYS_KEEP_ON_VALUE
+            // Snap zone for "Never re-enable" (95-100) - far right
+            sliderValue >= 95f -> NEVER_REACTIVATE_VALUE
 
             // Delay range (10-90) with snapping to nearest valid position
             else -> {
@@ -125,11 +125,11 @@ object Prefs {
      */
     fun snapSliderValue(sliderValue: Float): Float {
         return when {
-            // Snap to "Never re-enable" zone
-            sliderValue <= 5f -> SLIDER_NEVER_REACTIVATE
+            // Snap to "Always on" zone (far left)
+            sliderValue <= 5f -> SLIDER_ALWAYS_ON
 
-            // Snap to "Always on" zone
-            sliderValue >= 95f -> SLIDER_ALWAYS_ON
+            // Snap to "Never re-enable" zone (far right)
+            sliderValue >= 95f -> SLIDER_NEVER_REACTIVATE
 
             // Snap to delay range boundaries if in transition zones
             sliderValue < SLIDER_DELAY_START -> SLIDER_DELAY_START
@@ -147,8 +147,8 @@ object Prefs {
      */
     fun delayMsToSlider(delayMs: Long): Float {
         return when (delayMs) {
-            NEVER_REACTIVATE_VALUE -> SLIDER_NEVER_REACTIVATE
-            ALWAYS_KEEP_ON_VALUE -> SLIDER_ALWAYS_ON
+            ALWAYS_KEEP_ON_VALUE -> SLIDER_ALWAYS_ON // Position 0 (far left)
+            NEVER_REACTIVATE_VALUE -> SLIDER_NEVER_REACTIVATE // Position 100 (far right)
             else -> {
                 // Map delay range (0-5000ms) to slider range (10-90)
                 val normalizedDelay = delayMs.toFloat() / MAX_SCREEN_ON_DELAY_MS.toFloat()

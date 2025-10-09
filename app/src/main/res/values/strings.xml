@@ -5,8 +5,8 @@
 
     <!-- Screen-on delay configuration -->
     <string name="screen_on_delay_title">Screen Behavior</string>
-    <string name="screen_on_delay_summary">Wait %1$.1f seconds before activating when screen turns back on</string>
-    <string name="screen_on_delay_disabled"> No Delay (activates immediately when screen turns on)</string>
-    <string name="screen_on_delay_never_reactivate">Mic stays inactive after screen was turned off</string>
-    <string name="screen_on_delay_always_on">Always keep microphone active (effects battery usage)</string>
+    <string name="screen_on_delay_summary">Wait %1$.1f seconds after screen turns on before reactivating</string>
+    <string name="screen_on_delay_disabled">Reactivates immediately when screen turns on</string>
+    <string name="screen_on_delay_never_reactivate">Stays off after screen turns off (manual restart required)</string>
+    <string name="screen_on_delay_always_on">Ignores screen state (stays active even when screen is off)</string>
 </resources>

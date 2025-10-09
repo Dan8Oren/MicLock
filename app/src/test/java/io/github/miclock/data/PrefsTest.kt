@@ -109,13 +109,31 @@ class PrefsTest {
     }
 
     @Test
-    fun `setScreenOnDelayMs negative value should throw IllegalArgumentException`() {
+    fun `setScreenOnDelayMs never reactivate value should work`() {
+        // When
+        Prefs.setScreenOnDelayMs(context, Prefs.NEVER_REACTIVATE_VALUE)
+
+        // Then
+        assertThat(Prefs.getScreenOnDelayMs(context)).isEqualTo(Prefs.NEVER_REACTIVATE_VALUE)
+    }
+
+    @Test
+    fun `setScreenOnDelayMs always on value should work`() {
+        // When
+        Prefs.setScreenOnDelayMs(context, Prefs.ALWAYS_KEEP_ON_VALUE)
+
+        // Then
+        assertThat(Prefs.getScreenOnDelayMs(context)).isEqualTo(Prefs.ALWAYS_KEEP_ON_VALUE)
+    }
+
+    @Test
+    fun `setScreenOnDelayMs invalid negative value should throw IllegalArgumentException`() {
         // When/Then
         try {
-            Prefs.setScreenOnDelayMs(context, -1L)
+            Prefs.setScreenOnDelayMs(context, -3L) // Invalid negative value (not -1 or -2)
             assertThat(false).isTrue() // Should not reach here
         } catch (e: IllegalArgumentException) {
-            assertThat(e.message).contains("Screen-on delay must be between 0ms and 5000ms")
+            assertThat(e.message).contains("Screen-on delay must be between")
         }
     }
 
@@ -135,11 +153,59 @@ class PrefsTest {
         assertThat(Prefs.isValidScreenOnDelay(0L)).isTrue()
         assertThat(Prefs.isValidScreenOnDelay(1300L)).isTrue()
         assertThat(Prefs.isValidScreenOnDelay(5000L)).isTrue()
+        assertThat(Prefs.isValidScreenOnDelay(Prefs.NEVER_REACTIVATE_VALUE)).isTrue()
+        assertThat(Prefs.isValidScreenOnDelay(Prefs.ALWAYS_KEEP_ON_VALUE)).isTrue()
     }
 
     @Test
     fun `isValidScreenOnDelay should return false for invalid values`() {
-        assertThat(Prefs.isValidScreenOnDelay(-1L)).isFalse()
+        assertThat(Prefs.isValidScreenOnDelay(-3L)).isFalse() // Invalid negative value
         assertThat(Prefs.isValidScreenOnDelay(5001L)).isFalse()
+        assertThat(Prefs.isValidScreenOnDelay(-100L)).isFalse() // Another invalid negative
+    }
+
+    @Test
+    fun `sliderToDelayMs should map special values correctly`() {
+        // Always on (far left)
+        assertThat(Prefs.sliderToDelayMs(0f)).isEqualTo(Prefs.ALWAYS_KEEP_ON_VALUE)
+        assertThat(Prefs.sliderToDelayMs(5f)).isEqualTo(Prefs.ALWAYS_KEEP_ON_VALUE)
+        
+        // Never reactivate (far right)
+        assertThat(Prefs.sliderToDelayMs(95f)).isEqualTo(Prefs.NEVER_REACTIVATE_VALUE)
+        assertThat(Prefs.sliderToDelayMs(100f)).isEqualTo(Prefs.NEVER_REACTIVATE_VALUE)
+        
+        // Delay range
+        assertThat(Prefs.sliderToDelayMs(10f)).isEqualTo(0L) // Start of delay range
+        assertThat(Prefs.sliderToDelayMs(90f)).isEqualTo(5000L) // End of delay range
+        assertThat(Prefs.sliderToDelayMs(50f)).isEqualTo(2500L) // Middle of delay range
+    }
+
+    @Test
+    fun `delayMsToSlider should map special values correctly`() {
+        // Special values
+        assertThat(Prefs.delayMsToSlider(Prefs.ALWAYS_KEEP_ON_VALUE)).isEqualTo(0f)
+        assertThat(Prefs.delayMsToSlider(Prefs.NEVER_REACTIVATE_VALUE)).isEqualTo(100f)
+        
+        // Delay values
+        assertThat(Prefs.delayMsToSlider(0L)).isEqualTo(10f) // Start of delay range
+        assertThat(Prefs.delayMsToSlider(5000L)).isEqualTo(90f) // End of delay range
+        assertThat(Prefs.delayMsToSlider(2500L)).isEqualTo(50f) // Middle of delay range
+    }
+
+    @Test
+    fun `snapSliderValue should snap to correct zones`() {
+        // Always on zone
+        assertThat(Prefs.snapSliderValue(0f)).isEqualTo(0f)
+        assertThat(Prefs.snapSliderValue(3f)).isEqualTo(0f)
+        assertThat(Prefs.snapSliderValue(5f)).isEqualTo(0f)
+        
+        // Never reactivate zone
+        assertThat(Prefs.snapSliderValue(95f)).isEqualTo(100f)
+        assertThat(Prefs.snapSliderValue(97f)).isEqualTo(100f)
+        assertThat(Prefs.snapSliderValue(100f)).isEqualTo(100f)
+        
+        // Delay range
+        assertThat(Prefs.snapSliderValue(50f)).isEqualTo(50f)
+        assertThat(Prefs.snapSliderValue(25.7f)).isEqualTo(26f) // Rounds to nearest integer
     }
 }

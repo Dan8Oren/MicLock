@@ -178,103 +178,119 @@
                             android:textColor="@color/on_surface_variant"
                             android:layout_marginBottom="8dp" />
 
-                        <!-- Phase indicator labels -->
+                        <!-- Phase indicator labels - subtle and integrated -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:layout_marginBottom="4dp">
+                            android:layout_marginBottom="4dp"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp">
 
                             <TextView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Never"
-                                android:textSize="10sp"
-                                android:textColor="@color/error_red"
+                                android:layout_weight="2"
+                                android:text="Always"
+                                android:textSize="9sp"
+                                android:textColor="@color/secondary_green"
                                 android:gravity="start"
-                                android:alpha="0.7" />
+                                android:alpha="0.8"
+                                android:textStyle="bold" />
 
                             <TextView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="8"
                                 android:text="Delay (0-5s)"
-                                android:textSize="10sp"
+                                android:textSize="9sp"
                                 android:textColor="@color/on_surface_variant"
                                 android:gravity="center"
-                                android:alpha="0.7" />
+                                android:alpha="0.8"
+                                android:textStyle="bold"/>
 
                             <TextView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Always"
-                                android:textSize="10sp"
-                                android:textColor="@color/secondary_green"
+                                android:layout_weight="2"
+                                android:text="Never"
+                                android:textSize="9sp"
+                                android:textColor="@color/error_red"
                                 android:gravity="end"
-                                android:alpha="0.7" />
+                                android:alpha="0.8"
+                                android:textStyle="bold" />
 
                         </LinearLayout>
 
-                        <com.google.android.material.slider.Slider
-                            android:id="@+id/screenOnDelaySlider"
+                        <!-- Slider with integrated background zones -->
+                        <FrameLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:stepSize="1"
-                            app:thumbColor="@color/secondary_green"
-                            app:trackColorActive="@color/secondary_green"
-                            app:trackColorInactive="@color/outline"
-                            app:labelBehavior="gone" />
+                            android:layout_height="wrap_content">
 
-                        <!-- Visual phase indicators -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginTop="4dp">
+                            <!-- Background zones behind the slider -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="10dp"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginStart="12dp"
+                                android:layout_marginEnd="12dp"
+                                android:orientation="horizontal">
 
-                            <!-- Never re-enable zone indicator -->
-                            <View
-                                android:layout_width="0dp"
-                                android:layout_height="3dp"
-                                android:layout_weight="0.5"
-                                android:background="@color/error_red"
-                                android:alpha="0.6" />
+                                <!-- Always on zone (green) -->
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="0.6"
+                                    android:background="@color/secondary_green"
+                                    android:alpha="0.6" />
 
-                            <!-- Transition zone -->
-                            <View
-                                android:layout_width="0dp"
-                                android:layout_height="3dp"
-                                android:layout_weight="0.8"
-                                android:background="@color/outline"
-                                android:alpha="0.3" />
+                                <!-- Transition -->
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="0.8"
+                                    android:background="@color/outline"
+                                    android:alpha="0.3" />
 
-                            <!-- Delay zone indicator -->
-                            <View
-                                android:layout_width="0dp"
-                                android:layout_height="3dp"
-                                android:layout_weight="7"
-                                android:background="@color/on_surface_variant"
-                                android:alpha="0.4" />
+                                <!-- Delay zone (gray) -->
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="8"
+                                    android:background="@color/on_surface_variant"
+                                    android:alpha="0.6" />
 
-                            <!-- Transition zone -->
-                            <View
-                                android:layout_width="0dp"
-                                android:layout_height="3dp"
-                                android:layout_weight="0.8"
-                                android:background="@color/outline"
-                                android:alpha="0.3" />
+                                <!-- Transition -->
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="0.8"
+                                    android:background="@color/outline"
+                                    android:alpha="0.3" />
 
-                            <!-- Always on zone indicator -->
-                            <View
-                                android:layout_width="0dp"
-                                android:layout_height="3dp"
-                                android:layout_weight="0.5"
-                                android:background="@color/secondary_green"
-                                android:alpha="0.6" />
+                                <!-- Never reactivate zone (red) -->
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="0.6"
+                                    android:background="@color/error_red"
+                                    android:alpha="0.6" />
 
-                        </LinearLayout>
+                            </LinearLayout>
+
+                            <!-- Slider on top -->
+                            <com.google.android.material.slider.Slider
+                                android:id="@+id/screenOnDelaySlider"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:stepSize="1"
+                                app:labelBehavior="gone"
+                                app:thumbColor="@color/secondary_green"
+                                app:tickVisible="false"
+                                app:trackColorActive="@color/secondary_green"
+                                app:trackColorInactive="@android:color/transparent" />
+
+                        </FrameLayout>
 
                     </LinearLayout>
 
