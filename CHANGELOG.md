@@ -5,33 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.1] - 2025-01-25
+## [1.1.1] - 2025-10-09
 
 ### Added
-- **Intelligent Screen-On Delay**: Configurable delay (default 1.3 seconds) before re-activating microphone when screen turns on, preventing unnecessary battery drain during brief screen interactions like checking notifications or battery level.
+- **Configurable Screen-Off Behavior**:
+  Default configuration is set to 1.3 seconds of Delayed Reactivatoin. configuration options are:
+   a. **Always-On**: Keeps the microphone usage on even when the screen is off. might be a good usage for thoes who has quick microphone usage even when the screen is off (more battery usage, less recommanded).
+   b. **Delayed Reactivatoin**: (Recommanded Approach) Microphone turns off when screen is off with a configurable delay for re-activating the microphone when screen turns back on.preventing unnecessary battery drain during brief screen interactions like checking notifications or battery level.
+   c. **Stays-Off**: Turns the microphone usage off once the screen turns off and does not re-activates it. (recommanded for thoes who wants minimum battery usage, but requires manual re-activation before usage.)
+
 - **DelayedActivationManager**: New component for robust delay handling with proper race condition management and coroutine-based implementation.
-- **Screen-On Delay Configuration**: User-configurable delay setting with range of 0-5000ms, accessible through the main app interface with real-time slider feedback.
+
 
 ### Enhanced
 - **Battery Optimization**: Significantly reduced power consumption by avoiding microphone operations during brief screen interactions while maintaining responsive behavior for legitimate usage.
-- **Race Condition Handling**: Comprehensive handling of rapid screen state changes with automatic delay cancellation and restart logic.
-- **Service State Management**: Enhanced state validation to distinguish between different pause reasons (screen-off vs silence-pause vs other-app-pause).
-- **Foreground Service Integration**: Improved foreground service lifecycle management during delay operations with proper notification updates.
 - **Quick Settings Tile**: Enhanced tile to display "Activating..." state during delay periods with manual override capability.
 
-### Fixed
-- **Screen State Logic**: Fixed critical bug where screen-off events incorrectly set silence pause state, preventing proper delay activation on screen-on.
-- **Service State Validation**: Corrected logic to distinguish between service running and microphone actively held, allowing delays when service is paused by screen-off.
-- **Foreground Service Timing**: Fixed Android 14+ compatibility by starting foreground service immediately when delay is scheduled, preventing "FGS must be started from eligible state" errors.
 
 ### Technical Improvements
 - Coroutine-based delay implementation with proper job cancellation and cleanup
 - Atomic state updates and synchronized operations for thread safety
 - Timestamp-based race condition detection and latest-event-wins strategy
 - Enhanced service lifecycle integration with delay state persistence
-- Improved notification system with countdown display during delay periods
 
-## [1.1.0] - 2025-01-24
+## [1.1.0] - 2025-10-01
 
 ### Added
 - **Intelligent Quick Settings Tile**: A new state-aware Quick Settings tile that provides at-a-glance status (On, Off, Paused) and one-tap control of the MicLock service.
@@ -41,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The tile now displays a "Paused" state when another app is using the microphone, providing clearer feedback to the user.
 - The tile shows an unavailable state with a "No Permission" label if required permissions have not been granted.
 
-## [1.0.1] - 2025-01-23
+## [1.0.1] - 2025-09-23
 
 ### Enhanced
 - **Improved Service Reliability (Always-On Foreground Service):** The MicLockService now remains in the foreground at all times when active, even when the screen is off. This significantly improves service reliability by preventing the Android system from terminating the background process.
@@ -52,10 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Addressed issues where the service could be terminated by aggressive OEM power management when the screen was off
 
-## [1.0.0] - 2024-01-20
+## [1.0.0] - 2025-09-21
 
 ### Added
-- Initial public release of Mic-Lock
+- Initial public release of MicLock
 - Core functionality to reroute audio from faulty bottom microphone to earpiece microphone on Google Pixel devices
 - Battery-efficient background service with dual recording strategy (MediaRecorder/AudioRecord modes)
 - Polite background holding mechanism that yields to foreground applications
@@ -87,4 +84,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [1.1.1]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.1.1
 [1.1.0]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.1.0
+[1.0.1]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.0.1
 [1.0.0]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.0.0
