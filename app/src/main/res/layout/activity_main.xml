@@ -182,8 +182,6 @@
                             android:id="@+id/screenOnDelaySlider"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:valueFrom="0"
-                            android:valueTo="5000"
                             android:stepSize="100"
                             app:thumbColor="@color/secondary_green"
                             app:trackColorActive="@color/secondary_green"

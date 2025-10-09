@@ -99,6 +99,8 @@ class MainActivity : ComponentActivity() {
         }
 
         // Initialize screen-on delay slider
+        screenOnDelaySlider.valueFrom = Prefs.MIN_SCREEN_ON_DELAY_MS.toFloat()
+        screenOnDelaySlider.valueTo = Prefs.MAX_SCREEN_ON_DELAY_MS.toFloat()
         val currentDelay = Prefs.getScreenOnDelayMs(this)
         screenOnDelaySlider.value = currentDelay.toFloat()
         updateDelayConfigurationUi(currentDelay)
