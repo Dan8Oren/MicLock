@@ -4,7 +4,9 @@
     <string name="tile_description">Quick toggle for microphone protection</string>
 
     <!-- Screen-on delay configuration -->
-    <string name="screen_on_delay_title">Screen-On Delay</string>
-    <string name="screen_on_delay_summary">Wait %1$.1f seconds before activating when screen turns on</string>
-    <string name="screen_on_delay_disabled">Disabled (activates immediately)</string>
+    <string name="screen_on_delay_title">Screen Behavior</string>
+    <string name="screen_on_delay_summary">Wait %1$.1f seconds before activating when screen turns back on</string>
+    <string name="screen_on_delay_disabled"> No Delay (activates immediately when screen turns on)</string>
+    <string name="screen_on_delay_never_reactivate">Mic stays inactive after screen was turned off</string>
+    <string name="screen_on_delay_always_on">Always keep microphone active (effects battery usage)</string>
 </resources>

@@ -357,6 +357,12 @@ class MicLockService : Service(), MicActivationService {
         val eventTimestamp = intent?.getLongExtra(ScreenStateReceiver.EXTRA_EVENT_TIMESTAMP, 0L) ?: 0L
         Log.i(TAG, "Received ACTION_STOP_HOLDING, timestamp: $eventTimestamp")
         
+        // Check if always-on mode is enabled
+        if (::delayedActivationManager.isInitialized && delayedActivationManager.isAlwaysOnMode()) {
+            Log.d(TAG, "Always-on mode enabled, ignoring screen-off event")
+            return
+        }
+        
         // Cancel any pending delayed activation
         if (::delayedActivationManager.isInitialized) {
             val wasCancelled = delayedActivationManager.cancelDelayedActivation()

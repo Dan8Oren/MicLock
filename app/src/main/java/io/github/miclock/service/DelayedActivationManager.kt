@@ -218,6 +218,24 @@ open class DelayedActivationManager(
     }
 
     /**
+     * Checks if the app is configured to never re-enable after screen-off.
+     * 
+     * @return true if never re-enable mode is active, false otherwise
+     */
+    fun isNeverReactivateMode(): Boolean {
+        return Prefs.getScreenOnDelayMs(context) == Prefs.NEVER_REACTIVATE_VALUE
+    }
+
+    /**
+     * Checks if the app is configured to always keep mic on (ignore screen state).
+     * 
+     * @return true if always-on mode is active, false otherwise
+     */
+    fun isAlwaysOnMode(): Boolean {
+        return Prefs.getScreenOnDelayMs(context) == Prefs.ALWAYS_KEEP_ON_VALUE
+    }
+
+    /**
      * Determines if delay should be applied based on current conditions.
      * 
      * @return true if delay should be applied, false otherwise
@@ -226,6 +244,18 @@ open class DelayedActivationManager(
         val delayMs = Prefs.getScreenOnDelayMs(context)
         
         return when {
+            // Never re-enable mode
+            delayMs == Prefs.NEVER_REACTIVATE_VALUE -> {
+                Log.d(TAG, "Never re-enable mode active, blocking activation")
+                false
+            }
+            
+            // Always-on mode (should not apply delay, but should activate immediately)
+            delayMs == Prefs.ALWAYS_KEEP_ON_VALUE -> {
+                Log.d(TAG, "Always-on mode active, no delay needed")
+                false
+            }
+            
             // Delay is disabled (0ms)
             delayMs <= 0L -> {
                 Log.d(TAG, "Delay disabled (${delayMs}ms)")

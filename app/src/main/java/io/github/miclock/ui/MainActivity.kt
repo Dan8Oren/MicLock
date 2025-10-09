@@ -98,16 +98,26 @@ class MainActivity : ComponentActivity() {
             updateCompatibilityModeUi()
         }
 
-        // Initialize screen-on delay slider
-        screenOnDelaySlider.valueFrom = Prefs.MIN_SCREEN_ON_DELAY_MS.toFloat()
-        screenOnDelaySlider.valueTo = Prefs.MAX_SCREEN_ON_DELAY_MS.toFloat()
+        // Initialize screen-on delay slider with logical mapping
+        screenOnDelaySlider.valueFrom = Prefs.SLIDER_MIN
+        screenOnDelaySlider.valueTo = Prefs.SLIDER_MAX
         val currentDelay = Prefs.getScreenOnDelayMs(this)
-        screenOnDelaySlider.value = currentDelay.toFloat()
+        screenOnDelaySlider.value = Prefs.delayMsToSlider(currentDelay)
         updateDelayConfigurationUi(currentDelay)
 
         screenOnDelaySlider.addOnChangeListener { _, value, fromUser ->
             if (fromUser) {
-                val delayMs = value.toLong()
+                // Snap to nearest valid position for clear phase boundaries
+                val snappedValue = Prefs.snapSliderValue(value)
+                
+                // Convert snapped position to delay value
+                val delayMs = Prefs.sliderToDelayMs(snappedValue)
+                
+                // Update slider to show the snapped position (creates the snappy feel)
+                if (screenOnDelaySlider.value != snappedValue) {
+                    screenOnDelaySlider.value = snappedValue
+                }
+                
                 handleDelayPreferenceChange(delayMs)
             }
         }
@@ -328,14 +338,23 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Updates the delay configuration UI to reflect the current delay value.
-     * Shows appropriate summary text based on whether delay is enabled or disabled.
+     * Shows appropriate summary text for all behavior modes.
      */
     private fun updateDelayConfigurationUi(delayMs: Long) {
-        if (delayMs <= 0L) {
-            screenOnDelaySummary.text = getString(R.string.screen_on_delay_disabled)
-        } else {
-            val delaySeconds = delayMs / 1000.0
-            screenOnDelaySummary.text = getString(R.string.screen_on_delay_summary, delaySeconds)
+        when {
+            delayMs == Prefs.NEVER_REACTIVATE_VALUE -> {
+                screenOnDelaySummary.text = getString(R.string.screen_on_delay_never_reactivate)
+            }
+            delayMs == Prefs.ALWAYS_KEEP_ON_VALUE -> {
+                screenOnDelaySummary.text = getString(R.string.screen_on_delay_always_on)
+            }
+            delayMs <= 0L -> {
+                screenOnDelaySummary.text = getString(R.string.screen_on_delay_disabled)
+            }
+            else -> {
+                val delaySeconds = delayMs / 1000.0
+                screenOnDelaySummary.text = getString(R.string.screen_on_delay_summary, delaySeconds)
+            }
         }
     }
 
