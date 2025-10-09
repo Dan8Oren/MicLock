@@ -85,7 +85,7 @@ Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to
 
 Mic-Lock must implement configurable delayed activation to optimize battery usage while maintaining responsive behavior:
 
-* **Configurable Delay Period:** Provide user-configurable delay (0-5000ms, default 1300ms) before re-activating microphone when screen turns on
+* **Configurable Delay Period:** Provide user-configurable delay (0-5000ms) before re-activating microphone when screen turns on
 * **Smart Cancellation Logic:** Cancel pending activation if screen turns off during delay period, preventing unnecessary operations
 * **Race Condition Handling:** Handle rapid screen state changes with latest-event-wins strategy and proper coroutine job management
 * **State Validation:** Ensure delays only apply when appropriate (service paused by screen-off, not manually stopped or already active)

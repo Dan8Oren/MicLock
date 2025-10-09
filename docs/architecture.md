@@ -159,7 +159,7 @@ flowchart TD
 ### Power Management
 - **Wake Lock Management**: Minimal CPU wake locks only during active recording
 - **Screen State Integration**: To maximize reliability, the service remains in the foreground even when the screen is off. When the screen turns off, microphone usage is paused to conserve battery, and the notification is updated to "Paused (Screen off)". This prevents the OS from killing the service.
-- **Intelligent Delay System**: Configurable delays (default 1.3 seconds) before re-activating microphone when screen turns on, preventing unnecessary operations during brief screen interactions
+- **Intelligent Delay System**: Configurable delays before re-activating microphone when screen turns on, preventing unnecessary operations during brief screen interactions
 - **Foreground Service**: Prevents system termination while maintaining low priority
 
 ### Delayed Activation Flow
