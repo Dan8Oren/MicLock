@@ -27,7 +27,6 @@ import io.github.miclock.service.MicLockService
 import io.github.miclock.tile.EXTRA_START_SERVICE_FROM_TILE
 import io.github.miclock.tile.MicLockTileService
 import io.github.miclock.util.ApiGuard
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -109,15 +108,15 @@ open class MainActivity : ComponentActivity() {
             if (fromUser) {
                 // Snap to nearest valid position for clear phase boundaries
                 val snappedValue = Prefs.snapSliderValue(value)
-                
+
                 // Convert snapped position to delay value
                 val delayMs = Prefs.sliderToDelayMs(snappedValue)
-                
+
                 // Update slider to show the snapped position (creates the snappy feel)
                 if (screenOnDelaySlider.value != snappedValue) {
                     screenOnDelaySlider.value = snappedValue
                 }
-                
+
                 handleDelayPreferenceChange(delayMs)
             }
         }
@@ -344,17 +343,17 @@ open class MainActivity : ComponentActivity() {
     private fun updateDelayConfigurationUi(delayMs: Long) {
         when {
             delayMs == Prefs.NEVER_REACTIVATE_VALUE -> {
-                screenOnDelaySummary.text = getString(R.string.screen_on_delay_never_reactivate)
+                screenOnDelaySummary.text = getString(R.string.screen_off_stays_off_description)
             }
             delayMs == Prefs.ALWAYS_KEEP_ON_VALUE -> {
-                screenOnDelaySummary.text = getString(R.string.screen_on_delay_always_on)
+                screenOnDelaySummary.text = getString(R.string.screen_off_always_on_description)
             }
             delayMs <= 0L -> {
-                screenOnDelaySummary.text = getString(R.string.screen_on_delay_disabled)
+                screenOnDelaySummary.text = getString(R.string.screen_off_no_delay_description)
             }
             else -> {
                 val delaySeconds = delayMs / 1000.0
-                screenOnDelaySummary.text = getString(R.string.screen_on_delay_summary, delaySeconds)
+                screenOnDelaySummary.text = getString(R.string.screen_off_delay_description, delaySeconds)
             }
         }
     }

@@ -4,9 +4,12 @@
     <string name="tile_description">Quick toggle for microphone protection</string>
 
     <!-- Screen-on delay configuration -->
-    <string name="screen_on_delay_title">Screen Behavior</string>
-    <string name="screen_on_delay_summary">Wait %1$.1f seconds after screen turns on before reactivating</string>
-    <string name="screen_on_delay_disabled">Reactivates immediately when screen turns on</string>
-    <string name="screen_on_delay_never_reactivate">Stays off after screen turns off (manual restart required)</string>
-    <string name="screen_on_delay_always_on">Ignores screen state (stays active even when screen is off)</string>
+    <string name="screen_off_behavior_title">Screen-Off Behavior</string>
+    <string name="screen_off_delay_description">Wait %1$.1f seconds after screen turns back on and reactivates</string>
+    <string name="screen_off_no_delay_description">Reactivates immediately when screen turns on</string>
+    <string name="screen_off_stays_off_description">Stays off after screen turns off (manual restart required)</string>
+    <string name="screen_off_always_on_description">Ignores screen state (stays active even when screen is off)</string>
+    <string name="screen_off_delay_label">Delayed Reactivation (0–5s)</string>
+    <string name="screen_off_stays_off_label">Stays-Off</string>
+    <string name="screen_off_always_on_label">Always-On</string>
 </resources>
