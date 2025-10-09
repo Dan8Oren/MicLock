@@ -3,6 +3,7 @@
 *.aab
 *.aar
 *.apk
+./app/release/
 
 # Files for the Dalvik VM
 *.dex

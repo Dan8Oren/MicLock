@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-01-25
+
+### Added
+- **Intelligent Screen-On Delay**: Configurable delay (default 1.3 seconds) before re-activating microphone when screen turns on, preventing unnecessary battery drain during brief screen interactions like checking notifications or battery level.
+- **DelayedActivationManager**: New component for robust delay handling with proper race condition management and coroutine-based implementation.
+- **Screen-On Delay Configuration**: User-configurable delay setting with range of 0-5000ms, accessible through the main app interface with real-time slider feedback.
+
+### Enhanced
+- **Battery Optimization**: Significantly reduced power consumption by avoiding microphone operations during brief screen interactions while maintaining responsive behavior for legitimate usage.
+- **Race Condition Handling**: Comprehensive handling of rapid screen state changes with automatic delay cancellation and restart logic.
+- **Service State Management**: Enhanced state validation to distinguish between different pause reasons (screen-off vs silence-pause vs other-app-pause).
+- **Foreground Service Integration**: Improved foreground service lifecycle management during delay operations with proper notification updates.
+- **Quick Settings Tile**: Enhanced tile to display "Activating..." state during delay periods with manual override capability.
+
+### Fixed
+- **Screen State Logic**: Fixed critical bug where screen-off events incorrectly set silence pause state, preventing proper delay activation on screen-on.
+- **Service State Validation**: Corrected logic to distinguish between service running and microphone actively held, allowing delays when service is paused by screen-off.
+- **Foreground Service Timing**: Fixed Android 14+ compatibility by starting foreground service immediately when delay is scheduled, preventing "FGS must be started from eligible state" errors.
+
+### Technical Improvements
+- Coroutine-based delay implementation with proper job cancellation and cleanup
+- Atomic state updates and synchronized operations for thread safety
+- Timestamp-based race condition detection and latest-event-wins strategy
+- Enhanced service lifecycle integration with delay state persistence
+- Improved notification system with countdown display during delay periods
+
 ## [1.1.0] - 2025-01-24
 
 ### Added
@@ -59,5 +85,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contributing guidelines for open source development
 - Issue templates for bug reports and feature requests
 
-[1.1.0]: https://github.com/yourusername/mic-lock/releases/tag/v1.1.0
-[1.0.0]: https://github.com/yourusername/mic-lock/releases/tag/v1.0.0
+[1.1.1]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.1.1
+[1.1.0]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.1.0
+[1.0.0]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.0.0
