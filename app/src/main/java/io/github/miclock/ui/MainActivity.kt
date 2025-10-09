@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
  * * The activity communicates with MicLockService through intents and observes
  * service state changes via StateFlow to update the UI accordingly.
  */
-class MainActivity : ComponentActivity() {
+open class MainActivity : ComponentActivity() {
 
     private lateinit var statusText: TextView
     private lateinit var startBtn: MaterialButton
@@ -266,7 +266,7 @@ class MainActivity : ComponentActivity() {
         requestTileUpdate()
     }
 
-    private fun updateAllUi() {
+    protected open fun updateAllUi() {
         updateMainStatus()
         updateCompatibilityModeUi()
         updateDelayConfigurationUi(Prefs.getScreenOnDelayMs(this))

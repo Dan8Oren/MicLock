@@ -1055,6 +1055,15 @@ class MicLockService : Service(), MicActivationService {
         private val _state = MutableStateFlow(ServiceState())
         val state: StateFlow<ServiceState> = _state.asStateFlow()
         private const val TAG = "MicLockService"
+        
+        /**
+         * Test helper method to update service state for testing purposes.
+         * This should only be used in test code.
+         */
+        @androidx.annotation.VisibleForTesting
+        fun updateStateForTesting(newState: ServiceState) {
+            _state.value = newState
+        }
         private const val CHANNEL_ID = "mic_lock_channel"
         const val RESTART_CHANNEL_ID = "mic_lock_restart_channel"
         private const val NOTIF_ID = 42
