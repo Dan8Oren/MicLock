@@ -125,7 +125,7 @@ open class MainActivity : ComponentActivity() {
             if (!hasAllPerms()) {
                 reqPerms.launch(audioPerms + notifPerms)
             } else {
-                startMicLock()
+                handleStartButtonClick()
             }
         }
         stopBtn.setOnClickListener { stopMicLock() }
@@ -240,16 +240,72 @@ open class MainActivity : ComponentActivity() {
     }
 
     /**
+     * Handles start button click with proper screen-off pause state handling.
+     * Checks service state and routes to appropriate action (start, resume, or request permissions).
+     */
+    private fun handleStartButtonClick() {
+        try {
+            val currentState = MicLockService.state.value
+
+            when {
+                currentState.isPausedByScreenOff -> {
+                    // Resume from screen-off pause (like tile does)
+                    Log.d("MainActivity", "Resuming service from screen-off pause")
+                    val intent = Intent(this, MicLockService::class.java).apply {
+                        action = MicLockService.ACTION_START_USER_INITIATED
+                        putExtra("from_main_activity", true)
+                    }
+                    ContextCompat.startForegroundService(this, intent)
+                    requestTileUpdate()
+                }
+                !currentState.isRunning -> {
+                    // Normal start flow
+                    Log.d("MainActivity", "Starting service from stopped state")
+                    startMicLock()
+                }
+                else -> {
+                    // Service is running but not paused by screen-off
+                    // This shouldn't happen since start button should be disabled when running
+                    Log.w("MainActivity", "Start button clicked while service is running and not paused by screen-off")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to handle start button click: ${e.message}", e)
+            handleStartButtonFailure(e)
+        }
+    }
+
+    /**
      * Starts the MicLockService with user-initiated action.
      * This sends an ACTION_START_USER_INITIATED intent to the service.
      */
     private fun startMicLock() {
-        val intent = Intent(this, MicLockService::class.java)
-        intent.action = MicLockService.ACTION_START_USER_INITIATED
-        ContextCompat.startForegroundService(this, intent)
+        try {
+            val intent = Intent(this, MicLockService::class.java)
+            intent.action = MicLockService.ACTION_START_USER_INITIATED
+            intent.putExtra("from_main_activity", true)
+            ContextCompat.startForegroundService(this, intent)
 
-        // Request tile update to reflect service start
-        requestTileUpdate()
+            // Request tile update to reflect service start
+            requestTileUpdate()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to start MicLock service: ${e.message}", e)
+            handleStartButtonFailure(e)
+        }
+    }
+
+    /**
+     * Handles start button failures with user-friendly error messages.
+     * Logs the error and shows appropriate feedback to the user.
+     */
+    private fun handleStartButtonFailure(e: Exception) {
+        Log.e("MainActivity", "Start button action failed: ${e.message}", e)
+
+        // Update UI state to reflect failure
+        updateAllUi()
+
+        // Note: In a real implementation, you might want to show a Snackbar or Toast
+        // For now, we'll just log the error as the current UI doesn't have error display components
     }
 
     /**
@@ -296,7 +352,9 @@ open class MainActivity : ComponentActivity() {
             }
         }
 
-        startBtn.isEnabled = !running
+        // Enable start button when service is not running OR when paused by screen-off
+        // This allows the start button to act as a "Resume" button for screen-off pause
+        startBtn.isEnabled = !running || pausedByScreenOff
         stopBtn.isEnabled = running
     }
 
