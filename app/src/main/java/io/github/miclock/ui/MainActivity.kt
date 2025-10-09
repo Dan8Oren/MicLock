@@ -274,7 +274,8 @@ class MainActivity : ComponentActivity() {
 
     private fun updateMainStatus() {
         val running = MicLockService.state.value.isRunning
-        val paused = MicLockService.state.value.isPausedBySilence
+        val pausedBySilence = MicLockService.state.value.isPausedBySilence
+        val pausedByScreenOff = MicLockService.state.value.isPausedByScreenOff
 
         when {
             !running -> {
@@ -282,7 +283,7 @@ class MainActivity : ComponentActivity() {
                 statusText.setTextColor(ContextCompat.getColor(this, R.color.error_red))
                 statusText.animate().alpha(1.0f).setDuration(200)
             }
-            paused -> {
+            pausedBySilence || pausedByScreenOff -> {
                 statusText.text = "PAUSED"
                 statusText.setTextColor(ContextCompat.getColor(this, R.color.on_surface_variant))
                 statusText.animate().alpha(0.6f).setDuration(500).withEndAction {

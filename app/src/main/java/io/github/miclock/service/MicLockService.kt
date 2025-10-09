@@ -268,6 +268,12 @@ class MicLockService : Service(), MicActivationService {
                 }
                 serviceHealthy = true
                 Log.d(TAG, "Foreground service started successfully")
+
+                // If service is paused (e.g., by screen-off), resume mic holding
+                if (state.value.isPausedByScreenOff) {
+                    Log.i(TAG, "Service was paused - resuming mic holding logic")
+                    startMicHolding(fromDelayCompletion = false)
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service: ${e.message}")
                 serviceHealthy = false
