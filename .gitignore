@@ -4,6 +4,7 @@
 *.aar
 *.apk
 /app/release/
+/app/debug/
 
 # Files for the Dalvik VM
 *.dex
