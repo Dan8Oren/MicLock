@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Configurable Screen-Off Behavior**:
-  Default configuration is set to 1.3 seconds of Delayed Reactivatoin. configuration options are:
-   a. **Always-On**: Keeps the microphone usage on even when the screen is off. might be a good usage for thoes who has quick microphone usage even when the screen is off (more battery usage, less recommanded).
-   b. **Delayed Reactivatoin**: (Recommanded Approach) Microphone turns off when screen is off with a configurable delay for re-activating the microphone when screen turns back on.preventing unnecessary battery drain during brief screen interactions like checking notifications or battery level.
-   c. **Stays-Off**: Turns the microphone usage off once the screen turns off and does not re-activates it. (recommanded for thoes who wants minimum battery usage, but requires manual re-activation before usage.)
+  Default configuration is set to 1.3 seconds of Delayed Reactivation. Configuration options are:
+   a. **Always-On**: Keeps the microphone usage on even when the screen is off. Might be a good option for those who have quick microphone usage even when the screen is off (more battery usage, less recommended).
+   b. **Delayed Reactivation**: (Recommended Approach) Microphone turns off when the screen is off with a configurable delay for reactivating the microphone when the screen turns back on, preventing unnecessary battery drain during brief screen interactions like checking notifications or battery level.
+   c. **Stays-Off**: Turns the microphone usage off once the screen turns off and does not reactivate it. (Recommended for those who want minimum battery usage, but requires manual reactivation before usage.)
 
 - **DelayedActivationManager**: New component for robust delay handling with proper race condition management and coroutine-based implementation.
 
