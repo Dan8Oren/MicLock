@@ -353,6 +353,7 @@ class MicLockService : Service(), MicActivationService {
                 if (delayMs == 0L){
                     Log.d(TAG, "No delay configured (${delayMs}ms), starting immediately")
                     startMicHolding(fromDelayCompletion = false)
+                    return
                 }
                 // Always on Or Never
                 Log.d(TAG, "Always-On or Never configured, skipping reactivation")
