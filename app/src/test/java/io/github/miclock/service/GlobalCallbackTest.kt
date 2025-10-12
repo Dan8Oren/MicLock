@@ -50,8 +50,7 @@ class GlobalCallbackTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = true,
-            pausedBySilenceTimestamp = System.currentTimeMillis()
+            wasSilencedBeforeScreenOff = true
         )
 
         // When: Global callback detects no other apps recording (mic available)
@@ -62,14 +61,13 @@ class GlobalCallbackTest {
             isRunning = true,
             isPausedBySilence = false,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = false,
-            pausedBySilenceTimestamp = 0L
+            wasSilencedBeforeScreenOff = false
         )
 
         // Verify state transition
         assertFalse("isPausedBySilence should be cleared", expectedState.isPausedBySilence)
         assertFalse("wasSilencedBeforeScreenOff should be cleared", expectedState.wasSilencedBeforeScreenOff)
-        assertEquals("pausedBySilenceTimestamp should be reset", 0L, expectedState.pausedBySilenceTimestamp)
+
         assertTrue("isPausedByScreenOff should remain true", expectedState.isPausedByScreenOff)
     }
 
@@ -83,8 +81,7 @@ class GlobalCallbackTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = true,
-            pausedBySilenceTimestamp = System.currentTimeMillis()
+            wasSilencedBeforeScreenOff = true
         )
 
         // When: Global callback detects other apps still recording
@@ -93,7 +90,7 @@ class GlobalCallbackTest {
         // Then: Silence state should be maintained
         assertTrue("isPausedBySilence should remain true", silencedState.isPausedBySilence)
         assertTrue("wasSilencedBeforeScreenOff should remain true", silencedState.wasSilencedBeforeScreenOff)
-        assertTrue("pausedBySilenceTimestamp should be set", silencedState.pausedBySilenceTimestamp > 0L)
+
     }
 
     @Test
@@ -112,8 +109,7 @@ class GlobalCallbackTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = wasSilenced,
-            pausedBySilenceTimestamp = System.currentTimeMillis()
+            wasSilencedBeforeScreenOff = wasSilenced
         )
 
         assertTrue("wasSilencedBeforeScreenOff should be true", stateAfterScreenOff.wasSilencedBeforeScreenOff)
@@ -128,7 +124,6 @@ class GlobalCallbackTest {
         val invalidState = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
-            pausedBySilenceTimestamp = System.currentTimeMillis(),
             wasSilencedBeforeScreenOff = true
         )
 
@@ -137,51 +132,13 @@ class GlobalCallbackTest {
         val correctedState = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            pausedBySilenceTimestamp = 0L,
             wasSilencedBeforeScreenOff = false
         )
 
         assertFalse("isPausedBySilence should be cleared", correctedState.isPausedBySilence)
-        assertEquals("pausedBySilenceTimestamp should be reset", 0L, correctedState.pausedBySilenceTimestamp)
+
         assertFalse("wasSilencedBeforeScreenOff should be cleared", correctedState.wasSilencedBeforeScreenOff)
     }
 
-    @Test
-    fun testStateInvariants_clearsStaleTimestamp() = runTest {
-        // Tests enforceStateInvariants: if not paused but timestamp is set, clear it
 
-        // Given: State with timestamp but isPausedBySilence=false
-        val staleState = ServiceState(
-            isRunning = true,
-            isPausedBySilence = false,
-            pausedBySilenceTimestamp = System.currentTimeMillis()
-        )
-
-        // When: enforceStateInvariants is called
-        // Then: Timestamp should be cleared
-        val correctedState = ServiceState(
-            isRunning = true,
-            isPausedBySilence = false,
-            pausedBySilenceTimestamp = 0L
-        )
-
-        assertEquals("pausedBySilenceTimestamp should be reset", 0L, correctedState.pausedBySilenceTimestamp)
-    }
-
-    @Test
-    fun testStateInvariants_setsTimestampWhenPausedWithoutTimestamp() = runTest {
-        // Tests enforceStateInvariants: if paused but no timestamp, set it
-
-        // Given: State with isPausedBySilence but no timestamp
-        val incompleteState = ServiceState(
-            isRunning = true,
-            isPausedBySilence = true,
-            pausedBySilenceTimestamp = 0L
-        )
-
-        // When: enforceStateInvariants is called
-        // Then: Timestamp should be set
-        assertTrue("isPausedBySilence is true", incompleteState.isPausedBySilence)
-        // In actual implementation, enforceStateInvariants would set current timestamp
-    }
 }

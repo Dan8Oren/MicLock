@@ -105,8 +105,7 @@ class DelayedActivationManagerTest {
         // Given: Service is paused by silence (another app using mic)
         val recentTimestamp = System.currentTimeMillis() - 5000L // 5 seconds ago (fresh)
         whenever(mockService.getCurrentState()).thenReturn(ServiceState(
-            isPausedBySilence = true,
-            pausedBySilenceTimestamp = recentTimestamp
+            isPausedBySilence = true
         ))
 
         // When: Attempting to schedule delay
@@ -288,7 +287,6 @@ class DelayedActivationManagerTest {
         val recentTimestamp = System.currentTimeMillis() - 5000L // 5 seconds ago (fresh)
         whenever(mockService.getCurrentState()).thenReturn(ServiceState(
             isPausedBySilence = true,
-            pausedBySilenceTimestamp = recentTimestamp
         ))
         assertTrue("Should respect state when paused by silence", delayedActivationManager.shouldRespectExistingState())
 

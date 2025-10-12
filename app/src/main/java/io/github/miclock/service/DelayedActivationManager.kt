@@ -165,23 +165,9 @@ open class DelayedActivationManager(
 
             // Service is paused by silence (another app using mic) - respect the pause
             currentState.isPausedBySilence -> {
-                // Validate pause state freshness
-                val pauseAge = System.currentTimeMillis() - currentState.pausedBySilenceTimestamp
-                val maxPauseAge = 30_000L // 30 seconds
-
-                if (currentState.pausedBySilenceTimestamp == 0L) {
-                    // Missing timestamp - shouldn't happen with invariants, but handle gracefully
-                    Log.w(TAG, "Pause state has no timestamp, treating as stale")
-                    false
-                } else if (pauseAge > maxPauseAge) {
-                    // Pause state is too old - likely stale
-                    Log.d(TAG, "Pause state is stale (${pauseAge}ms old), ignoring")
-                    false
-                } else {
-                    // Pause state is recent - respect it
-                    Log.d(TAG, "Service paused by silence (${pauseAge}ms ago), respecting pause state")
-                    true
-                }
+                // The global callback ensures isPausedBySilence is always current
+                Log.d(TAG, "Service paused by silence, respecting pause state")
+                true
             }
 
             // Service is paused by screen-off - this is normal and delay should be applied

@@ -44,18 +44,16 @@ class SilenceStateIntegrationTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = false,
-            pausedBySilenceTimestamp = System.currentTimeMillis(),
             wasSilencedBeforeScreenOff = false
         )
         assertTrue("Service should be paused by silence", silencedState.isPausedBySilence)
-        assertTrue("Timestamp should be set", silencedState.pausedBySilenceTimestamp > 0L)
+
 
         // Phase 3: Screen turns off
         val screenOffState = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            pausedBySilenceTimestamp = silencedState.pausedBySilenceTimestamp,
             wasSilencedBeforeScreenOff = true
         )
         assertTrue("Service should be paused by screen-off", screenOffState.isPausedByScreenOff)
@@ -66,19 +64,17 @@ class SilenceStateIntegrationTest {
             isRunning = true,
             isPausedBySilence = false,
             isPausedByScreenOff = true,
-            pausedBySilenceTimestamp = 0L,
             wasSilencedBeforeScreenOff = false
         )
         assertFalse("isPausedBySilence should be cleared", micAvailableState.isPausedBySilence)
         assertFalse("wasSilencedBeforeScreenOff should be cleared", micAvailableState.wasSilencedBeforeScreenOff)
-        assertEquals("Timestamp should be reset", 0L, micAvailableState.pausedBySilenceTimestamp)
+
 
         // Phase 5: Screen turns on - service should resume
         val resumedState = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
             isPausedByScreenOff = false,
-            pausedBySilenceTimestamp = 0L,
             wasSilencedBeforeScreenOff = false
         )
         assertTrue("Service should be running", resumedState.isRunning)
@@ -87,63 +83,15 @@ class SilenceStateIntegrationTest {
     }
 
     @Test
-    fun testDelayedActivation_respectsFreshSilenceState() = runTest {
-        // Tests that DelayedActivationManager respects fresh silence states
-
-        // Given: Service paused by silence with recent timestamp (< 30s)
-        val recentTimestamp = System.currentTimeMillis() - 5000L // 5 seconds ago
-        val freshSilenceState = ServiceState(
-            isRunning = true,
-            isPausedBySilence = true,
-            isPausedByScreenOff = true,
-            pausedBySilenceTimestamp = recentTimestamp,
-            wasSilencedBeforeScreenOff = true
-        )
-
-        // When: Checking if delay should be applied
-        val pauseAge = System.currentTimeMillis() - freshSilenceState.pausedBySilenceTimestamp
-        val maxPauseAge = 30_000L
-
-        // Then: Fresh state should be respected (delay should not proceed)
-        assertTrue("Pause age should be less than max", pauseAge < maxPauseAge)
-        assertTrue("Fresh silence state should be respected", freshSilenceState.isPausedBySilence)
-    }
-
-    @Test
-    fun testDelayedActivation_ignoresStaleSilenceState() = runTest {
-        // Tests that DelayedActivationManager ignores stale silence states
-
-        // Given: Service paused by silence with old timestamp (> 30s)
-        val staleTimestamp = System.currentTimeMillis() - 35000L // 35 seconds ago
-        val staleSilenceState = ServiceState(
-            isRunning = true,
-            isPausedBySilence = true,
-            isPausedByScreenOff = true,
-            pausedBySilenceTimestamp = staleTimestamp,
-            wasSilencedBeforeScreenOff = true
-        )
-
-        // When: Checking if delay should be applied
-        val pauseAge = System.currentTimeMillis() - staleSilenceState.pausedBySilenceTimestamp
-        val maxPauseAge = 30_000L
-
-        // Then: Stale state should be ignored (delay should proceed)
-        assertTrue("Pause age should be greater than max", pauseAge > maxPauseAge)
-        // In actual implementation, shouldRespectExistingState would return false
-    }
-
-    @Test
     fun testLongRecording_notInterrupted() = runTest {
         // Tests that user's long recording session is not interrupted
         // Scenario: User recording for 2+ hours with screen off
 
         // Given: Service paused by silence for extended period
-        val longRecordingTimestamp = System.currentTimeMillis() - 7200000L // 2 hours ago
         val longRecordingState = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            pausedBySilenceTimestamp = longRecordingTimestamp,
             wasSilencedBeforeScreenOff = true
         )
 

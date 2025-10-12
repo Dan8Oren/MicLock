@@ -219,7 +219,6 @@ class MicLockService : Service(), MicActivationService {
             sessionSilencedBeforeScreenOff = false
             updateServiceState(
                 paused = false,
-                pausedBySilenceTimestamp = 0L,
                 wasSilencedBeforeScreenOff = false
             )
         } else {
@@ -232,15 +231,13 @@ class MicLockService : Service(), MicActivationService {
             isSilenced = true
             sessionSilencedBeforeScreenOff = true
 
-            val timestamp = System.currentTimeMillis()
             updateServiceState(
                 paused = true,
-                pausedBySilenceTimestamp = timestamp,
                 wasSilencedBeforeScreenOff = true
             )
 
-            Log.i(TAG, "Recording silenced by system (other app using mic) at $timestamp")
-            markCooldownStart = timestamp
+            Log.i(TAG, "Recording silenced by system (other app using mic)")
+            markCooldownStart = System.currentTimeMillis()
 
             if (isLoopActive) {
                 updateNotification("Paused — mic in use by another app")
@@ -251,7 +248,6 @@ class MicLockService : Service(), MicActivationService {
 
             updateServiceState(
                 paused = false,
-                pausedBySilenceTimestamp = 0L,
                 wasSilencedBeforeScreenOff = false
             )
 
@@ -1150,7 +1146,6 @@ class MicLockService : Service(), MicActivationService {
         deviceAddr: String? = null,
         delayPending: Boolean? = null,
         delayRemainingMs: Long? = null,
-        pausedBySilenceTimestamp: Long? = null,
         wasSilencedBeforeScreenOff: Boolean? = null
     ) {
         _state.update { currentState ->
@@ -1161,7 +1156,7 @@ class MicLockService : Service(), MicActivationService {
                 currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress,
                 isDelayedActivationPending = delayPending ?: currentState.isDelayedActivationPending,
                 delayedActivationRemainingMs = delayRemainingMs ?: currentState.delayedActivationRemainingMs,
-                pausedBySilenceTimestamp = pausedBySilenceTimestamp ?: currentState.pausedBySilenceTimestamp,
+    
                 wasSilencedBeforeScreenOff = wasSilencedBeforeScreenOff ?: currentState.wasSilencedBeforeScreenOff,
             )
 
@@ -1178,21 +1173,9 @@ class MicLockService : Service(), MicActivationService {
                 Log.w(TAG, "Clearing isPausedBySilence - global callback not active")
                 return state.copy(
                     isPausedBySilence = false,
-                    pausedBySilenceTimestamp = 0L,
                     wasSilencedBeforeScreenOff = false
                 )
             }
-        }
-
-        if (!state.isPausedBySilence && state.pausedBySilenceTimestamp != 0L) {
-            Log.d(TAG, "Clearing stale pausedBySilenceTimestamp")
-            return state.copy(pausedBySilenceTimestamp = 0L)
-        }
-
-        if (state.isPausedBySilence && state.pausedBySilenceTimestamp == 0L) {
-            val timestamp = System.currentTimeMillis()
-            Log.d(TAG, "Setting missing pausedBySilenceTimestamp: $timestamp")
-            return state.copy(pausedBySilenceTimestamp = timestamp)
         }
 
         return state
