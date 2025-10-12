@@ -7,4 +7,6 @@ data class ServiceState(
     val currentDeviceAddress: String? = null,
     val isDelayedActivationPending: Boolean = false,
     val delayedActivationRemainingMs: Long = 0,
+    val pausedBySilenceTimestamp: Long = 0L,
+    val wasSilencedBeforeScreenOff: Boolean = false,
 )

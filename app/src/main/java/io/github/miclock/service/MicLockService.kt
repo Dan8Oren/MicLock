@@ -83,6 +83,10 @@ class MicLockService : Service(), MicActivationService {
     private var backoffMs: Long = 500L
     private var recCallback: AudioManager.AudioRecordingCallback? = null
 
+    private var globalRecCallback: AudioManager.AudioRecordingCallback? = null
+    private var lastRecordingSessionId: Int? = null
+    private var sessionSilencedBeforeScreenOff: Boolean = false
+
     // MediaRecorder fallback
     private var mediaRecorderHolder: MediaRecorderHolder? = null
 
@@ -117,6 +121,146 @@ class MicLockService : Service(), MicActivationService {
         }
         registerReceiver(screenStateReceiver, filter)
         Log.d(TAG, "ScreenStateReceiver registered dynamically")
+
+        // Register global callback on service creation
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            registerGlobalCallback()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun registerGlobalCallback() {
+        if (globalRecCallback != null) {
+            Log.w(TAG, "Global callback already registered, skipping")
+            return
+        }
+
+        globalRecCallback = object : AudioManager.AudioRecordingCallback() {
+            override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
+                handleGlobalRecordingChange(configs)
+            }
+        }
+
+        try {
+            audioManager.registerAudioRecordingCallback(
+                globalRecCallback!!,
+                Handler(Looper.getMainLooper())
+            )
+            Log.d(TAG, "Global recording callback registered")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to register global callback: ${e.message}", e)
+            globalRecCallback = null
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun unregisterGlobalCallback() {
+        globalRecCallback?.let {
+            try {
+                audioManager.unregisterAudioRecordingCallback(it)
+                Log.d(TAG, "Global recording callback unregistered")
+            } catch (e: Exception) {
+                Log.w(TAG, "Error unregistering global callback: ${e.message}")
+            }
+        }
+        globalRecCallback = null
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun handleGlobalRecordingChange(configs: MutableList<AudioRecordingConfiguration>) {
+        val currentSessionId = lastRecordingSessionId
+        val currentState = state.value
+
+        Log.d(TAG, "Global callback triggered: ${configs.size} configs, sessionId=$currentSessionId, " +
+                  "loopActive=${loopJob?.isActive}, isPausedBySilence=${currentState.isPausedBySilence}")
+
+        when {
+            loopJob?.isActive == true && currentSessionId != null -> {
+                handleActiveSessionRecordingChange(configs, currentSessionId)
+            }
+            sessionSilencedBeforeScreenOff && currentSessionId != null -> {
+                handleInactiveSessionRecordingChange(configs)
+            }
+            else -> {
+                Log.d(TAG, "No relevant session context, ignoring recording change")
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun handleActiveSessionRecordingChange(
+        configs: MutableList<AudioRecordingConfiguration>,
+        sessionId: Int
+    ) {
+        val ourSession = configs.firstOrNull {
+            it.clientAudioSessionId == sessionId
+        }
+
+        if (ourSession != null) {
+            val silenced = ourSession.isClientSilenced
+            handleSessionSilencing(silenced, isLoopActive = true)
+        } else {
+            Log.d(TAG, "Our session (ID: $sessionId) not found in active configurations")
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun handleInactiveSessionRecordingChange(
+        configs: MutableList<AudioRecordingConfiguration>
+    ) {
+        val othersStillRecording = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            configs.any { !it.isClientSilenced }
+        } else {
+            configs.isNotEmpty()
+        }
+
+        if (!othersStillRecording) {
+            Log.d(TAG, "Mic became available while screen off - clearing stuck silence state")
+            sessionSilencedBeforeScreenOff = false
+            updateServiceState(
+                paused = false,
+                pausedBySilenceTimestamp = 0L,
+                wasSilencedBeforeScreenOff = false
+            )
+        } else {
+            Log.d(TAG, "Other apps still recording, maintaining silence state")
+        }
+    }
+
+    private fun handleSessionSilencing(silenced: Boolean, isLoopActive: Boolean) {
+        if (silenced && !isSilenced) {
+            isSilenced = true
+            sessionSilencedBeforeScreenOff = true
+
+            val timestamp = System.currentTimeMillis()
+            updateServiceState(
+                paused = true,
+                pausedBySilenceTimestamp = timestamp,
+                wasSilencedBeforeScreenOff = true
+            )
+
+            Log.i(TAG, "Recording silenced by system (other app using mic) at $timestamp")
+            markCooldownStart = timestamp
+
+            if (isLoopActive) {
+                updateNotification("Paused — mic in use by another app")
+            }
+        } else if (!silenced && isSilenced) {
+            isSilenced = false
+            sessionSilencedBeforeScreenOff = false
+
+            updateServiceState(
+                paused = false,
+                pausedBySilenceTimestamp = 0L,
+                wasSilencedBeforeScreenOff = false
+            )
+
+            if (isLoopActive) {
+                Log.i(TAG, "Mic available again - loop will resume")
+            } else {
+                Log.i(TAG, "Mic became available while screen off")
+            }
+        }
     }
 
     private fun createRestartNotification() {
@@ -164,6 +308,13 @@ class MicLockService : Service(), MicActivationService {
 
         scope.cancel()
         wakeLockManager.release()
+
+        // Unregister global callback on service destruction
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            unregisterGlobalCallback()
+        }
+
+        // Clean up session-specific callback
         try { recCallback?.let { audioManager.unregisterAudioRecordingCallback(it) } } catch (_: Throwable) {}
         recCallback = null
         mediaRecorderHolder?.stopRecording()
@@ -541,6 +692,12 @@ class MicLockService : Service(), MicActivationService {
     private fun stopMicHolding() {
         if (loopJob == null && !state.value.isPausedBySilence) return // Avoid redundant calls
         Log.i(TAG, "Screen is OFF. Pausing mic holding logic.")
+
+        sessionSilencedBeforeScreenOff = isSilenced
+
+        Log.d(TAG, "Stopping mic holding: wasSilenced=$isSilenced, " +
+                  "sessionId=$lastRecordingSessionId, " +
+                  "globalCallbackActive=${globalRecCallback != null}")
         stopFlag.set(true)
         loopJob?.cancel()
         loopJob = null
@@ -551,7 +708,11 @@ class MicLockService : Service(), MicActivationService {
         recCallback = null
         mediaRecorderHolder?.stopRecording()
         mediaRecorderHolder = null
-        updateServiceState(deviceAddr = null, pausedByScreenOff = true) // Mark as paused by screen-off
+        updateServiceState(
+            deviceAddr = null,
+            pausedByScreenOff = true,
+            wasSilencedBeforeScreenOff = sessionSilencedBeforeScreenOff
+        )
 
         updateNotification("Paused (Screen off)")
     }
@@ -770,7 +931,9 @@ class MicLockService : Service(), MicActivationService {
                 wakeLockManager.acquire()
 
                 val recordingSessionId = recorder.audioSessionId
-                Log.d(TAG, "AudioRecord session ID: $recordingSessionId")
+                lastRecordingSessionId = recordingSessionId
+
+                Log.d(TAG, "AudioRecord session ID: $recordingSessionId (tracked for global callback)")
 
                 val actualChannelCount = recorder.format.channelCount
                 Log.d(
@@ -834,15 +997,9 @@ class MicLockService : Service(), MicActivationService {
                     override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
                         val mine = configs.firstOrNull { it.clientAudioSessionId == recordingSessionId } ?: return
                         val silenced = mine.isClientSilenced
-                        if (silenced && !isSilenced) {
-                            isSilenced = true
-                            updateServiceState(paused = true)
-                            Log.i(TAG, "AudioRecord silenced by system (other app using mic).")
-                            markCooldownStart = System.currentTimeMillis()
-                            updateNotification("Paused — mic in use by another app")
+                        handleSessionSilencing(silenced, isLoopActive = true)
+                        if (silenced) {
                             try { recorder.stop() } catch (_: Throwable) {}
-                        } else if (!silenced && isSilenced) {
-                            Log.i(TAG, "AudioRecord unsilenced; will resume (handled by main loop).")
                         }
                     }
                 }
@@ -992,21 +1149,53 @@ class MicLockService : Service(), MicActivationService {
         pausedByScreenOff: Boolean? = null,
         deviceAddr: String? = null,
         delayPending: Boolean? = null,
-        delayRemainingMs: Long? = null
+        delayRemainingMs: Long? = null,
+        pausedBySilenceTimestamp: Long? = null,
+        wasSilencedBeforeScreenOff: Boolean? = null
     ) {
         _state.update { currentState ->
-            currentState.copy(
+            val newState = currentState.copy(
                 isRunning = running ?: currentState.isRunning,
                 isPausedBySilence = paused ?: currentState.isPausedBySilence,
                 isPausedByScreenOff = pausedByScreenOff ?: currentState.isPausedByScreenOff,
                 currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress,
                 isDelayedActivationPending = delayPending ?: currentState.isDelayedActivationPending,
                 delayedActivationRemainingMs = delayRemainingMs ?: currentState.delayedActivationRemainingMs,
+                pausedBySilenceTimestamp = pausedBySilenceTimestamp ?: currentState.pausedBySilenceTimestamp,
+                wasSilencedBeforeScreenOff = wasSilencedBeforeScreenOff ?: currentState.wasSilencedBeforeScreenOff,
             )
+
+            enforceStateInvariants(newState)
         }
 
         // Request tile update whenever service state changes
         requestTileUpdate()
+    }
+
+    private fun enforceStateInvariants(state: ServiceState): ServiceState {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && globalRecCallback == null) {
+            if (state.isPausedBySilence) {
+                Log.w(TAG, "Clearing isPausedBySilence - global callback not active")
+                return state.copy(
+                    isPausedBySilence = false,
+                    pausedBySilenceTimestamp = 0L,
+                    wasSilencedBeforeScreenOff = false
+                )
+            }
+        }
+
+        if (!state.isPausedBySilence && state.pausedBySilenceTimestamp != 0L) {
+            Log.d(TAG, "Clearing stale pausedBySilenceTimestamp")
+            return state.copy(pausedBySilenceTimestamp = 0L)
+        }
+
+        if (state.isPausedBySilence && state.pausedBySilenceTimestamp == 0L) {
+            val timestamp = System.currentTimeMillis()
+            Log.d(TAG, "Setting missing pausedBySilenceTimestamp: $timestamp")
+            return state.copy(pausedBySilenceTimestamp = timestamp)
+        }
+
+        return state
     }
 
     private fun requestTileUpdate() {
@@ -1056,7 +1245,7 @@ class MicLockService : Service(), MicActivationService {
         private val _state = MutableStateFlow(ServiceState())
         val state: StateFlow<ServiceState> = _state.asStateFlow()
         private const val TAG = "MicLockService"
-        
+
         /**
          * Test helper method to update service state for testing purposes.
          * This should only be used in test code.
