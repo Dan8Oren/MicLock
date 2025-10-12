@@ -503,7 +503,7 @@ class MicLockService : Service(), MicActivationService {
                     return
                 }
                 // Always on Or Never
-                Log.d(TAG, "Always-On or Never configured, skipping reactivation")
+                Log.d(TAG, "Always-On or Never configured, skipping reactivation - Delay configured = ${delayMs}ms")
             }
         } else {
             Log.w(TAG, "Service not running, ignoring START_HOLDING action. (Consider starting service first)")
@@ -1156,7 +1156,7 @@ class MicLockService : Service(), MicActivationService {
                 currentDeviceAddress = deviceAddr ?: currentState.currentDeviceAddress,
                 isDelayedActivationPending = delayPending ?: currentState.isDelayedActivationPending,
                 delayedActivationRemainingMs = delayRemainingMs ?: currentState.delayedActivationRemainingMs,
-    
+
                 wasSilencedBeforeScreenOff = wasSilencedBeforeScreenOff ?: currentState.wasSilencedBeforeScreenOff,
             )
 
