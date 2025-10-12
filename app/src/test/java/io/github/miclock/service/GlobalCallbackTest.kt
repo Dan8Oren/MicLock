@@ -136,7 +136,6 @@ class GlobalCallbackTest {
         )
 
         assertFalse("isPausedBySilence should be cleared", correctedState.isPausedBySilence)
-
         assertFalse("wasSilencedBeforeScreenOff should be cleared", correctedState.wasSilencedBeforeScreenOff)
     }
 

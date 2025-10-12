@@ -101,8 +101,7 @@ class SilenceStateIntegrationTest {
         // Then: Service should remain paused (respecting user's recording)
         assertTrue("Service should remain paused by silence", longRecordingState.isPausedBySilence)
         assertTrue("wasSilencedBeforeScreenOff should be true", longRecordingState.wasSilencedBeforeScreenOff)
-        // Note: Even though timestamp is stale, the global callback would detect
-        // active recording and maintain the silence state
+        // Note: The global callback would detect active recording and maintain the silence state
     }
 
     @Test
