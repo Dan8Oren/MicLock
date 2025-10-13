@@ -1234,6 +1234,52 @@ class MicLockService : Service(), MicActivationService {
                 Log.w(TAG, "Failed to request tile update: ${e.message}")
             }
         }
+
+        // Request tile update whenever service state changes
+        requestTileUpdate()
+    }
+
+    private fun requestTileUpdate() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            try {
+                val componentName = ComponentName(this, MicLockTileService::class.java)
+                TileService.requestListeningState(this, componentName)
+                Log.d(TAG, "Requested tile update")
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to request tile update: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Gets the current service state.
+     * Used by DelayedActivationManager for state validation.
+     *
+     * @return current ServiceState
+     */
+    override fun getCurrentState(): ServiceState = state.value
+
+    /**
+     * Checks if the service was manually stopped by the user.
+     * This is determined by checking if the service is not running and was explicitly stopped.
+     *
+     * @return true if manually stopped by user, false otherwise
+     */
+    override fun isManuallyStoppedByUser(): Boolean {
+        val currentState = state.value
+        // Service is considered manually stopped if it's not running and not paused by silence
+        // This indicates user intentionally stopped it rather than system pausing it
+        return !currentState.isRunning && !currentState.isPausedBySilence
+    }
+
+    /**
+     * Checks if the microphone is actively being held (recording loop is active).
+     * This is different from service running - service can be running but paused (screen off).
+     *
+     * @return true if mic is actively held, false otherwise
+     */
+    override fun isMicActivelyHeld(): Boolean {
+        return loopJob?.isActive == true
     }
 
     /**
@@ -1271,7 +1317,7 @@ class MicLockService : Service(), MicActivationService {
         private val _state = MutableStateFlow(ServiceState())
         val state: StateFlow<ServiceState> = _state.asStateFlow()
         private const val TAG = "MicLockService"
-
+        
         /**
          * Test helper method to update service state for testing purposes.
          * This should only be used in test code.
