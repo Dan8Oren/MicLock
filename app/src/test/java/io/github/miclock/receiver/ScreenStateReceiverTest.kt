@@ -73,14 +73,14 @@ class ScreenStateReceiverTest {
 
         // Then: Should not update timestamps
         assertEquals(
-                "Screen ON timestamp should not change",
-                initialScreenOnTime,
-                receiver.getLastScreenOnTimestamp()
+            "Screen ON timestamp should not change",
+            initialScreenOnTime,
+            receiver.getLastScreenOnTimestamp(),
         )
         assertEquals(
-                "Screen OFF timestamp should not change",
-                initialScreenOffTime,
-                receiver.getLastScreenOffTimestamp()
+            "Screen OFF timestamp should not change",
+            initialScreenOffTime,
+            receiver.getLastScreenOffTimestamp(),
         )
     }
 
@@ -219,9 +219,9 @@ class ScreenStateReceiverTest {
 
         // Then: Processed timestamp should not change
         assertEquals(
-                "Processed timestamp should not change for unknown action",
-                processedTimeAfterValid,
-                receiver.getLastProcessedEventTimestamp()
+            "Processed timestamp should not change for unknown action",
+            processedTimeAfterValid,
+            receiver.getLastProcessedEventTimestamp(),
         )
     }
 

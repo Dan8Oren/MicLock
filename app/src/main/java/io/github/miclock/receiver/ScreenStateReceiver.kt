@@ -33,8 +33,9 @@ class ScreenStateReceiver : BroadcastReceiver() {
 
         if (timeSinceLastEvent < DEBOUNCE_THRESHOLD_MS && lastProcessed > 0) {
             Log.d(
-                    TAG,
-                    "Debouncing: Ignoring event (${timeSinceLastEvent}ms since last event, threshold: ${DEBOUNCE_THRESHOLD_MS}ms)"
+                TAG,
+                "Debouncing: Ignoring event (${timeSinceLastEvent}ms since last event," +
+                    " threshold: ${DEBOUNCE_THRESHOLD_MS}ms)",
             )
             return
         }
@@ -55,8 +56,8 @@ class ScreenStateReceiver : BroadcastReceiver() {
                 lastScreenOnTimestamp.set(eventTimestamp)
 
                 Log.i(
-                        TAG,
-                        "Screen turned ON - sending START_HOLDING action (timestamp: $eventTimestamp)"
+                    TAG,
+                    "Screen turned ON - sending START_HOLDING action (timestamp: $eventTimestamp)",
                 )
                 serviceIntent.action = MicLockService.ACTION_START_HOLDING
             }
@@ -72,8 +73,8 @@ class ScreenStateReceiver : BroadcastReceiver() {
                 lastScreenOffTimestamp.set(eventTimestamp)
 
                 Log.i(
-                        TAG,
-                        "Screen turned OFF - sending STOP_HOLDING action (timestamp: $eventTimestamp)"
+                    TAG,
+                    "Screen turned OFF - sending STOP_HOLDING action (timestamp: $eventTimestamp)",
                 )
                 serviceIntent.action = MicLockService.ACTION_STOP_HOLDING
             }
@@ -106,7 +107,7 @@ class ScreenStateReceiver : BroadcastReceiver() {
 
     /** Gets the timestamp of the last processed event. Used for debouncing logic. */
     fun getLastProcessedEventTimestamp(): Long = lastProcessedEventTimestamp.get()
-    
+
     /**
      * Resets all timestamps to zero. For testing purposes only.
      * @VisibleForTesting

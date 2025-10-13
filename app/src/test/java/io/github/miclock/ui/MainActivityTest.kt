@@ -1,7 +1,6 @@
 package io.github.miclock.ui
 
 import android.os.Build
-import io.github.miclock.service.MicLockService
 import io.github.miclock.service.model.ServiceState
 import org.junit.Assert.*
 import org.junit.Test
@@ -26,7 +25,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            isPausedByScreenOff = true
+            isPausedByScreenOff = true,
         )
 
         // When: Determining status text based on state
@@ -42,7 +41,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining status text based on state
@@ -58,7 +57,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
-            isPausedByScreenOff = true
+            isPausedByScreenOff = true,
         )
 
         // When: Determining status text based on state
@@ -74,7 +73,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining status text based on state
@@ -90,7 +89,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = false,
             isPausedBySilence = false,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining status text based on state
@@ -106,7 +105,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = false,
             isPausedBySilence = true,
-            isPausedByScreenOff = true
+            isPausedByScreenOff = true,
         )
 
         // When: Determining status text based on state
@@ -122,7 +121,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            isPausedByScreenOff = true
+            isPausedByScreenOff = true,
         )
 
         // When: Determining start button action based on state
@@ -138,7 +137,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = false,
             isPausedBySilence = false,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining start button action based on state
@@ -154,7 +153,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining start button action based on state
@@ -170,7 +169,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining start button action based on state
@@ -186,7 +185,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = false,
             isPausedBySilence = false,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining if start button should be enabled
@@ -202,7 +201,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            isPausedByScreenOff = true
+            isPausedByScreenOff = true,
         )
 
         // When: Determining if start button should be enabled
@@ -218,7 +217,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining if start button should be enabled
@@ -234,7 +233,7 @@ class MainActivityTest {
         val state = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
 
         // When: Determining if start button should be enabled
@@ -250,7 +249,7 @@ class MainActivityTest {
     private enum class StartButtonAction {
         START_SERVICE,
         RESUME_FROM_SCREEN_OFF_PAUSE,
-        DO_NOTHING
+        DO_NOTHING,
     }
 
     /**
@@ -285,7 +284,7 @@ class MainActivityTest {
 
         return when {
             !running -> "OFF"
-            pausedBySilence || pausedByScreenOff -> "PAUSED"  // This is the fix for Issue 2
+            pausedBySilence || pausedByScreenOff -> "PAUSED" // This is the fix for Issue 2
             else -> "ON"
         }
     }

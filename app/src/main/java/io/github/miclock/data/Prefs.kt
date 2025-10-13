@@ -23,8 +23,8 @@ object Prefs {
     const val ALWAYS_KEEP_ON_VALUE = -2L // Always keep mic on (ignore screen state)
 
     fun getUseMediaRecorder(ctx: Context): Boolean =
-            ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-                    .getBoolean(KEY_USE_MEDIA_RECORDER, false)
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+            .getBoolean(KEY_USE_MEDIA_RECORDER, false)
 
     fun setUseMediaRecorder(ctx: Context, value: Boolean) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit {
@@ -33,8 +33,8 @@ object Prefs {
     }
 
     fun getLastRecordingMethod(ctx: Context): String? =
-            ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-                    .getString(KEY_LAST_RECORDING_METHOD, null)
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+            .getString(KEY_LAST_RECORDING_METHOD, null)
 
     fun setLastRecordingMethod(ctx: Context, method: String) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit {
@@ -47,8 +47,8 @@ object Prefs {
      * @return delay in milliseconds, defaults to 1300ms
      */
     fun getScreenOnDelayMs(ctx: Context): Long =
-            ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-                    .getLong(KEY_SCREEN_ON_DELAY, DEFAULT_SCREEN_ON_DELAY_MS)
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+            .getLong(KEY_SCREEN_ON_DELAY, DEFAULT_SCREEN_ON_DELAY_MS)
 
     /**
      * Sets the screen-on delay in milliseconds with validation.
@@ -58,7 +58,9 @@ object Prefs {
      */
     fun setScreenOnDelayMs(ctx: Context, delayMs: Long) {
         require(isValidScreenOnDelay(delayMs)) {
-            "Screen-on delay must be between ${MIN_SCREEN_ON_DELAY_MS}ms and ${MAX_SCREEN_ON_DELAY_MS}ms, ${NEVER_REACTIVATE_VALUE} for never re-enable, or ${ALWAYS_KEEP_ON_VALUE} for always on, got ${delayMs}ms"
+            "Screen-on delay must be between ${MIN_SCREEN_ON_DELAY_MS}ms and ${MAX_SCREEN_ON_DELAY_MS}ms," +
+                " $NEVER_REACTIVATE_VALUE for never re-enable," +
+                " or $ALWAYS_KEEP_ON_VALUE for always on, got ${delayMs}ms"
         }
 
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit {
@@ -72,9 +74,9 @@ object Prefs {
      * @return true if valid, false otherwise
      */
     fun isValidScreenOnDelay(delayMs: Long): Boolean =
-            delayMs == NEVER_REACTIVATE_VALUE ||
-                    delayMs == ALWAYS_KEEP_ON_VALUE ||
-                    delayMs in MIN_SCREEN_ON_DELAY_MS..MAX_SCREEN_ON_DELAY_MS
+        delayMs == NEVER_REACTIVATE_VALUE ||
+            delayMs == ALWAYS_KEEP_ON_VALUE ||
+            delayMs in MIN_SCREEN_ON_DELAY_MS..MAX_SCREEN_ON_DELAY_MS
 
     // Slider mapping constants
     const val SLIDER_MIN = 0f
@@ -101,16 +103,16 @@ object Prefs {
             else -> {
                 // Snap to the delay range boundaries if close
                 val snappedValue =
-                        when {
-                            sliderValue < SLIDER_DELAY_START -> SLIDER_DELAY_START
-                            sliderValue > SLIDER_DELAY_END -> SLIDER_DELAY_END
-                            else -> sliderValue
-                        }
+                    when {
+                        sliderValue < SLIDER_DELAY_START -> SLIDER_DELAY_START
+                        sliderValue > SLIDER_DELAY_END -> SLIDER_DELAY_END
+                        else -> sliderValue
+                    }
 
                 // Map to delay range (0-5000ms)
                 val normalizedValue =
-                        (snappedValue - SLIDER_DELAY_START) /
-                                (SLIDER_DELAY_END - SLIDER_DELAY_START)
+                    (snappedValue - SLIDER_DELAY_START) /
+                        (SLIDER_DELAY_END - SLIDER_DELAY_START)
                 val delayMs = (normalizedValue * MAX_SCREEN_ON_DELAY_MS).toLong()
                 // Round to nearest 100ms
                 (delayMs / 100L) * 100L
@@ -153,8 +155,8 @@ object Prefs {
                 // Map delay range (0-5000ms) to slider range (10-90)
                 val normalizedDelay = delayMs.toFloat() / MAX_SCREEN_ON_DELAY_MS.toFloat()
                 val sliderValue =
-                        SLIDER_DELAY_START +
-                                (normalizedDelay * (SLIDER_DELAY_END - SLIDER_DELAY_START))
+                    SLIDER_DELAY_START +
+                        (normalizedDelay * (SLIDER_DELAY_END - SLIDER_DELAY_START))
                 // Round to nearest integer to align with stepSize
                 round(sliderValue)
             }

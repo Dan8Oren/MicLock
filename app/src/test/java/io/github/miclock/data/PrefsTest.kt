@@ -169,11 +169,11 @@ class PrefsTest {
         // Always on (far left)
         assertThat(Prefs.sliderToDelayMs(0f)).isEqualTo(Prefs.ALWAYS_KEEP_ON_VALUE)
         assertThat(Prefs.sliderToDelayMs(5f)).isEqualTo(Prefs.ALWAYS_KEEP_ON_VALUE)
-        
+
         // Never reactivate (far right)
         assertThat(Prefs.sliderToDelayMs(95f)).isEqualTo(Prefs.NEVER_REACTIVATE_VALUE)
         assertThat(Prefs.sliderToDelayMs(100f)).isEqualTo(Prefs.NEVER_REACTIVATE_VALUE)
-        
+
         // Delay range
         assertThat(Prefs.sliderToDelayMs(10f)).isEqualTo(0L) // Start of delay range
         assertThat(Prefs.sliderToDelayMs(90f)).isEqualTo(5000L) // End of delay range
@@ -185,7 +185,7 @@ class PrefsTest {
         // Special values
         assertThat(Prefs.delayMsToSlider(Prefs.ALWAYS_KEEP_ON_VALUE)).isEqualTo(0f)
         assertThat(Prefs.delayMsToSlider(Prefs.NEVER_REACTIVATE_VALUE)).isEqualTo(100f)
-        
+
         // Delay values
         assertThat(Prefs.delayMsToSlider(0L)).isEqualTo(10f) // Start of delay range
         assertThat(Prefs.delayMsToSlider(5000L)).isEqualTo(90f) // End of delay range
@@ -198,12 +198,12 @@ class PrefsTest {
         assertThat(Prefs.snapSliderValue(0f)).isEqualTo(0f)
         assertThat(Prefs.snapSliderValue(3f)).isEqualTo(0f)
         assertThat(Prefs.snapSliderValue(5f)).isEqualTo(0f)
-        
+
         // Never reactivate zone
         assertThat(Prefs.snapSliderValue(95f)).isEqualTo(100f)
         assertThat(Prefs.snapSliderValue(97f)).isEqualTo(100f)
         assertThat(Prefs.snapSliderValue(100f)).isEqualTo(100f)
-        
+
         // Delay range
         assertThat(Prefs.snapSliderValue(50f)).isEqualTo(50f)
         assertThat(Prefs.snapSliderValue(25.7f)).isEqualTo(26f) // Rounds to nearest integer
