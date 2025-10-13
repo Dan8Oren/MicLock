@@ -43,7 +43,6 @@ class TestableYieldingLogic(
         private set
     var lastNotificationText = ""
         private set
-    private var silencedTimestamp: Long? = null
 
     fun startHolding() {
         _state.update { it.copy(isRunning = true, isPausedBySilence = false) }
@@ -52,7 +51,6 @@ class TestableYieldingLogic(
     fun simulateRecordingConfigChange(clientSilenced: Boolean) {
         if (clientSilenced && !isSilenced) {
             isSilenced = true
-            silencedTimestamp = System.currentTimeMillis()
             _state.update { it.copy(isPausedBySilence = true) }
             lastNotificationText = "Paused — mic in use by another app"
         } else if (!clientSilenced && isSilenced) {
@@ -61,15 +59,11 @@ class TestableYieldingLogic(
     }
 
     fun canAttemptReacquisition(currentTime: Long): Boolean {
-        val cooldownComplete = silencedTimestamp?.let { currentTime - it >= 3000L } ?: false
-
-        return cooldownComplete && !audioManager.othersRecording()
+        return !audioManager.othersRecording()
     }
 
     fun getRemainingCooldownMs(currentTime: Long): Long {
-        return silencedTimestamp?.let {
-            maxOf(0L, 3000L - (currentTime - it))
-        } ?: 0L
+        return 0L
     }
 
     fun applyBackoff() {
