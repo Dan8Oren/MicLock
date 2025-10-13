@@ -64,17 +64,17 @@ class PoliteYieldingTest {
 
     @Test
     fun testCooldownPeriod_whileSilenced_waitsBeforeReacquisition() = runTest {
-        // Given: Service is silenced and others are still recording
+        // Given: Service is silenced
         yieldingLogic.startHolding()
         yieldingLogic.simulateRecordingConfigChange(clientSilenced = true)
-        whenever(mockAudioManager.othersRecording()).thenReturn(true)
+        val silencedTime = System.currentTimeMillis()
 
-        // When: Checking if ready to re-acquire while others still recording
-        val canReacquire = yieldingLogic.canAttemptReacquisition(System.currentTimeMillis())
+        // When: Checking if ready to re-acquire during cooldown
+        val canReacquire = yieldingLogic.canAttemptReacquisition(silencedTime + 1000L) // 1 sec later
 
-        // Then: Should not be able to reacquire (others still using mic)
+        // Then: Should still be in cooldown (3 second minimum)
         assertFalse(canReacquire)
-        assertEquals(0L, yieldingLogic.getRemainingCooldownMs(System.currentTimeMillis()))
+        assertEquals(2000L, yieldingLogic.getRemainingCooldownMs(silencedTime + 1000L))
     }
 
     @Test
