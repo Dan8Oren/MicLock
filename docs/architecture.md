@@ -20,6 +20,7 @@ The heart of the application - a `ForegroundService` that runs continuously to m
 - **Persistent Notification**: Displays a persistent notification to indicate active status and reduce the likelihood of system termination
 - **Microphone Acquisition**: Utilizes Android's audio APIs (`MediaRecorder` or `AudioRecord`) to acquire and hold a functional microphone
 - **Dual Mode Support**: Supports two distinct modes (`MediaRecorder Mode` and `AudioRecord Mode`) for compatibility across different devices and Android versions
+- **Intelligent Screen State Management**: Integrates with DelayedActivationManager for battery-efficient screen-on behavior
 - **Polite Yielding**: Gracefully releases microphone when other apps need it
 - **Route Validation**: Validates that the acquired microphone route is functional
 
@@ -65,12 +66,23 @@ Handles persistent storage of user settings and preferences.
 - Auto-restart preferences
 - User configuration choices
 
-### 5. MicLockTileService (Quick Settings Tile)
+### 5. DelayedActivationManager (Delay Management)
+
+A specialized component responsible for managing configurable delays before microphone re-activation when the screen turns on.
+
+**Key Responsibilities:**
+- **Delay Scheduling**: Manages coroutine-based delays with proper cancellation and cleanup
+- **Race Condition Handling**: Handles rapid screen state changes with latest-event-wins strategy
+- **State Validation**: Ensures delays respect existing service states (manual stops, active sessions, paused states)
+- **Battery Optimization**: Prevents unnecessary microphone operations during brief screen interactions
+
+### 6. MicLockTileService (Quick Settings Tile)
 A `TileService` that acts as a primary remote control for the `MicLockService`.
 
 **Key Responsibilities:**
-- **State-Aware UI**: Reflects the real-time status of the service (Active, Inactive, Paused, No Permission).
+- **State-Aware UI**: Reflects the real-time status of the service (Active, Inactive, Paused, Activating, No Permission).
 - **One-Tap Control**: Allows the user to start and stop the service directly from the Quick Settings panel.
+- **Delay State Display**: Shows "Activating..." state during delay periods with manual override capability.
 - **Resilient Start Logic**: Implements a robust fallback mechanism to ensure service activation even when the app is in the background, by launching the main activity if a direct start fails.
 
 
@@ -147,7 +159,28 @@ flowchart TD
 ### Power Management
 - **Wake Lock Management**: Minimal CPU wake locks only during active recording
 - **Screen State Integration**: To maximize reliability, the service remains in the foreground even when the screen is off. When the screen turns off, microphone usage is paused to conserve battery, and the notification is updated to "Paused (Screen off)". This prevents the OS from killing the service.
+- **Intelligent Delay System**: Configurable delays before re-activating microphone when screen turns on, preventing unnecessary operations during brief screen interactions
 - **Foreground Service**: Prevents system termination while maintaining low priority
+
+### Delayed Activation Flow
+
+When the screen turns on, Mic-Lock employs an intelligent delay system to optimize battery usage:
+
+```mermaid
+flowchart TD
+    A[Screen Turns On] --> B{Service State Check}
+    B -->|Already Active| C[No Action Needed]
+    B -->|Manually Stopped| D[No Action - Respect User Choice]
+    B -->|Paused by Screen Off| E[Schedule Delayed Activation]
+    E --> F[Start 1.3s Delay Timer]
+    F --> G{Screen State During Delay}
+    G -->|Screen Turns Off| H[Cancel Delay]
+    G -->|Screen Stays On| I[Complete Delay]
+    I --> J[Activate Microphone]
+    H --> K[Wait for Next Screen On]
+```
+
+This system prevents unnecessary microphone activation during brief screen interactions like checking notifications or battery level, while ensuring responsive behavior for legitimate usage.
 
 ## 🛡️ Android Compatibility
 

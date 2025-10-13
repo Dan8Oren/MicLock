@@ -21,19 +21,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for MicLockService focusing on tile integration behaviors,
- * foreground service start failures, and restart notification suppression.
+ * Unit tests for MicLockService focusing on tile integration behaviors, foreground service start
+ * failures, and restart notification suppression.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 class MicLockServiceUnitTest {
 
-    @Mock
-    private lateinit var mockContext: Context
+    @Mock private lateinit var mockContext: Context
 
-    @Mock
-    private lateinit var mockNotificationManager: NotificationManager
+    @Mock private lateinit var mockNotificationManager: NotificationManager
 
     private lateinit var testableMicLockService: TestableMicLockService
     private lateinit var testScope: TestScope
@@ -45,7 +43,7 @@ class MicLockServiceUnitTest {
 
         // Setup mock context
         whenever(mockContext.getSystemService(Context.NOTIFICATION_SERVICE))
-            .thenReturn(mockNotificationManager)
+                .thenReturn(mockNotificationManager)
         whenever(mockContext.packageName).thenReturn("io.github.miclock")
 
         // Setup notification manager
@@ -55,77 +53,83 @@ class MicLockServiceUnitTest {
     }
 
     @Test
-    fun testHandleStartUserInitiated_fgsFailsWithFromTileTrue_broadcastsFailureAndSuppressesNotification() = runTest {
-        // Given: Intent with from_tile=true and FGS will fail
-        val intent = Intent().apply {
-            action = MicLockService.ACTION_START_USER_INITIATED
-            putExtra("from_tile", true)
-        }
-        testableMicLockService.setForegroundServiceException(
-            RuntimeException("FOREGROUND_SERVICE_MICROPHONE requires permissions"),
-        )
-        testableMicLockService.setPermissionsGranted(true)
+    fun testHandleStartUserInitiated_fgsFailsWithFromTileTrue_broadcastsFailureAndSuppressesNotification() =
+            runTest {
+                // Given: Intent with from_tile=true and FGS will fail
+                val intent =
+                        Intent().apply {
+                            action = MicLockService.ACTION_START_USER_INITIATED
+                            putExtra("from_tile", true)
+                        }
+                testableMicLockService.setForegroundServiceException(
+                        RuntimeException("FOREGROUND_SERVICE_MICROPHONE requires permissions"),
+                )
+                testableMicLockService.setPermissionsGranted(true)
 
-        // When: handleStartUserInitiated is called
-        testableMicLockService.testHandleStartUserInitiated(intent)
+                // When: handleStartUserInitiated is called
+                testableMicLockService.testHandleStartUserInitiated(intent)
 
-        // Then: Should broadcast tile failure and suppress restart notification
-        assertTrue(
-            "Should broadcast tile start failure",
-            testableMicLockService.wasTileFailureBroadcast(),
-        )
-        assertEquals(
-            "Should broadcast correct failure reason",
-            MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION,
-            testableMicLockService.getLastBroadcastFailureReason(),
-        )
-        assertTrue(
-            "Should suppress restart notification",
-            testableMicLockService.isRestartNotificationSuppressed(),
-        )
-        assertFalse(
-            "Service should not be running after FGS failure",
-            testableMicLockService.isServiceRunning(),
-        )
-    }
+                // Then: Should broadcast tile failure and suppress restart notification
+                assertTrue(
+                        "Should broadcast tile start failure",
+                        testableMicLockService.wasTileFailureBroadcast(),
+                )
+                assertEquals(
+                        "Should broadcast correct failure reason",
+                        MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION,
+                        testableMicLockService.getLastBroadcastFailureReason(),
+                )
+                assertTrue(
+                        "Should suppress restart notification",
+                        testableMicLockService.isRestartNotificationSuppressed(),
+                )
+                assertFalse(
+                        "Service should not be running after FGS failure",
+                        testableMicLockService.isServiceRunning(),
+                )
+            }
 
     @Test
-    fun testHandleStartUserInitiated_fgsFailsWithFromTileFalse_doesNotBroadcastButSuppresses() = runTest {
-        // Given: Intent with from_tile=false and FGS will fail
-        val intent = Intent().apply {
-            action = MicLockService.ACTION_START_USER_INITIATED
-            putExtra("from_tile", false)
-        }
-        testableMicLockService.setForegroundServiceException(
-            RuntimeException("FOREGROUND_SERVICE_MICROPHONE requires permissions"),
-        )
-        testableMicLockService.setPermissionsGranted(true)
+    fun testHandleStartUserInitiated_fgsFailsWithFromTileFalse_doesNotBroadcastButSuppresses() =
+            runTest {
+                // Given: Intent with from_tile=false and FGS will fail
+                val intent =
+                        Intent().apply {
+                            action = MicLockService.ACTION_START_USER_INITIATED
+                            putExtra("from_tile", false)
+                        }
+                testableMicLockService.setForegroundServiceException(
+                        RuntimeException("FOREGROUND_SERVICE_MICROPHONE requires permissions"),
+                )
+                testableMicLockService.setPermissionsGranted(true)
 
-        // When: handleStartUserInitiated is called
-        testableMicLockService.testHandleStartUserInitiated(intent)
+                // When: handleStartUserInitiated is called
+                testableMicLockService.testHandleStartUserInitiated(intent)
 
-        // Then: Should not broadcast tile failure but should still suppress restart notification
-        assertFalse(
-            "Should not broadcast tile failure for non-tile starts",
-            testableMicLockService.wasTileFailureBroadcast(),
-        )
-        assertTrue(
-            "Should still suppress restart notification",
-            testableMicLockService.isRestartNotificationSuppressed(),
-        )
-        assertFalse(
-            "Service should not be running after FGS failure",
-            testableMicLockService.isServiceRunning(),
-        )
-    }
+                // Then: Should not broadcast tile failure but should still suppress restart
+                // notification
+                assertFalse(
+                        "Should not broadcast tile failure for non-tile starts",
+                        testableMicLockService.wasTileFailureBroadcast(),
+                )
+                assertTrue(
+                        "Should still suppress restart notification",
+                        testableMicLockService.isRestartNotificationSuppressed(),
+                )
+                assertFalse(
+                        "Service should not be running after FGS failure",
+                        testableMicLockService.isServiceRunning(),
+                )
+            }
 
     @Test
     fun testHandleStartUserInitiated_fgsSucceeds_clearsFailureState() = runTest {
         // Given: Intent and FGS will succeed
-        val intent = Intent().apply {
-            action = MicLockService.ACTION_START_USER_INITIATED
-            putExtra("from_tile", true)
-        }
+        val intent =
+                Intent().apply {
+                    action = MicLockService.ACTION_START_USER_INITIATED
+                    putExtra("from_tile", true)
+                }
         testableMicLockService.setForegroundServiceWillFail(false)
         testableMicLockService.setPermissionsGranted(true)
 
@@ -134,16 +138,16 @@ class MicLockServiceUnitTest {
 
         // Then: Should clear failure state and start successfully
         assertFalse(
-            "Should not broadcast tile failure on success",
-            testableMicLockService.wasTileFailureBroadcast(),
+                "Should not broadcast tile failure on success",
+                testableMicLockService.wasTileFailureBroadcast(),
         )
         assertFalse(
-            "Should not suppress restart notification on success",
-            testableMicLockService.isRestartNotificationSuppressed(),
+                "Should not suppress restart notification on success",
+                testableMicLockService.isRestartNotificationSuppressed(),
         )
         assertTrue(
-            "Service should be running after successful start",
-            testableMicLockService.isServiceRunning(),
+                "Service should be running after successful start",
+                testableMicLockService.isServiceRunning(),
         )
     }
 
@@ -158,8 +162,8 @@ class MicLockServiceUnitTest {
 
         // Then: Should not create restart notification
         assertFalse(
-            "Should not create restart notification when suppressed",
-            testableMicLockService.wasRestartNotificationCreated(),
+                "Should not create restart notification when suppressed",
+                testableMicLockService.wasRestartNotificationCreated(),
         )
     }
 
@@ -174,8 +178,8 @@ class MicLockServiceUnitTest {
 
         // Then: Should create restart notification
         assertTrue(
-            "Should create restart notification when not suppressed",
-            testableMicLockService.wasRestartNotificationCreated(),
+                "Should create restart notification when not suppressed",
+                testableMicLockService.wasRestartNotificationCreated(),
         )
     }
 
@@ -190,8 +194,8 @@ class MicLockServiceUnitTest {
 
         // Then: Should not create restart notification
         assertFalse(
-            "Should not create restart notification when service was not running",
-            testableMicLockService.wasRestartNotificationCreated(),
+                "Should not create restart notification when service was not running",
+                testableMicLockService.wasRestartNotificationCreated(),
         )
     }
 
@@ -205,35 +209,38 @@ class MicLockServiceUnitTest {
 
         // Then: Should create correct broadcast intent
         assertTrue(
-            "Should broadcast tile failure",
-            testableMicLockService.wasTileFailureBroadcast(),
+                "Should broadcast tile failure",
+                testableMicLockService.wasTileFailureBroadcast(),
         )
         assertEquals(
-            "Should broadcast correct action",
-            MicLockService.ACTION_TILE_START_FAILED,
-            testableMicLockService.getLastBroadcastAction(),
+                "Should broadcast correct action",
+                MicLockService.ACTION_TILE_START_FAILED,
+                testableMicLockService.getLastBroadcastAction(),
         )
         assertEquals(
-            "Should broadcast correct failure reason",
-            reason,
-            testableMicLockService.getLastBroadcastFailureReason(),
+                "Should broadcast correct failure reason",
+                reason,
+                testableMicLockService.getLastBroadcastFailureReason(),
         )
         assertEquals(
-            "Should set correct package name",
-            "io.github.miclock",
-            testableMicLockService.getLastBroadcastPackage(),
+                "Should set correct package name",
+                "io.github.miclock",
+                testableMicLockService.getLastBroadcastPackage(),
         )
     }
 
     @Test
     fun testForegroundServiceStartException_setsCorrectFailureReason() = runTest {
         // Test different FGS exception messages
-        val testCases = listOf(
-            "FOREGROUND_SERVICE_MICROPHONE" to MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION,
-            "requires permissions" to MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION,
-            "eligible state" to MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION,
-            "Some other error" to null,
-        )
+        val testCases =
+                listOf(
+                        "FOREGROUND_SERVICE_MICROPHONE" to
+                                MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION,
+                        "requires permissions" to
+                                MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION,
+                        "eligible state" to MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION,
+                        "Some other error" to null,
+                )
 
         testCases.forEach { (errorMessage, expectedReason) ->
             // Reset service state
@@ -241,10 +248,11 @@ class MicLockServiceUnitTest {
             freshService.setPermissionsGranted(true)
             freshService.setForegroundServiceException(RuntimeException(errorMessage))
 
-            val intent = Intent().apply {
-                action = MicLockService.ACTION_START_USER_INITIATED
-                putExtra("from_tile", true)
-            }
+            val intent =
+                    Intent().apply {
+                        action = MicLockService.ACTION_START_USER_INITIATED
+                        putExtra("from_tile", true)
+                    }
 
             // When: handleStartUserInitiated is called
             freshService.testHandleStartUserInitiated(intent)
@@ -252,31 +260,118 @@ class MicLockServiceUnitTest {
             // Then: Should set correct failure reason
             if (expectedReason != null) {
                 assertEquals(
-                    "Should set correct failure reason for: $errorMessage",
-                    expectedReason,
-                    freshService.getStartFailureReason(),
+                        "Should set correct failure reason for: $errorMessage",
+                        expectedReason,
+                        freshService.getStartFailureReason(),
                 )
                 assertTrue(
-                    "Should suppress restart notification for FGS restriction",
-                    freshService.isRestartNotificationSuppressed(),
+                        "Should suppress restart notification for FGS restriction",
+                        freshService.isRestartNotificationSuppressed(),
                 )
             } else {
                 assertNull(
-                    "Should not set failure reason for non-FGS error: $errorMessage",
-                    freshService.getStartFailureReason(),
+                        "Should not set failure reason for non-FGS error: $errorMessage",
+                        freshService.getStartFailureReason(),
                 )
             }
         }
     }
+
+    @Test
+    fun testHandleStartUserInitiated_serviceRunningAndPausedByScreenOff_resumesMicHolding() =
+            runTest {
+                // Given: Service is running but paused by screen-off
+                testableMicLockService.setServiceWasRunning(true)
+                testableMicLockService.setServiceState(running = true, pausedByScreenOff = true)
+                testableMicLockService.setPermissionsGranted(true)
+
+                val intent =
+                        Intent().apply {
+                            action = MicLockService.ACTION_START_USER_INITIATED
+                            putExtra("from_tile", true)
+                        }
+
+                // When: handleStartUserInitiated is called
+                testableMicLockService.testHandleStartUserInitiated(intent)
+
+                // Then: Should resume mic holding logic
+                assertTrue(
+                        "Should start mic holding when service was paused",
+                        testableMicLockService.isMicHoldingActive()
+                )
+                assertFalse(
+                        "Should clear paused by screen-off state",
+                        testableMicLockService.isPausedByScreenOff()
+                )
+            }
+
+    @Test
+    fun testHandleStartUserInitiated_serviceRunningAndNotPaused_doesNotRestartMicHolding() =
+            runTest {
+                // Given: Service is running and not paused
+                testableMicLockService.setServiceWasRunning(true)
+                testableMicLockService.setServiceState(running = true, pausedByScreenOff = false)
+                testableMicLockService.setPermissionsGranted(true)
+                testableMicLockService.mockStartMicHolding() // Start mic holding initially
+
+                val intent =
+                        Intent().apply {
+                            action = MicLockService.ACTION_START_USER_INITIATED
+                            putExtra("from_tile", true)
+                        }
+
+                // When: handleStartUserInitiated is called
+                testableMicLockService.testHandleStartUserInitiated(intent)
+
+                // Then: Should not restart already active mic holding
+                assertTrue(
+                        "Mic holding should remain active",
+                        testableMicLockService.isMicHoldingActive()
+                )
+                // Verify no unnecessary restart occurred
+                assertEquals(
+                        "Should not have restarted mic holding",
+                        1,
+                        testableMicLockService.getMicHoldingStartCount()
+                )
+            }
+
+    @Test
+    fun testHandleStartUserInitiated_serviceRunningAndPausedBySilence_resumesMicHolding() =
+            runTest {
+                // Given: Service is running but paused by silence
+                testableMicLockService.setServiceWasRunning(true)
+                testableMicLockService.setServiceState(running = true, pausedBySilence = true)
+                testableMicLockService.setPermissionsGranted(true)
+
+                val intent =
+                        Intent().apply {
+                            action = MicLockService.ACTION_START_USER_INITIATED
+                            putExtra("from_tile", true)
+                        }
+
+                // When: handleStartUserInitiated is called
+                testableMicLockService.testHandleStartUserInitiated(intent)
+
+                // Then: Should resume mic holding logic
+                assertTrue(
+                        "Should start mic holding when service was paused by silence",
+                        testableMicLockService.isMicHoldingActive()
+                )
+                assertFalse(
+                        "Should clear paused by silence state",
+                        testableMicLockService.isPausedBySilence()
+                )
+            }
 }
 
 /**
- * Testable version of MicLockService that allows mocking of Android framework
- * interactions and provides access to internal state for verification.
+ * Testable version of MicLockService that allows mocking of Android framework interactions and
+ * provides access to internal state for verification.
  */
 class TestableMicLockService(
-    private val mockContext: Context,
-    private val testScope: TestScope,
+        private val mockContext: Context,
+        private val testScope: TestScope,
 ) {
 
     private val _state = MutableStateFlow(ServiceState())
@@ -296,6 +391,11 @@ class TestableMicLockService(
 
     // Notification tracking
     private var restartNotificationCreated = false
+
+    // Mic holding state tracking
+    private var micHoldingActive = false
+    private var micHoldingStartCount = 0
+    private var currentServiceState = ServiceState()
 
     // Test control methods
     fun setForegroundServiceWillFail(willFail: Boolean) {
@@ -320,6 +420,21 @@ class TestableMicLockService(
         suppressRestartNotification = suppress
     }
 
+    fun setServiceState(
+            running: Boolean = _state.value.isRunning,
+            pausedByScreenOff: Boolean = _state.value.isPausedByScreenOff,
+            pausedBySilence: Boolean = _state.value.isPausedBySilence
+    ) {
+        val newState =
+                ServiceState(
+                        isRunning = running,
+                        isPausedByScreenOff = pausedByScreenOff,
+                        isPausedBySilence = pausedBySilence
+                )
+        _state.value = newState
+        currentServiceState = newState
+    }
+
     // Mock service methods
     fun testHandleStartUserInitiated(intent: Intent?) {
         val isFromTile = intent?.getBooleanExtra("from_tile", false) ?: false
@@ -334,17 +449,20 @@ class TestableMicLockService(
 
                 // Simulate successful start
                 _state.value = _state.value.copy(isRunning = true)
+                mockStartMicHolding()
             } catch (e: Exception) {
                 val errorMessage = e.message ?: ""
                 if (errorMessage.contains("FOREGROUND_SERVICE_MICROPHONE") ||
-                    errorMessage.contains("requires permissions") ||
-                    errorMessage.contains("eligible state")
+                                errorMessage.contains("requires permissions") ||
+                                errorMessage.contains("eligible state")
                 ) {
                     startFailureReason = MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION
                     suppressRestartNotification = true
 
                     if (isFromTile) {
-                        testBroadcastTileStartFailure(MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION)
+                        testBroadcastTileStartFailure(
+                                MicLockService.FAILURE_REASON_FOREGROUND_RESTRICTION
+                        )
                     }
                 } else {
                     // For non-FGS errors, still suppress restart notification
@@ -354,12 +472,22 @@ class TestableMicLockService(
                 _state.value = _state.value.copy(isRunning = false)
                 return
             }
+        } else {
+            // Service already running - check if paused and resume if needed
+            if (_state.value.isPausedByScreenOff || _state.value.isPausedBySilence) {
+                mockStartMicHolding()
+            }
         }
     }
 
     fun testOnDestroy() {
         val wasRunning = serviceWasRunning || _state.value.isRunning
-        _state.value = _state.value.copy(isRunning = false, isPausedBySilence = false, currentDeviceAddress = null)
+        _state.value =
+                _state.value.copy(
+                        isRunning = false,
+                        isPausedBySilence = false,
+                        currentDeviceAddress = null
+                )
 
         if (wasRunning && !suppressRestartNotification) {
             mockCreateRestartNotification()
@@ -367,21 +495,35 @@ class TestableMicLockService(
     }
 
     fun testBroadcastTileStartFailure(reason: String) {
-        val failureIntent = Intent(MicLockService.ACTION_TILE_START_FAILED).apply {
-            putExtra(MicLockService.EXTRA_FAILURE_REASON, reason)
-            setPackage(mockContext.packageName)
-        }
+        val failureIntent =
+                Intent(MicLockService.ACTION_TILE_START_FAILED).apply {
+                    putExtra(MicLockService.EXTRA_FAILURE_REASON, reason)
+                    setPackage(mockContext.packageName)
+                }
         broadcastIntents.add(failureIntent)
     }
 
     private fun mockStartForeground() {
         if (foregroundServiceWillFail) {
-            throw foregroundServiceException ?: RuntimeException("Simulated foreground service failure")
+            throw foregroundServiceException
+                    ?: RuntimeException("Simulated foreground service failure")
         }
     }
 
     private fun mockCreateRestartNotification() {
         restartNotificationCreated = true
+    }
+
+    // Mock the startMicHolding method
+    fun mockStartMicHolding() {
+        micHoldingActive = true
+        micHoldingStartCount++
+        // Clear paused states when mic holding starts
+        setServiceState(
+                running = _state.value.isRunning,
+                pausedByScreenOff = false,
+                pausedBySilence = false
+        )
     }
 
     // Test assertion methods
@@ -390,8 +532,9 @@ class TestableMicLockService(
     }
 
     fun getLastBroadcastFailureReason(): String? {
-        return broadcastIntents.lastOrNull { it.action == MicLockService.ACTION_TILE_START_FAILED }
-            ?.getStringExtra(MicLockService.EXTRA_FAILURE_REASON)
+        return broadcastIntents
+                .lastOrNull { it.action == MicLockService.ACTION_TILE_START_FAILED }
+                ?.getStringExtra(MicLockService.EXTRA_FAILURE_REASON)
     }
 
     fun getLastBroadcastAction(): String? {
@@ -409,4 +552,12 @@ class TestableMicLockService(
     fun wasRestartNotificationCreated(): Boolean = restartNotificationCreated
 
     fun getStartFailureReason(): String? = startFailureReason
+
+    fun isMicHoldingActive(): Boolean = micHoldingActive
+
+    fun isPausedByScreenOff(): Boolean = currentServiceState.isPausedByScreenOff
+
+    fun isPausedBySilence(): Boolean = currentServiceState.isPausedBySilence
+
+    fun getMicHoldingStartCount(): Int = micHoldingStartCount
 }

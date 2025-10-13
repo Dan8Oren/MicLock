@@ -41,9 +41,10 @@ cd MicLock
 Mic-Lock acts as a "polite background holder" that:
 1.  **Detects Faulty Microphone**: Identifies when the default microphone path is compromised (typically the bottom mic on Pixel devices).
 2.  **Secures Working Mic**: Establishes and holds a connection to your device's *working* earpiece microphone array in a battery-efficient manner.
-3.  **Graceful Handover**: When other apps start recording, Mic-Lock gracefully releases its hold.
-4.  **Correct Path Inheritance**: The other app then inherits the correctly routed audio path to the functional microphone instead of defaulting to the broken one.
-5.  **Seamless Experience**: Your recordings and calls work perfectly without manual intervention!
+3.  **Intelligent Screen Management**: Uses configurable delays (default 1.3 seconds) before re-activating when screen turns on, preventing unnecessary battery drain during brief interactions like checking notifications.
+4.  **Graceful Handover**: When other apps start recording, Mic-Lock gracefully releases its hold.
+5.  **Correct Path Inheritance**: The other app then inherits the correctly routed audio path to the functional microphone instead of defaulting to the broken one.
+6.  **Seamless Experience**: Your recordings and calls work perfectly without manual intervention!
 
 ## 🔒 Security & Privacy
 
@@ -79,6 +80,7 @@ For even easier access, Mic-Lock includes a Quick Settings tile.
 
 -   **AudioRecord Mode**: (Default) More battery-efficient, optimized for most modern devices. If you experience high battery usage, switch to this mode.
 -   **MediaRecorder Mode**:  Offers wider compatibility, especially on older or more problematic devices, but might use slightly more battery.
+-   **Screen-On Delay**: Configurable delay (0-5000ms, default 1.3 seconds) before re-activating microphone when screen turns on. This prevents unnecessary battery drain during brief screen interactions like checking notifications or battery level. Set to 0 for immediate activation.
 
 ## 🛠️ Troubleshooting
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="2dp" />
+            <!-- Create a subtle gradient that hints at the zones -->
+            <gradient
+                android:type="linear"
+                android:angle="0"
+                android:startColor="#4CAF50"
+                android:centerColor="#757575"
+                android:endColor="#F44336" />
+            <size android:height="4dp" />
+        </shape>
+    </item>
+</selector>

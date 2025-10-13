@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2025-01-24
+## [1.1.1] - 2025-10-09
+
+### Added
+- **Configurable Screen-Off Behavior**:
+  Default configuration is set to 1.3 seconds of Delayed Reactivation. Configuration options are:
+   a. **Always-On**: Keeps the microphone usage on even when the screen is off. Might be a good option for those who have quick microphone usage even when the screen is off (more battery usage, less recommended).
+   b. **Delayed Reactivation**: (Recommended Approach) Microphone turns off when the screen is off with a configurable delay for reactivating the microphone when the screen turns back on, preventing unnecessary battery drain during brief screen interactions like checking notifications or battery level.
+   c. **Stays-Off**: Turns the microphone usage off once the screen turns off and does not reactivate it. (Recommended for those who want minimum battery usage, but requires manual reactivation before usage.)
+
+- **DelayedActivationManager**: New component for robust delay handling with proper race condition management and coroutine-based implementation.
+
+
+### Enhanced
+- **Battery Optimization**: Significantly reduced power consumption by avoiding microphone operations during brief screen interactions while maintaining responsive behavior for legitimate usage.
+- **Quick Settings Tile**: Enhanced tile to display "Activating..." state during delay periods with manual override capability.
+
+
+### Technical Improvements
+- Coroutine-based delay implementation with proper job cancellation and cleanup
+- Atomic state updates and synchronized operations for thread safety
+- Timestamp-based race condition detection and latest-event-wins strategy
+- Enhanced service lifecycle integration with delay state persistence
+
+## [1.1.0] - 2025-10-01
 
 ### Added
 - **Intelligent Quick Settings Tile**: A new state-aware Quick Settings tile that provides at-a-glance status (On, Off, Paused) and one-tap control of the MicLock service.
@@ -15,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The tile now displays a "Paused" state when another app is using the microphone, providing clearer feedback to the user.
 - The tile shows an unavailable state with a "No Permission" label if required permissions have not been granted.
 
-## [1.0.1] - 2025-01-23
+## [1.0.1] - 2025-09-23
 
 ### Enhanced
 - **Improved Service Reliability (Always-On Foreground Service):** The MicLockService now remains in the foreground at all times when active, even when the screen is off. This significantly improves service reliability by preventing the Android system from terminating the background process.
@@ -26,10 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Addressed issues where the service could be terminated by aggressive OEM power management when the screen was off
 
-## [1.0.0] - 2024-01-20
+## [1.0.0] - 2025-09-21
 
 ### Added
-- Initial public release of Mic-Lock
+- Initial public release of MicLock
 - Core functionality to reroute audio from faulty bottom microphone to earpiece microphone on Google Pixel devices
 - Battery-efficient background service with dual recording strategy (MediaRecorder/AudioRecord modes)
 - Polite background holding mechanism that yields to foreground applications
@@ -59,5 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contributing guidelines for open source development
 - Issue templates for bug reports and feature requests
 
-[1.1.0]: https://github.com/yourusername/mic-lock/releases/tag/v1.1.0
-[1.0.0]: https://github.com/yourusername/mic-lock/releases/tag/v1.0.0
+[1.1.1]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.1.1
+[1.1.0]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.1.0
+[1.0.1]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.0.1
+[1.0.0]: https://github.com/Dan8Oren/MicLock/releases/tag/v1.0.0
