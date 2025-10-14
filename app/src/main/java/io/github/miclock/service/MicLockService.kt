@@ -1244,9 +1244,6 @@ class MicLockService : Service(), MicActivationService {
                 Log.w(TAG, "Failed to request tile update: ${e.message}")
             }
         }
-
-        // Request tile update whenever service state changes
-        requestTileUpdate()
     }
 
     /**
