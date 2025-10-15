@@ -16,19 +16,33 @@ This app was specifically **invented to fix this issue** by running discreetly i
 
 ## 🔧 Installation
 
-### Option 1: Download APK (Recommended for most users)
-1.  Download the latest stable APK: [`releases`](https://github.com/Dan8Oren/MicLock/releases/)
-2.  Enable "Install from Unknown Sources" in your device settings if prompted (this is standard for sideloaded apps).
-3.  Install the downloaded APK file.
-4.  Grant **microphone** and **notification** permissions when the app first launches.
+### Option 1: Google Play (Closed Alpha)
+Join the **closed testing program** on Google Play to download and receive updates automatically:
 
-### Option 2: Build from Source (For developers and advanced users)
+<a href="https://play.google.com/store/apps/details?id=io.github.miclock" target="_blank">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200"/>
+</a>
+
+> 🔗 [Join on the web](https://play.google.com/apps/testing/io.github.miclock)
+
+---
+
+### Option 2: Download APK (Recommended for most users)
+1. Download the latest stable APK from the [**Releases**](https://github.com/Dan8Oren/MicLock/releases/) page.
+2. Enable *“Install from Unknown Sources”* in your device settings if prompted (standard for sideloaded apps).
+3. Install the downloaded APK file.
+4. Grant **microphone** and **notification** permissions when the app first launches.
+
+---
+
+### Option 3: Build from Source (For developers and advanced users)
 
 ```bash
 git clone https://github.com/Dan8Oren/MicLock.git
 cd MicLock
 ./gradlew assembleRelease
 ```
+
 ## 🎯 Quick Start
 
 1.  **Launch the app** and complete the initial permission requests.
@@ -41,9 +55,10 @@ cd MicLock
 Mic-Lock acts as a "polite background holder" that:
 1.  **Detects Faulty Microphone**: Identifies when the default microphone path is compromised (typically the bottom mic on Pixel devices).
 2.  **Secures Working Mic**: Establishes and holds a connection to your device's *working* earpiece microphone array in a battery-efficient manner.
-3.  **Graceful Handover**: When other apps start recording, Mic-Lock gracefully releases its hold.
-4.  **Correct Path Inheritance**: The other app then inherits the correctly routed audio path to the functional microphone instead of defaulting to the broken one.
-5.  **Seamless Experience**: Your recordings and calls work perfectly without manual intervention!
+3.  **Intelligent Screen Management**: Uses configurable delays (default 1.3 seconds) before re-activating when screen turns on, preventing unnecessary battery drain during brief interactions like checking notifications.
+4.  **Graceful Handover**: When other apps start recording, Mic-Lock gracefully releases its hold.
+5.  **Correct Path Inheritance**: The other app then inherits the correctly routed audio path to the functional microphone instead of defaulting to the broken one.
+6.  **Seamless Experience**: Your recordings and calls work perfectly without manual intervention!
 
 ## 🔒 Security & Privacy
 
@@ -79,6 +94,7 @@ For even easier access, Mic-Lock includes a Quick Settings tile.
 
 -   **AudioRecord Mode**: (Default) More battery-efficient, optimized for most modern devices. If you experience high battery usage, switch to this mode.
 -   **MediaRecorder Mode**:  Offers wider compatibility, especially on older or more problematic devices, but might use slightly more battery.
+-   **Screen-On Delay**: Configurable delay (0-5000ms, default 1.3 seconds) before re-activating microphone when screen turns on. This prevents unnecessary battery drain during brief screen interactions like checking notifications or battery level. Set to 0 for immediate activation.
 
 ## 🛠️ Troubleshooting
 
@@ -110,10 +126,10 @@ For developers and those interested in the technical implementation, architectur
 
 ---
 
-**Supported Android Versions**: Android 7.0 (API 24) and above  
-**Tested Devices**: 
+**Supported Android Versions**: Android 7.0 (API 24) and above
+**Tested Devices**:
  - **Google Pixel 7 Pro** (primary development and testing device).
  - **Google Pixel 7**
  - **Google Pixel 8**
- 
+
  Compatibility with other devices is expected but may require adjustments or specific mode selections (AudioRecord/MediaRecorder).

@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import io.github.miclock.R
 import io.github.miclock.data.Prefs
@@ -26,7 +27,6 @@ import io.github.miclock.service.MicLockService
 import io.github.miclock.tile.EXTRA_START_SERVICE_FROM_TILE
 import io.github.miclock.tile.MicLockTileService
 import io.github.miclock.util.ApiGuard
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
  * * The activity communicates with MicLockService through intents and observes
  * service state changes via StateFlow to update the UI accordingly.
  */
-class MainActivity : ComponentActivity() {
+open class MainActivity : ComponentActivity() {
 
     private lateinit var statusText: TextView
     private lateinit var startBtn: MaterialButton
@@ -47,6 +47,9 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var mediaRecorderToggle: SwitchMaterial
     private lateinit var mediaRecorderBatteryWarningText: TextView
+
+    private lateinit var screenOnDelaySlider: Slider
+    private lateinit var screenOnDelaySummary: TextView
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
     private val notifPerms = if (Build.VERSION.SDK_INT >= 33) {
@@ -79,6 +82,9 @@ class MainActivity : ComponentActivity() {
         mediaRecorderToggle = findViewById(R.id.mediaRecorderToggle)
         mediaRecorderBatteryWarningText = findViewById(R.id.mediaRecorderBatteryWarningText)
 
+        screenOnDelaySlider = findViewById(R.id.screenOnDelaySlider)
+        screenOnDelaySummary = findViewById(R.id.screenOnDelaySummary)
+
         // Initialize compatibility mode toggle
         mediaRecorderToggle.isChecked = Prefs.getUseMediaRecorder(this)
         mediaRecorderToggle.setOnCheckedChangeListener { _, isChecked ->
@@ -91,11 +97,35 @@ class MainActivity : ComponentActivity() {
             updateCompatibilityModeUi()
         }
 
+        // Initialize screen-on delay slider with logical mapping
+        screenOnDelaySlider.valueFrom = Prefs.SLIDER_MIN
+        screenOnDelaySlider.valueTo = Prefs.SLIDER_MAX
+        val currentDelay = Prefs.getScreenOnDelayMs(this)
+        screenOnDelaySlider.value = Prefs.delayMsToSlider(currentDelay)
+        updateDelayConfigurationUi(currentDelay)
+
+        screenOnDelaySlider.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                // Snap to nearest valid position for clear phase boundaries
+                val snappedValue = Prefs.snapSliderValue(value)
+
+                // Convert snapped position to delay value
+                val delayMs = Prefs.sliderToDelayMs(snappedValue)
+
+                // Update slider to show the snapped position (creates the snappy feel)
+                if (screenOnDelaySlider.value != snappedValue) {
+                    screenOnDelaySlider.value = snappedValue
+                }
+
+                handleDelayPreferenceChange(delayMs)
+            }
+        }
+
         startBtn.setOnClickListener {
             if (!hasAllPerms()) {
                 reqPerms.launch(audioPerms + notifPerms)
             } else {
-                startMicLock()
+                handleStartButtonClick()
             }
         }
         stopBtn.setOnClickListener { stopMicLock() }
@@ -210,16 +240,72 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
+     * Handles start button click with proper screen-off pause state handling.
+     * Checks service state and routes to appropriate action (start, resume, or request permissions).
+     */
+    private fun handleStartButtonClick() {
+        try {
+            val currentState = MicLockService.state.value
+
+            when {
+                currentState.isPausedByScreenOff -> {
+                    // Resume from screen-off pause (like tile does)
+                    Log.d("MainActivity", "Resuming service from screen-off pause")
+                    val intent = Intent(this, MicLockService::class.java).apply {
+                        action = MicLockService.ACTION_START_USER_INITIATED
+                        putExtra("from_main_activity", true)
+                    }
+                    ContextCompat.startForegroundService(this, intent)
+                    requestTileUpdate()
+                }
+                !currentState.isRunning -> {
+                    // Normal start flow
+                    Log.d("MainActivity", "Starting service from stopped state")
+                    startMicLock()
+                }
+                else -> {
+                    // Service is running but not paused by screen-off
+                    // This shouldn't happen since start button should be disabled when running
+                    Log.w("MainActivity", "Start button clicked while service is running and not paused by screen-off")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to handle start button click: ${e.message}", e)
+            handleStartButtonFailure(e)
+        }
+    }
+
+    /**
      * Starts the MicLockService with user-initiated action.
      * This sends an ACTION_START_USER_INITIATED intent to the service.
      */
     private fun startMicLock() {
-        val intent = Intent(this, MicLockService::class.java)
-        intent.action = MicLockService.ACTION_START_USER_INITIATED
-        ContextCompat.startForegroundService(this, intent)
+        try {
+            val intent = Intent(this, MicLockService::class.java)
+            intent.action = MicLockService.ACTION_START_USER_INITIATED
+            intent.putExtra("from_main_activity", true)
+            ContextCompat.startForegroundService(this, intent)
 
-        // Request tile update to reflect service start
-        requestTileUpdate()
+            // Request tile update to reflect service start
+            requestTileUpdate()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to start MicLock service: ${e.message}", e)
+            handleStartButtonFailure(e)
+        }
+    }
+
+    /**
+     * Handles start button failures with user-friendly error messages.
+     * Logs the error and shows appropriate feedback to the user.
+     */
+    private fun handleStartButtonFailure(e: Exception) {
+        Log.e("MainActivity", "Start button action failed: ${e.message}", e)
+
+        // Update UI state to reflect failure
+        updateAllUi()
+
+        // Note: In a real implementation, you might want to show a Snackbar or Toast
+        // For now, we'll just log the error as the current UI doesn't have error display components
     }
 
     /**
@@ -235,14 +321,16 @@ class MainActivity : ComponentActivity() {
         requestTileUpdate()
     }
 
-    private fun updateAllUi() {
+    protected open fun updateAllUi() {
         updateMainStatus()
         updateCompatibilityModeUi()
+        updateDelayConfigurationUi(Prefs.getScreenOnDelayMs(this))
     }
 
     private fun updateMainStatus() {
         val running = MicLockService.state.value.isRunning
-        val paused = MicLockService.state.value.isPausedBySilence
+        val pausedBySilence = MicLockService.state.value.isPausedBySilence
+        val pausedByScreenOff = MicLockService.state.value.isPausedByScreenOff
 
         when {
             !running -> {
@@ -250,7 +338,7 @@ class MainActivity : ComponentActivity() {
                 statusText.setTextColor(ContextCompat.getColor(this, R.color.error_red))
                 statusText.animate().alpha(1.0f).setDuration(200)
             }
-            paused -> {
+            pausedBySilence || pausedByScreenOff -> {
                 statusText.text = "PAUSED"
                 statusText.setTextColor(ContextCompat.getColor(this, R.color.on_surface_variant))
                 statusText.animate().alpha(0.6f).setDuration(500).withEndAction {
@@ -264,7 +352,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        startBtn.isEnabled = !running
+        // Enable start button when service is not running OR when paused by screen-off
+        // This allows the start button to act as a "Resume" button for screen-off pause
+        startBtn.isEnabled = !running || pausedByScreenOff
         stopBtn.isEnabled = running
     }
 
@@ -301,6 +391,59 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 Log.w("MainActivity", "Failed to request tile update: ${e.message}")
             }
+        }
+    }
+
+    /**
+     * Updates the delay configuration UI to reflect the current delay value.
+     * Shows appropriate summary text for all behavior modes.
+     */
+    private fun updateDelayConfigurationUi(delayMs: Long) {
+        when {
+            delayMs == Prefs.NEVER_REACTIVATE_VALUE -> {
+                screenOnDelaySummary.text = getString(R.string.screen_off_stays_off_description)
+            }
+            delayMs == Prefs.ALWAYS_KEEP_ON_VALUE -> {
+                screenOnDelaySummary.text = getString(R.string.screen_off_always_on_description)
+            }
+            delayMs <= 0L -> {
+                screenOnDelaySummary.text = getString(R.string.screen_off_no_delay_description)
+            }
+            else -> {
+                val delaySeconds = delayMs / 1000.0
+                screenOnDelaySummary.text = getString(R.string.screen_off_delay_description, delaySeconds)
+            }
+        }
+    }
+
+    /**
+     * Handles changes to the delay preference from the UI.
+     * Validates the input, saves the preference, and updates any pending delay operations.
+     * Provides user feedback for configuration changes.
+     */
+    private fun handleDelayPreferenceChange(delayMs: Long) {
+        try {
+            // Validate the delay value
+            if (!Prefs.isValidScreenOnDelay(delayMs)) {
+                Log.w("MainActivity", "Invalid delay value: ${delayMs}ms")
+                return
+            }
+
+            // Save the preference
+            Prefs.setScreenOnDelayMs(this, delayMs)
+
+            // Update UI to reflect the change
+            updateDelayConfigurationUi(delayMs)
+
+            Log.d("MainActivity", "Screen-on delay updated to ${delayMs}ms")
+
+            // Preference changes take effect immediately:
+            // - The new delay value will be used for the next screen-on event
+            // - Any currently pending delay operation will complete with its original delay
+            // - No service restart is required
+            // - This provides predictable behavior where in-flight operations complete as scheduled
+        } catch (e: IllegalArgumentException) {
+            Log.e("MainActivity", "Failed to set screen-on delay: ${e.message}")
         }
     }
 }

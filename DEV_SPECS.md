@@ -62,7 +62,7 @@ Mic-Lock should avoid requesting audio modes or flags that might inadvertently b
 
 ### 2.6 Proper Foreground Service (FGS) Lifecycle and Android 14+ Compatibility
 
-Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to ensure stable policy classification, while gracefully handling Android 14+ background service restrictions:
+Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to ensure stable policy classification, while gracefully handling Android 14+ background service restrictions and implementing intelligent delayed activation:
 
 * **Open Input After FGS Start:** The microphone input should only be opened *after* the Foreground Service is fully running and its notification is visible.
 * **Persistent Notification:** Maintain a clear, ongoing notification that indicates the service status and allows user control.
@@ -74,9 +74,26 @@ Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to
   - Using regular `startService()` for already-running services to avoid background restrictions
 * **Screen State Integration:** To prevent termination by the OS, the service remains in the foreground at all times when active.
   - When the screen turns **off**, the service pauses microphone usage to save battery but **does not exit the foreground state**. The notification is updated to show a "Paused (Screen off)" status.
-  - When the screen turns **on**, the service resumes active microphone holding.
+  - When the screen turns **on**, the service implements intelligent delayed activation with configurable delays (default 1.3 seconds) to prevent unnecessary battery drain during brief screen interactions.
+* **Delayed Activation Management:** The service must properly handle delayed microphone re-activation:
+  - Start foreground service immediately when delay is scheduled to comply with Android 14+ restrictions
+  - Cancel pending delays if screen turns off during delay period
+  - Restart delay from beginning if screen turns on again during existing delay
+  - Respect existing service states (manual stops, active sessions, paused by other apps) when applying delays
 
-### 2.7 User Interface and Preferences
+### 2.7 Intelligent Screen State Management
+
+Mic-Lock must implement configurable delayed activation to optimize battery usage while maintaining responsive behavior:
+
+* **Configurable Delay Period:** Provide user-configurable delay (0-5000ms) before re-activating microphone when screen turns on
+* **Smart Cancellation Logic:** Cancel pending activation if screen turns off during delay period, preventing unnecessary operations
+* **Race Condition Handling:** Handle rapid screen state changes with latest-event-wins strategy and proper coroutine job management
+* **State Validation:** Ensure delays only apply when appropriate (service paused by screen-off, not manually stopped or already active)
+* **Foreground Service Coordination:** Start foreground service immediately when delay is scheduled to comply with Android 14+ background restrictions
+* **Notification Updates:** Update service notification to reflect delay status with countdown display during delay periods
+* **Manual Override Support:** Allow immediate activation through Quick Settings tile or manual service start, cancelling any pending delays
+
+### 2.8 User Interface and Preferences
 
 *   **Quick Settings Tile**: A state-aware tile provides at-a-glance status and one-tap control. It must reflect the service's state (On, Off, Paused) and become unavailable if permissions are missing.
 
@@ -90,7 +107,7 @@ Mic-Lock must integrate correctly with Android's Foreground Service lifecycle to
 * **Battery Usage Awareness:** Clearly communicate to users that MediaRecorder mode uses more battery but provides better compatibility.
 * **Battery Optimization Exemption:** Upon first launch, the app prompts the user to grant an exemption from battery optimizations. This is critical to prevent the Android system from terminating the service during long periods of device inactivity, ensuring continuous background operation.
 
-### 2.8 Service Resilience and User Experience
+### 2.9 Service Resilience and User Experience
 
 To ensure the service remains active and is easy to manage, Mic-Lock implements several resilience features:
 

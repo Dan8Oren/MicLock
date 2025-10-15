@@ -3,6 +3,8 @@
     <!-- New Custom Colors -->
     <color name="dark_background">#121b2e</color>
     <color name="secondary_green">#5ada9c</color>
+    <color name="secondary_green_low_alpha">#585ADA9C</color>
+
 
     <!-- Primary brand colors - adjusted to dark theme -->
     <color name="primary">#5ada9c</color> <!-- Using secondary_green as primary for visibility -->

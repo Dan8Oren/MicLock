@@ -146,6 +146,161 @@
 
                     </LinearLayout>
 
+                    <!-- Screen-On Delay Configuration -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/outline"
+                        android:alpha="0.3"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/screen_off_behavior_title"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/secondary_green"
+                        android:layout_marginBottom="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/screenOnDelaySummary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/screen_off_no_delay_description"
+                            android:textSize="12sp"
+                            android:textColor="@color/on_surface"
+                            android:layout_marginBottom="8dp" />
+                        <!-- Slider with integrated background zones -->
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <!-- Phase indicator labels - subtle and integrated -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginBottom="10dp"
+                                android:paddingStart="12dp"
+                                android:paddingEnd="12dp">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="2"
+                                    android:text="@string/screen_off_always_on_label"
+                                    android:textSize="9sp"
+                                    android:textColor="@color/secondary_green"
+                                    android:gravity="start"
+                                    android:alpha="0.8"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="8"
+                                    android:text="@string/screen_off_delay_label"
+                                    android:textSize="9sp"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:gravity="center"
+                                    android:alpha="0.8"
+                                    android:textStyle="bold"/>
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="2"
+                                    android:text="@string/screen_off_stays_off_label"
+                                    android:textSize="9sp"
+                                    android:textColor="@color/error_red"
+                                    android:gravity="end"
+                                    android:alpha="0.8"
+                                    android:textStyle="bold" />
+
+                            </LinearLayout>
+
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="match_parent"
+                                android:layout_height="10dp"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginStart="12dp"
+                                android:layout_marginEnd="12dp"
+                                app:cardCornerRadius="5dp"
+                                app:cardElevation="0dp">
+
+                                <!-- Background zones behind the slider -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center_vertical"
+                                    android:orientation="horizontal">
+
+                                    <!-- Always on zone (green) -->
+                                    <View
+                                        android:layout_width="0dp"
+                                        android:layout_height="match_parent"
+                                        android:layout_weight="0.6"
+                                        android:background="@color/secondary_green"
+                                        android:alpha="0.6" />
+
+                                    <!-- Transition -->
+                                    <View
+                                        android:layout_width="0dp"
+                                        android:layout_height="match_parent"
+                                        android:layout_weight="0.8"
+                                        android:background="@color/outline"
+                                        android:alpha="0.3" />
+
+                                    <!-- Delay zone (gray) -->
+                                    <View
+                                        android:layout_width="0dp"
+                                        android:layout_height="match_parent"
+                                        android:layout_weight="8"
+                                        android:background="@color/on_surface_variant"
+                                        android:alpha="0.6" />
+
+                                    <!-- Transition -->
+                                    <View
+                                        android:layout_width="0dp"
+                                        android:layout_height="match_parent"
+                                        android:layout_weight="0.8"
+                                        android:background="@color/outline"
+                                        android:alpha="0.3" />
+
+                                    <!-- Never reactivate zone (red) -->
+                                    <View
+                                        android:layout_width="0dp"
+                                        android:layout_height="match_parent"
+                                        android:layout_weight="0.6"
+                                        android:background="@color/error_red"
+                                        android:alpha="0.6" />
+
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                            <!-- Slider on top -->
+                            <com.google.android.material.slider.Slider
+                                android:id="@+id/screenOnDelaySlider"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:stepSize="1"
+                                app:labelBehavior="gone"
+                                app:thumbColor="@color/secondary_green"
+                                app:tickVisible="false"
+                                app:trackColorActive="@color/secondary_green"
+                                app:trackColorInactive="@android:color/transparent" />
+
+                        </FrameLayout>
+
+                    </LinearLayout>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

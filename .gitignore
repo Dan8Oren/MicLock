@@ -3,6 +3,8 @@
 *.aab
 *.aar
 *.apk
+/app/release/
+/app/debug/
 
 # Files for the Dalvik VM
 *.dex
@@ -27,6 +29,8 @@ build/
 .idea/kotlinScripting.xml
 .idea/artifacts/
 .idea/inspectionProfiles/
+.idea/androidTestResultsUserPreferences.xml
+.idea/deploymentTargetSelector.xml
 
 # Local configuration files (e.g., for Android Studio)
 local.properties
@@ -55,3 +59,6 @@ captures/
 
 # External libraries
 libs/ # If you are not managing libraries through Gradle dependencies
+
+.kiro
+.vscode
