@@ -18,7 +18,9 @@ This app was specifically **invented to fix this issue** by running discreetly i
 
 ### Option 1: Google Play (Closed Alpha)
 Join the **closed testing program** on Google Play to download and receive updates automatically:
-
+- Send me your email to `dan8oren@gmail.com` and request to join the testing 🙏 
+this will help deploying MicLock in Google Play Store for everyone!
+- after that you can download the app from here:
 <a href="https://play.google.com/store/apps/details?id=io.github.miclock" target="_blank">
   <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200"/>
 </a>
