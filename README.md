@@ -29,7 +29,7 @@ this will help deploying MicLock in Google Play Store for everyone!
 
 ---
 
-### Option 2: Download APK (Recommended for most users)
+### Option 2: Download APK
 1. Download the latest stable APK from the [**Releases**](https://github.com/Dan8Oren/MicLock/releases/) page.
 2. Enable *“Install from Unknown Sources”* in your device settings if prompted (standard for sideloaded apps).
 3. Install the downloaded APK file.
