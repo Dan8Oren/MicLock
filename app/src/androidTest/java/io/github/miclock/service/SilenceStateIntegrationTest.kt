@@ -1,6 +1,5 @@
 package io.github.miclock.service
 
-import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.miclock.service.model.ServiceState
@@ -34,7 +33,7 @@ class SilenceStateIntegrationTest {
         val initialState = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            isPausedByScreenOff = false
+            isPausedByScreenOff = false,
         )
         assertTrue("Service should be running", initialState.isRunning)
         assertFalse("Service should not be paused by silence", initialState.isPausedBySilence)
@@ -44,17 +43,16 @@ class SilenceStateIntegrationTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = false,
-            wasSilencedBeforeScreenOff = false
+            wasSilencedBeforeScreenOff = false,
         )
         assertTrue("Service should be paused by silence", silencedState.isPausedBySilence)
-
 
         // Phase 3: Screen turns off
         val screenOffState = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = true
+            wasSilencedBeforeScreenOff = true,
         )
         assertTrue("Service should be paused by screen-off", screenOffState.isPausedByScreenOff)
         assertTrue("wasSilencedBeforeScreenOff should be true", screenOffState.wasSilencedBeforeScreenOff)
@@ -64,18 +62,17 @@ class SilenceStateIntegrationTest {
             isRunning = true,
             isPausedBySilence = false,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = false
+            wasSilencedBeforeScreenOff = false,
         )
         assertFalse("isPausedBySilence should be cleared", micAvailableState.isPausedBySilence)
         assertFalse("wasSilencedBeforeScreenOff should be cleared", micAvailableState.wasSilencedBeforeScreenOff)
-
 
         // Phase 5: Screen turns on - service should resume
         val resumedState = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
             isPausedByScreenOff = false,
-            wasSilencedBeforeScreenOff = false
+            wasSilencedBeforeScreenOff = false,
         )
         assertTrue("Service should be running", resumedState.isRunning)
         assertFalse("Service should not be paused by silence", resumedState.isPausedBySilence)
@@ -92,7 +89,7 @@ class SilenceStateIntegrationTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = true
+            wasSilencedBeforeScreenOff = true,
         )
 
         // When: Global callback continues to detect active recording
@@ -112,7 +109,7 @@ class SilenceStateIntegrationTest {
         val states = listOf(
             ServiceState(isRunning = true, isPausedByScreenOff = false),
             ServiceState(isRunning = true, isPausedByScreenOff = true, wasSilencedBeforeScreenOff = false),
-            ServiceState(isRunning = true, isPausedByScreenOff = false, isPausedBySilence = false)
+            ServiceState(isRunning = true, isPausedByScreenOff = false, isPausedBySilence = false),
         )
 
         // When: Rapid screen transitions occur

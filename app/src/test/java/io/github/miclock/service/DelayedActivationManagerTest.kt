@@ -35,12 +35,12 @@ class DelayedActivationManagerTest {
         MockitoAnnotations.openMocks(this)
         context = RuntimeEnvironment.getApplication()
         testScope = TestScope()
-        
+
         // Setup default mock behavior
         whenever(mockService.getCurrentState()).thenReturn(ServiceState())
         whenever(mockService.isManuallyStoppedByUser()).thenReturn(false)
         whenever(mockService.isMicActivelyHeld()).thenReturn(false)
-        
+
         delayedActivationManager = TestableDelayedActivationManager(context, mockService, testScope)
     }
 
@@ -104,9 +104,11 @@ class DelayedActivationManagerTest {
     fun testScheduleDelayedActivation_servicePausedBySilence_doesNotSchedule() = testScope.runTest {
         // Given: Service is paused by silence (another app using mic)
         val recentTimestamp = System.currentTimeMillis() - 5000L // 5 seconds ago (fresh)
-        whenever(mockService.getCurrentState()).thenReturn(ServiceState(
-            isPausedBySilence = true
-        ))
+        whenever(mockService.getCurrentState()).thenReturn(
+            ServiceState(
+                isPausedBySilence = true,
+            ),
+        )
 
         // When: Attempting to schedule delay
         val result = delayedActivationManager.scheduleDelayedActivation(1000L)
@@ -186,7 +188,7 @@ class DelayedActivationManagerTest {
         // Verify that the delay mechanism is working correctly
         val remainingTime = delayedActivationManager.getRemainingDelayMs()
         assertTrue("Should have remaining time close to 1000ms", remainingTime >= 950L)
-        
+
         // Test that cancellation works
         val cancelled = delayedActivationManager.cancelDelayedActivation()
         assertTrue("Should successfully cancel delay", cancelled)
@@ -240,21 +242,21 @@ class DelayedActivationManagerTest {
         whenever(mockService.getCurrentState()).thenReturn(ServiceState(isRunning = false, isPausedBySilence = false))
         whenever(mockService.isManuallyStoppedByUser()).thenReturn(false)
         Prefs.setScreenOnDelayMs(context, 1000L)
-        
+
         // Debug: Check individual conditions
         val currentState = mockService.getCurrentState()
         val isManuallyStoppedByUser = mockService.isManuallyStoppedByUser()
         val shouldRespectExisting = delayedActivationManager.shouldRespectExistingState()
         val prefDelay = Prefs.getScreenOnDelayMs(context)
         val shouldApply = delayedActivationManager.shouldApplyDelay()
-        
+
         assertFalse("Service should not be running", currentState.isRunning)
         assertFalse("Service should not be paused by silence", currentState.isPausedBySilence)
         assertFalse("Service should not be manually stopped", isManuallyStoppedByUser)
         assertFalse("Should not respect existing state", shouldRespectExisting)
         assertEquals("Preference delay should be 1000ms", 1000L, prefDelay)
         assertTrue("Should apply delay with valid conditions", shouldApply)
-        
+
         val scheduled = delayedActivationManager.scheduleDelayedActivation(1000L)
         assertTrue("Should successfully schedule delay", scheduled)
         assertTrue("Should have pending activation", delayedActivationManager.isActivationPending())
@@ -285,9 +287,11 @@ class DelayedActivationManagerTest {
         // Test case 2: Service paused by silence (with fresh timestamp)
         whenever(mockService.isMicActivelyHeld()).thenReturn(false)
         val recentTimestamp = System.currentTimeMillis() - 5000L // 5 seconds ago (fresh)
-        whenever(mockService.getCurrentState()).thenReturn(ServiceState(
-            isPausedBySilence = true,
-        ))
+        whenever(mockService.getCurrentState()).thenReturn(
+            ServiceState(
+                isPausedBySilence = true,
+            ),
+        )
         assertTrue("Should respect state when paused by silence", delayedActivationManager.shouldRespectExistingState())
 
         // Test case 3: Manually stopped by user
@@ -370,11 +374,14 @@ class DelayedActivationManagerTest {
         // Then: Should track timestamps accurately using test scheduler time
         val screenOnTime = delayedActivationManager.getLastScreenOnTime()
         val delayStartTime = delayedActivationManager.getDelayStartTime()
-        
+
         assertEquals("Screen-on time should be test scheduler time", 0L, screenOnTime)
         assertEquals("Delay start time should be test scheduler time", 0L, delayStartTime)
-        assertEquals("Screen-on time and delay start time should be equal", 
-                    screenOnTime, delayStartTime)
+        assertEquals(
+            "Screen-on time and delay start time should be equal",
+            screenOnTime,
+            delayStartTime,
+        )
     }
 
     private fun assertDoesNotThrow(block: () -> Unit) {
@@ -393,9 +400,9 @@ class DelayedActivationManagerTest {
 class TestableDelayedActivationManager(
     context: Context,
     service: MicActivationService,
-    private val testScope: TestScope
+    private val testScope: TestScope,
 ) : DelayedActivationManager(context, service, testScope) {
-    
+
     override fun getCurrentTimeMs(): Long {
         return testScope.testScheduler.currentTime
     }

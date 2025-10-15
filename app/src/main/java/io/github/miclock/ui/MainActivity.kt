@@ -442,7 +442,6 @@ open class MainActivity : ComponentActivity() {
             // - Any currently pending delay operation will complete with its original delay
             // - No service restart is required
             // - This provides predictable behavior where in-flight operations complete as scheduled
-
         } catch (e: IllegalArgumentException) {
             Log.e("MainActivity", "Failed to set screen-on delay: ${e.message}")
         }

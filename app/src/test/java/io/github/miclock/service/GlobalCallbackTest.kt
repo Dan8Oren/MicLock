@@ -1,7 +1,6 @@
 package io.github.miclock.service
 
 import android.media.AudioManager
-import android.media.AudioRecordingConfiguration
 import io.github.miclock.service.model.ServiceState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -50,7 +49,7 @@ class GlobalCallbackTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = true
+            wasSilencedBeforeScreenOff = true,
         )
 
         // When: Global callback detects no other apps recording (mic available)
@@ -61,7 +60,7 @@ class GlobalCallbackTest {
             isRunning = true,
             isPausedBySilence = false,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = false
+            wasSilencedBeforeScreenOff = false,
         )
 
         // Verify state transition
@@ -81,7 +80,7 @@ class GlobalCallbackTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = true
+            wasSilencedBeforeScreenOff = true,
         )
 
         // When: Global callback detects other apps still recording
@@ -90,7 +89,6 @@ class GlobalCallbackTest {
         // Then: Silence state should be maintained
         assertTrue("isPausedBySilence should remain true", silencedState.isPausedBySilence)
         assertTrue("wasSilencedBeforeScreenOff should remain true", silencedState.wasSilencedBeforeScreenOff)
-
     }
 
     @Test
@@ -109,7 +107,7 @@ class GlobalCallbackTest {
             isRunning = true,
             isPausedBySilence = true,
             isPausedByScreenOff = true,
-            wasSilencedBeforeScreenOff = wasSilenced
+            wasSilencedBeforeScreenOff = wasSilenced,
         )
 
         assertTrue("wasSilencedBeforeScreenOff should be true", stateAfterScreenOff.wasSilencedBeforeScreenOff)
@@ -124,7 +122,7 @@ class GlobalCallbackTest {
         val invalidState = ServiceState(
             isRunning = true,
             isPausedBySilence = true,
-            wasSilencedBeforeScreenOff = true
+            wasSilencedBeforeScreenOff = true,
         )
 
         // When: enforceStateInvariants is called (globalRecCallback == null)
@@ -132,12 +130,10 @@ class GlobalCallbackTest {
         val correctedState = ServiceState(
             isRunning = true,
             isPausedBySilence = false,
-            wasSilencedBeforeScreenOff = false
+            wasSilencedBeforeScreenOff = false,
         )
 
         assertFalse("isPausedBySilence should be cleared", correctedState.isPausedBySilence)
         assertFalse("wasSilencedBeforeScreenOff should be cleared", correctedState.wasSilencedBeforeScreenOff)
     }
-
-
 }
