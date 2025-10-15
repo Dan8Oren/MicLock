@@ -2,15 +2,15 @@ name: Android CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches:
+      - '**'        # means all branches
   pull_request:
-    branches: [ main, develop ]
 
 jobs:
   code-quality:
     runs-on: ubuntu-latest
     name: Code Quality Checks
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
