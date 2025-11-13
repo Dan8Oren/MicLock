@@ -3,7 +3,7 @@
 
 <!-- Badges -->
 <div align="center">
-  <img src="https://img.shields.io/github/downloads/Dan8Oren/MicLock/total" alt="Total Downloads">
+  <img src="https://img.shields.io/github/downloads/Dan8Oren/MicLock/total?cache_bust=1" alt="Total Downloads">
   <img src="https://img.shields.io/github/v/release/Dan8Oren/MicLock" alt="Latest Release">
   <img src="https://img.shields.io/github/license/Dan8Oren/MicLock" alt="License">
 </div>
