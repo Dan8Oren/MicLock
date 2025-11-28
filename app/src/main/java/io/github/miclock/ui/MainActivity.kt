@@ -25,6 +25,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import io.github.miclock.R
+import io.github.miclock.data.DebugRecordingStateManager
 import io.github.miclock.data.Prefs
 import io.github.miclock.service.MicLockService
 import io.github.miclock.tile.EXTRA_START_SERVICE_FROM_TILE
@@ -182,10 +183,21 @@ open class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val debugItem = menu.findItem(R.id.menu_debug_tools)
+        val isRecording = DebugRecordingStateManager.state.value.isRecording
+        debugItem.title = if (isRecording) {
+            getString(R.string.menu_stop_debug_recording)
+        } else {
+            getString(R.string.menu_debug_tools)
+        }
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_debug_tools -> {
-                // TODO: Handle debug tools menu item (will be implemented in next tasks)
+                handleDebugToolsClick()
                 true
             }
             R.id.menu_about -> {
@@ -193,6 +205,20 @@ open class MainActivity : AppCompatActivity() {
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    /**
+     * Handles debug tools menu click by routing to start or stop based on current recording state.
+     * If recording is active, stops and shares logs. Otherwise, shows warning dialog to start recording.
+     */
+    private fun handleDebugToolsClick() {
+        if (DebugRecordingStateManager.state.value.isRecording) {
+            // TODO: stopAndShareDebugLogs() will be implemented in task 14
+            Log.d("MainActivity", "Debug recording is active - stop & share will be implemented in task 14")
+        } else {
+            // TODO: showDebugRecordingWarning() will be implemented in task 12
+            Log.d("MainActivity", "Debug recording not active - warning dialog will be implemented in task 12")
         }
     }
 
