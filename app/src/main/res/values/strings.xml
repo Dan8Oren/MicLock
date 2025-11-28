@@ -16,4 +16,8 @@
     <!-- Debug recording auto-stop notification -->
     <string name="debug_auto_stop_title">Debug Recording Stopped</string>
     <string name="debug_auto_stop_message">Recording stopped after 30 minutes to prevent excessive battery drain.</string>
+
+    <!-- Menu items -->
+    <string name="menu_debug_tools">Debug Tools</string>
+    <string name="menu_about">About</string>
 </resources>
