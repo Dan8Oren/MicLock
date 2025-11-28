@@ -19,5 +19,35 @@
 
     <!-- Menu items -->
     <string name="menu_debug_tools">Debug Tools</string>
+    <string name="menu_stop_debug_recording">Stop &amp; Share Debug Logs</string>
     <string name="menu_about">About</string>
+
+    <!-- Debug recording warning dialog -->
+    <string name="debug_warning_title">Start Debug Recording?</string>
+    <string name="debug_warning_message">This will record app logs and system audio state to help diagnose issues.\n\n• Recording will stop automatically after 30 minutes\n• Logs are stored temporarily and cleaned up when you close the app\n• Battery usage will increase during recording\n\nYou can stop and share logs at any time from the menu.</string>
+    <string name="start_recording">Start Recording</string>
+
+    <!-- Debug recording UI -->
+    <string name="debug_recording_active">🔴 Debug Recording Active</string>
+    <string name="stopping_recording">Stopping recording…</string>
+    <string name="collecting_system_state">Collecting system state…</string>
+
+    <!-- Debug recording error messages -->
+    <string name="debug_start_failed">Failed to start debug recording. Please try again.</string>
+    <string name="debug_permission_denied">Cannot access app logs on this device. Debug recording is not available.</string>
+    <string name="unknown_error">An unknown error occurred</string>
+
+    <!-- Debug recording success -->
+    <string name="logs_ready_to_share">Debug logs ready to share</string>
+    <string name="share_debug_logs">Share Debug Logs</string>
+
+    <!-- Partial success dialog -->
+    <string name="logs_collected_with_warnings">Logs Collected with Warnings</string>
+    <string name="partial_collection_message">Some data could not be collected:\n\n%1$s\n\nYou can still share the partial logs, or start a new recording to collect more data.\n\nNote: Retrying will discard current logs and you\'ll need to reproduce the issue again.</string>
+    <string name="share_anyway">Share Anyway</string>
+    <string name="retry_recording">Start New Recording</string>
+
+    <!-- Failure dialog -->
+    <string name="failed_to_collect_logs">Failed to Collect Logs</string>
+    <string name="collection_failure_message">Unable to collect debug logs:\n\n%1$s\n\nFailures:\n%2$s\n\nYou can start a new recording to try again. Note: Current logs will be discarded and you\'ll need to reproduce the issue.</string>
 </resources>
