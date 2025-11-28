@@ -31,7 +31,12 @@ import io.github.miclock.service.MicLockService
 import io.github.miclock.tile.EXTRA_START_SERVICE_FROM_TILE
 import io.github.miclock.tile.MicLockTileService
 import io.github.miclock.util.ApiGuard
+import io.github.miclock.util.CollectionResult
+import io.github.miclock.util.DebugLogCollector
+import io.github.miclock.util.DebugLogRecorder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * MainActivity provides the user interface for controlling the Mic-Lock service.
@@ -214,8 +219,7 @@ open class MainActivity : AppCompatActivity() {
      */
     private fun handleDebugToolsClick() {
         if (DebugRecordingStateManager.state.value.isRecording) {
-            // TODO: stopAndShareDebugLogs() will be implemented in task 14
-            Log.d("MainActivity", "Debug recording is active - stop & share will be implemented in task 14")
+            stopAndShareDebugLogs()
         } else {
             showDebugRecordingWarning()
         }
@@ -267,6 +271,126 @@ open class MainActivity : AppCompatActivity() {
             .setTitle(R.string.failed_to_collect_logs)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    /**
+     * Stops the debug recording and shares the collected logs.
+     * 
+     * This method performs the following steps:
+     * 1. Stops the debug recording and retrieves the log file
+     * 2. Collects system state via dumpsys commands
+     * 3. Creates a diagnostic package (zip file)
+     * 4. Handles the collection result (success, partial success, or failure)
+     * 5. Resets the recording state
+     * 
+     * All I/O operations are performed on the IO dispatcher to avoid blocking the UI thread.
+     */
+    private fun stopAndShareDebugLogs() {
+        lifecycleScope.launch {
+            try {
+                // Show loading state - stopping recording
+                statusText.text = getString(R.string.stopping_recording)
+                
+                // Step 1: Stop recording on IO dispatcher
+                val logFile = withContext(Dispatchers.IO) {
+                    DebugLogRecorder.stopRecording()
+                }
+                
+                // Show loading state - collecting system state
+                statusText.text = getString(R.string.collecting_system_state)
+                
+                // Step 2: Collect system state on IO dispatcher
+                val result = withContext(Dispatchers.IO) {
+                    DebugLogCollector.collectAndShare(this@MainActivity, logFile)
+                }
+                
+                // Step 3: Handle result based on type
+                handleCollectionResult(result)
+                
+                // Step 4: Reset state
+                DebugRecordingStateManager.reset(this@MainActivity)
+                
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to collect debug logs", e)
+                showDebugRecordingError(e.message ?: getString(R.string.unknown_error))
+                
+                // Reset state even on error
+                DebugRecordingStateManager.reset(this@MainActivity)
+            } finally {
+                // Restore normal status display
+                updateAllUi()
+            }
+        }
+    }
+
+    /**
+     * Handles the collection result by routing to appropriate dialog or action.
+     * 
+     * @param result CollectionResult from DebugLogCollector
+     */
+    private fun handleCollectionResult(result: CollectionResult) {
+        when (result) {
+            is CollectionResult.Success -> {
+                // Clean success - just share
+                startActivity(Intent.createChooser(result.shareIntent, getString(R.string.share_debug_logs)))
+                android.widget.Toast.makeText(this, R.string.logs_ready_to_share, android.widget.Toast.LENGTH_SHORT).show()
+            }
+            is CollectionResult.PartialSuccess -> {
+                // Some failures - warn user but allow sharing
+                showPartialSuccessDialog(result)
+            }
+            is CollectionResult.Failure -> {
+                // Critical failure - offer retry
+                showFailureDialog(result)
+            }
+        }
+    }
+
+    /**
+     * Shows a dialog for partial success scenarios.
+     * Allows the user to share the partial logs or start a new recording.
+     * 
+     * @param result PartialSuccess result containing share intent and failure list
+     */
+    private fun showPartialSuccessDialog(result: CollectionResult.PartialSuccess) {
+        val failureList = result.failures.joinToString("\n") { 
+            "• ${it.component}: ${it.error}" 
+        }
+        
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.logs_collected_with_warnings)
+            .setMessage(getString(R.string.partial_collection_message, failureList))
+            .setPositiveButton(R.string.share_anyway) { _, _ ->
+                startActivity(Intent.createChooser(result.shareIntent, getString(R.string.share_debug_logs)))
+            }
+            .setNegativeButton(R.string.retry_recording) { _, _ ->
+                showDebugRecordingWarning()
+            }
+            .setNeutralButton(android.R.string.cancel, null)
+            .setCancelable(true)
+            .show()
+    }
+
+    /**
+     * Shows a dialog for failure scenarios.
+     * Offers the user the option to start a new recording.
+     * 
+     * @param result Failure result containing error message and failure list
+     */
+    private fun showFailureDialog(result: CollectionResult.Failure) {
+        val failureList = result.failures.joinToString("\n") { 
+            "• ${it.component}: ${it.error}" 
+        }
+        
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.failed_to_collect_logs)
+            .setMessage(getString(R.string.collection_failure_message, result.error, failureList))
+            .setPositiveButton(R.string.retry_recording) { _, _ ->
+                showDebugRecordingWarning()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .setCancelable(true)
             .show()
     }
 
