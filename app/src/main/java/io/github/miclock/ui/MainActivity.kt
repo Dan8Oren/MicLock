@@ -13,11 +13,14 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.service.quicksettings.TileService
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.TextView
-import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -39,8 +42,9 @@ import kotlinx.coroutines.launch
  * * The activity communicates with MicLockService through intents and observes
  * service state changes via StateFlow to update the UI accordingly.
  */
-open class MainActivity : ComponentActivity() {
+open class MainActivity : AppCompatActivity() {
 
+    private lateinit var toolbar: MaterialToolbar
     private lateinit var statusText: TextView
     private lateinit var startBtn: MaterialButton
     private lateinit var stopBtn: MaterialButton
@@ -74,6 +78,9 @@ open class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
 
         statusText = findViewById(R.id.statusText)
         startBtn = findViewById(R.id.startBtn)
@@ -168,6 +175,25 @@ open class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.menu_debug_tools -> {
+                // TODO: Handle debug tools menu item (will be implemented in next tasks)
+                true
+            }
+            R.id.menu_about -> {
+                // TODO: Handle about menu item (future implementation)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun requestBatteryOptimizationExemption() {
