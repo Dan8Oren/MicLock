@@ -217,9 +217,33 @@ open class MainActivity : AppCompatActivity() {
             // TODO: stopAndShareDebugLogs() will be implemented in task 14
             Log.d("MainActivity", "Debug recording is active - stop & share will be implemented in task 14")
         } else {
-            // TODO: showDebugRecordingWarning() will be implemented in task 12
-            Log.d("MainActivity", "Debug recording not active - warning dialog will be implemented in task 12")
+            showDebugRecordingWarning()
         }
+    }
+
+    /**
+     * Shows a warning dialog explaining the debug recording feature before starting.
+     * Informs the user about battery impact, automatic 30-minute timeout, and cleanup behavior.
+     * If the user confirms, starts the debug recording session.
+     */
+    private fun showDebugRecordingWarning() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.debug_warning_title)
+            .setMessage(R.string.debug_warning_message)
+            .setPositiveButton(R.string.start_recording) { _, _ ->
+                startDebugRecording()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    /**
+     * Starts a debug recording session.
+     * This method will be fully implemented in task 13.
+     */
+    private fun startDebugRecording() {
+        // TODO: Full implementation in task 13
+        Log.d("MainActivity", "startDebugRecording() will be fully implemented in task 13")
     }
 
     private fun requestBatteryOptimizationExemption() {
