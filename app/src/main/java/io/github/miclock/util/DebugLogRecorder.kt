@@ -43,6 +43,7 @@ object DebugLogRecorder {
     
     private val autoStopHandler = Handler(Looper.getMainLooper())
     private var autoStopRunnable: Runnable? = null
+    private var autoStopCallback: (() -> Unit)? = null
     
     /**
      * Starts logcat recording process.
@@ -231,14 +232,17 @@ object DebugLogRecorder {
     /**
      * Schedules automatic stop after 30 minutes.
      * @param context Application context for notifications
+     * @param callback Callback to invoke when auto-stop is triggered
      */
-    fun scheduleAutoStop(context: Context) {
+    fun scheduleAutoStop(context: Context, callback: () -> Unit) {
         cancelAutoStop() // Cancel any existing scheduled stop
+        
+        autoStopCallback = callback
         
         autoStopRunnable = Runnable {
             Log.d(TAG, "Auto-stop triggered after 30 minutes")
-            stopRecording()
-            // Note: Notification and state update will be handled by DebugRecordingStateManager
+            // Invoke callback to let StateManager handle the stop and notification
+            autoStopCallback?.invoke()
         }.also {
             autoStopHandler.postDelayed(it, AUTO_STOP_DELAY_MS)
         }
@@ -253,6 +257,7 @@ object DebugLogRecorder {
         autoStopRunnable?.let {
             autoStopHandler.removeCallbacks(it)
             autoStopRunnable = null
+            autoStopCallback = null
             Log.d(TAG, "Auto-stop cancelled")
         }
     }
