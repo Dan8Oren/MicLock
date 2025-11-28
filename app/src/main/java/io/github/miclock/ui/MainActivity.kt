@@ -239,11 +239,35 @@ open class MainActivity : AppCompatActivity() {
 
     /**
      * Starts a debug recording session.
-     * This method will be fully implemented in task 13.
+     * Calls DebugRecordingStateManager to initiate log capture.
+     * Handles SecurityException for devices that restrict logcat access.
+     * Shows error dialog if recording fails to start.
      */
     private fun startDebugRecording() {
-        // TODO: Full implementation in task 13
-        Log.d("MainActivity", "startDebugRecording() will be fully implemented in task 13")
+        lifecycleScope.launch {
+            try {
+                val success = DebugRecordingStateManager.startRecording(this@MainActivity)
+                if (!success) {
+                    showDebugRecordingError(getString(R.string.debug_start_failed))
+                }
+            } catch (e: SecurityException) {
+                Log.e("MainActivity", "SecurityException starting debug recording", e)
+                showDebugRecordingError(getString(R.string.debug_permission_denied))
+            }
+        }
+    }
+
+    /**
+     * Shows an error dialog for debug recording failures.
+     * 
+     * @param message Error message to display to the user
+     */
+    private fun showDebugRecordingError(message: String) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.failed_to_collect_logs)
+            .setMessage(message)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun requestBatteryOptimizationExemption() {
