@@ -35,6 +35,9 @@ import io.github.miclock.util.CollectionResult
 import io.github.miclock.util.DebugLogCollector
 import io.github.miclock.util.DebugLogRecorder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -60,6 +63,11 @@ open class MainActivity : AppCompatActivity() {
 
     private lateinit var screenOnDelaySlider: Slider
     private lateinit var screenOnDelaySummary: TextView
+
+    private lateinit var debugRecordingBanner: android.widget.LinearLayout
+    private lateinit var debugRecordingTimer: TextView
+    
+    private var timerJob: Job? = null
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
     private val notifPerms = if (Build.VERSION.SDK_INT >= 33) {
@@ -97,6 +105,16 @@ open class MainActivity : AppCompatActivity() {
 
         screenOnDelaySlider = findViewById(R.id.screenOnDelaySlider)
         screenOnDelaySummary = findViewById(R.id.screenOnDelaySummary)
+
+        debugRecordingBanner = findViewById(R.id.debugRecordingBanner)
+        debugRecordingTimer = findViewById(R.id.debugRecordingTimer)
+
+        // Ensure clean state on app start
+        DebugRecordingStateManager.reset(this)
+        DebugLogRecorder.cleanup(this)
+        
+        // Observe recording state
+        observeDebugRecordingState()
 
         // Initialize compatibility mode toggle
         mediaRecorderToggle.isChecked = Prefs.getUseMediaRecorder(this)
@@ -167,6 +185,9 @@ open class MainActivity : AppCompatActivity() {
         // Re-check permissions every time activity becomes visible
         enforcePermsOrRequest()
         updateAllUi()
+        
+        // Refresh menu to show correct debug tools state
+        invalidateOptionsMenu()
 
         lifecycleScope.launch {
             MicLockService.state.collect { _ ->
@@ -181,6 +202,15 @@ open class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        
+        // Clean up recording resources
+        if (DebugRecordingStateManager.state.value.isRecording) {
+            DebugRecordingStateManager.stopRecording()
+        }
+        DebugLogRecorder.cleanup(this)
+        DebugLogRecorder.cancelAutoStop()
+        
+        stopRecordingTimer()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -211,6 +241,64 @@ open class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    /**
+     * Observes debug recording state changes and updates UI accordingly.
+     * Collects StateFlow emissions in the lifecycle scope to react to recording state changes.
+     */
+    private fun observeDebugRecordingState() {
+        lifecycleScope.launch {
+            DebugRecordingStateManager.state.collect { state ->
+                updateDebugRecordingUI(state)
+            }
+        }
+    }
+    
+    /**
+     * Updates the debug recording UI based on the current state.
+     * Shows/hides the recording banner, updates the menu, and manages the timer.
+     * 
+     * @param state Current debug recording state
+     */
+    private fun updateDebugRecordingUI(state: io.github.miclock.data.DebugRecordingState) {
+        debugRecordingBanner.visibility = if (state.isRecording) android.view.View.VISIBLE else android.view.View.GONE
+        
+        if (state.isRecording) {
+            startRecordingTimer(state.startTime)
+        } else {
+            stopRecordingTimer()
+        }
+        
+        // Update menu item text to reflect current state
+        invalidateOptionsMenu()
+    }
+    
+    /**
+     * Starts the recording timer that updates every second.
+     * Displays elapsed time in MM:SS format.
+     * 
+     * @param startTime Unix timestamp (milliseconds) when recording started
+     */
+    private fun startRecordingTimer(startTime: Long) {
+        timerJob?.cancel()
+        timerJob = lifecycleScope.launch {
+            while (isActive) {
+                val elapsed = System.currentTimeMillis() - startTime
+                val minutes = (elapsed / 60000).toInt()
+                val seconds = ((elapsed % 60000) / 1000).toInt()
+                debugRecordingTimer.text = String.format("%02d:%02d", minutes, seconds)
+                delay(1000)
+            }
+        }
+    }
+    
+    /**
+     * Stops the recording timer and cancels the timer job.
+     */
+    private fun stopRecordingTimer() {
+        timerJob?.cancel()
+        timerJob = null
     }
 
     /**
