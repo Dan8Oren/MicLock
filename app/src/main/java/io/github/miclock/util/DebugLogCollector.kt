@@ -51,6 +51,15 @@ object DebugLogCollector {
     // Critical services that require retry logic
     private val CRITICAL_SERVICES = setOf("telecom")
 
+    // Context information for each dumpsys service
+    private val SERVICE_CONTEXT = mapOf(
+        "audio" to "Relevant for all audio routing issues",
+        "telecom" to "Relevant when issues occur during phone calls",
+        "media.session" to "Relevant when media players (Spotify, YouTube, etc.) are involved",
+        "media.audio_policy" to "Relevant for audio focus and routing policy issues",
+        "media.audio_flinger" to "Relevant for low-level audio HAL issues"
+    )
+
     /**
      * Collects all diagnostic data, saves to Downloads, and creates share intent.
      * @param context Application context
@@ -382,6 +391,7 @@ object DebugLogCollector {
 
     /**
      * Creates a collection report documenting what succeeded and failed.
+     * Includes context information for each failed component to help users understand relevance.
      * @param logFile App log file (optional)
      * @param dumpsysData Map of service name to dumpsys output
      * @param failures List of collection failures
@@ -407,6 +417,13 @@ object DebugLogCollector {
                     val severity = if (failure.isCritical) "CRITICAL" else "WARNING"
                     appendLine("  ✗ [$severity] ${failure.component}")
                     appendLine("    Error: ${failure.error}")
+                    
+                    // Add context information for dumpsys services
+                    val serviceName = failure.component.removePrefix("dumpsys ")
+                    val context = SERVICE_CONTEXT[serviceName]
+                    if (context != null) {
+                        appendLine("    Context: $context")
+                    }
                 }
                 appendLine()
             }
@@ -433,6 +450,16 @@ object DebugLogCollector {
                 appendLine()
                 appendLine("=== Notes ===")
                 appendLine("⚠ Some system state data missing. Logs may be incomplete.")
+                appendLine()
+                appendLine("=== Context Information ===")
+                appendLine("Understanding what's missing:")
+                for (failure in failures) {
+                    val serviceName = failure.component.removePrefix("dumpsys ")
+                    val context = SERVICE_CONTEXT[serviceName]
+                    if (context != null) {
+                        appendLine("• $serviceName: $context")
+                    }
+                }
             }
         }
     }
@@ -548,6 +575,17 @@ object DebugLogCollector {
             )
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+    }
+
+    /**
+     * Gets context information for a collection failure.
+     * Helps users understand when the missing data is relevant to their issue.
+     * @param failure The collection failure
+     * @return Context string explaining when this data is relevant, or null if no context available
+     */
+    fun getFailureContext(failure: CollectionFailure): String? {
+        val serviceName = failure.component.removePrefix("dumpsys ")
+        return SERVICE_CONTEXT[serviceName]
     }
 
     /**

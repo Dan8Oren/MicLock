@@ -441,12 +441,18 @@ open class MainActivity : AppCompatActivity() {
     /**
      * Shows a dialog for partial success scenarios.
      * Allows the user to share the partial logs or start a new recording.
+     * Includes context information to help users understand if missing data is relevant.
      * 
      * @param result PartialSuccess result containing share intent and failure list
      */
     private fun showPartialSuccessDialog(result: CollectionResult.PartialSuccess) {
-        val failureList = result.failures.joinToString("\n") { 
-            "• ${it.component}: ${it.error}" 
+        val failureList = result.failures.joinToString("\n") { failure ->
+            val context = DebugLogCollector.getFailureContext(failure)
+            if (context != null) {
+                "• ${failure.component}: ${failure.error}\n  → $context"
+            } else {
+                "• ${failure.component}: ${failure.error}"
+            }
         }
         
         androidx.appcompat.app.AlertDialog.Builder(this)
