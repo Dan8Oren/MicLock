@@ -38,16 +38,23 @@
     <string name="unknown_error">An unknown error occurred</string>
 
     <!-- Debug recording success -->
-    <string name="logs_ready_to_share">Debug logs ready to share</string>
+    <string name="logs_ready_to_share">Logs saved to Downloads/miclock_logs</string>
     <string name="share_debug_logs">Share Debug Logs</string>
 
     <!-- Partial success dialog -->
     <string name="logs_collected_with_warnings">Logs Collected with Warnings</string>
-    <string name="partial_collection_message">Some data could not be collected:\n\n%1$s\n\nYou can still share the partial logs, or start a new recording to collect more data.\n\nNote: Retrying will discard current logs and you\'ll need to reproduce the issue again.</string>
-    <string name="share_anyway">Share Anyway</string>
+    <string name="partial_collection_message">Some data could not be collected:\n\n%1$s\n\nLogs have been saved to Downloads/miclock_logs. You can share them now or find them later in your Downloads folder.\n\n </string>
+    <string name="share_anyway">Share Now</string>
     <string name="retry_recording">Start New Recording</string>
 
     <!-- Failure dialog -->
     <string name="failed_to_collect_logs">Failed to Collect Logs</string>
-    <string name="collection_failure_message">Unable to collect debug logs:\n\n%1$s\n\nFailures:\n%2$s\n\nYou can start a new recording to try again. Note: Current logs will be discarded and you\'ll need to reproduce the issue.</string>
+    <string name="collection_failure_message">Unable to collect debug logs:\n\n%1$s\n\nFailures:\n%2$s\n\nYou can start a new recording to try again.</string>
+
+    <!-- Debug logs saved notification -->
+    <string name="debug_logs_saved_title">Debug Logs Saved</string>
+    <string name="debug_logs_saved_text">Saved to Downloads/miclock_logs/%1$s</string>
+    <string name="debug_logs_saved_big_text">Debug logs saved to Downloads/miclock_logs folder.\nTap \'Share\' to send them now, or find them in Downloads/miclock_logs later.</string>
+    <string name="logs_saved_to_downloads">Logs saved to Downloads/miclock_logs</string>
+    <string name="share">Share</string>
 </resources>

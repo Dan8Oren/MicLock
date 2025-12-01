@@ -380,6 +380,9 @@ open class MainActivity : AppCompatActivity() {
                 // Show loading state - stopping recording
                 statusText.text = getString(R.string.stopping_recording)
                 
+                // Get recording start time before stopping (needed for filename)
+                val recordingStartTime = DebugRecordingStateManager.state.value.startTime
+                
                 // Step 1: Stop recording on IO dispatcher
                 val logFile = withContext(Dispatchers.IO) {
                     DebugLogRecorder.stopRecording()
@@ -390,8 +393,8 @@ open class MainActivity : AppCompatActivity() {
                 
                 // Step 2: Collect system state on IO dispatcher
                 val result = withContext(Dispatchers.IO) {
-                    DebugLogCollector.collectAndShare(this@MainActivity, logFile)
-                }
+                    DebugLogCollector.collectAndShare(this@MainActivity, logFile, recordingStartTime)
+               
                 
                 // Step 3: Handle result based on type
                 handleCollectionResult(result)
