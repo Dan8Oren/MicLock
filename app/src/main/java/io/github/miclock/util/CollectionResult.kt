@@ -14,7 +14,7 @@ sealed class CollectionResult {
      */
     data class Success(
         val shareIntent: Intent,
-        val warnings: List<String> = emptyList()
+        val warnings: List<String> = emptyList(),
     ) : CollectionResult()
 
     /**
@@ -24,7 +24,7 @@ sealed class CollectionResult {
      */
     data class PartialSuccess(
         val shareIntent: Intent,
-        val failures: List<CollectionFailure>
+        val failures: List<CollectionFailure>,
     ) : CollectionResult()
 
     /**
@@ -34,7 +34,7 @@ sealed class CollectionResult {
      */
     data class Failure(
         val error: String,
-        val failures: List<CollectionFailure>
+        val failures: List<CollectionFailure>,
     ) : CollectionResult()
 }
 
@@ -49,5 +49,5 @@ data class CollectionFailure(
     val component: String,
     val error: String,
     val isCritical: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
 )

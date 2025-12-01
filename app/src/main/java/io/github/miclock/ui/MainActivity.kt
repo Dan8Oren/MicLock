@@ -13,16 +13,14 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.service.quicksettings.TileService
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.appcompat.widget.PopupMenu
 import com.google.android.material.button.MaterialButton
-import android.widget.ImageButton
 import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import io.github.miclock.R
@@ -286,7 +284,9 @@ open class MainActivity : AppCompatActivity() {
         }
 
         // Request a Feature card click listener
-        val requestFeatureCard = view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.requestFeatureCard)
+        val requestFeatureCard = view.findViewById<com.google.android.material.card.MaterialCardView>(
+            R.id.requestFeatureCard,
+        )
         requestFeatureCard.setOnClickListener {
             val featureRequestUrl = "https://github.com/Dan8Oren/MicLock/issues/new?template=feature_request.md"
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(featureRequestUrl))
@@ -453,7 +453,6 @@ open class MainActivity : AppCompatActivity() {
 
                 // Step 4: Reset state
                 DebugRecordingStateManager.reset(this@MainActivity)
-
             } catch (e: Exception) {
                 Log.e("MainActivity", "Failed to collect debug logs", e)
                 showDebugRecordingError(e.message ?: getString(R.string.unknown_error))
@@ -575,7 +574,9 @@ open class MainActivity : AppCompatActivity() {
 
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("App Crashed During Debug Recording")
-            .setMessage("Debug logs were automatically saved. Would you like to report this crash?\n\nException: $exceptionType\nMessage: $exceptionMessage")
+            .setMessage(
+                "Debug logs were automatically saved. Would you like to report this crash?\n\nException: $exceptionType\nMessage: $exceptionMessage",
+            )
             .setPositiveButton("Report on GitHub") { _, _ ->
                 openGitHubIssue()
             }
@@ -675,7 +676,6 @@ open class MainActivity : AppCompatActivity() {
 
             // Clear crash logs after opening GitHub
             io.github.miclock.util.CrashHandler.clearPendingCrashLogs(this)
-
         } catch (e: Exception) {
             Log.e("MainActivity", "Failed to open GitHub issue", e)
             android.widget.Toast.makeText(this, "Failed to open GitHub: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
@@ -706,7 +706,7 @@ open class MainActivity : AppCompatActivity() {
                 putExtra(
                     Intent.EXTRA_TEXT,
                     "Crash logs from Mic-Lock app. " +
-                        "The app crashed during debug recording and logs were automatically collected."
+                        "The app crashed during debug recording and logs were automatically collected.",
                 )
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 clipData = android.content.ClipData.newRawUri(filename, uri)
@@ -716,10 +716,13 @@ open class MainActivity : AppCompatActivity() {
 
             // Clear crash logs after sharing
             io.github.miclock.util.CrashHandler.clearPendingCrashLogs(this)
-
         } catch (e: Exception) {
             Log.e("MainActivity", "Failed to share crash logs", e)
-            android.widget.Toast.makeText(this, "Failed to share crash logs: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(
+                this,
+                "Failed to share crash logs: ${e.message}",
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
         }
     }
 

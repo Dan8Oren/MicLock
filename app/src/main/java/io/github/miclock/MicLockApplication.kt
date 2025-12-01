@@ -10,16 +10,16 @@ import io.github.miclock.util.CrashHandler
  * Registers the crash handler to intercept uncaught exceptions during debug recording.
  */
 class MicLockApplication : Application() {
-    
+
     companion object {
         private const val TAG = "MicLockApplication"
     }
-    
+
     override fun onCreate() {
         super.onCreate()
-        
+
         Log.d(TAG, "Application onCreate")
-        
+
         // Register crash handler on Android O+ (required for DebugLogCollector)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()

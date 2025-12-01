@@ -14,9 +14,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.FileProvider
 import io.github.miclock.R
 import io.github.miclock.service.MicLockService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
@@ -25,6 +22,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
  * Collects system state snapshots and packages diagnostic data.
@@ -45,7 +45,7 @@ object DebugLogCollector {
         "telecom",
         "media.session",
         "media.audio_policy",
-        "media.audio_flinger"
+        "media.audio_flinger",
     )
 
     // Critical services that require retry logic
@@ -57,7 +57,7 @@ object DebugLogCollector {
         "telecom" to "Relevant when issues occur during phone calls",
         "media.session" to "Relevant when media players (Spotify, YouTube, etc.) are involved",
         "media.audio_policy" to "Relevant for audio focus and routing policy issues",
-        "media.audio_flinger" to "Relevant for low-level audio HAL issues"
+        "media.audio_flinger" to "Relevant for low-level audio HAL issues",
     )
 
     /**
@@ -75,7 +75,7 @@ object DebugLogCollector {
         logFile: File?,
         recordingStartTime: Long,
         isCrashCollection: Boolean = false,
-        crashInfoFile: File? = null
+        crashInfoFile: File? = null,
     ): CollectionResult = withContext(Dispatchers.IO) {
         val failures = mutableListOf<CollectionFailure>()
         val dumpsysData = mutableMapOf<String, String>()
@@ -118,8 +118,8 @@ object DebugLogCollector {
                     CollectionFailure(
                         component = "dumpsys $service",
                         error = lastError ?: "Failed to collect",
-                        isCritical = isCritical
-                    )
+                        isCritical = isCritical,
+                    ),
                 )
             }
         }
@@ -147,7 +147,7 @@ object DebugLogCollector {
             Log.e(TAG, "No viable data collected")
             return@withContext CollectionResult.Failure(
                 error = "No diagnostic data could be collected. App logs and critical system state are unavailable.",
-                failures = failures
+                failures = failures,
             )
         }
 
@@ -158,14 +158,14 @@ object DebugLogCollector {
             Log.e(TAG, "Failed to create zip file", e)
             return@withContext CollectionResult.Failure(
                 error = "Failed to package diagnostic data: ${e.message}",
-                failures = failures
+                failures = failures,
             )
         }
 
         if (zipFile == null) {
             return@withContext CollectionResult.Failure(
                 error = "Failed to create diagnostic package",
-                failures = failures
+                failures = failures,
             )
         }
 
@@ -185,10 +185,10 @@ object DebugLogCollector {
                 CollectionFailure(
                     component = "Save to Downloads",
                     error = "Failed to save file to Downloads/miclock_logs folder",
-                    isCritical = false
-                )
+                    isCritical = false,
+                ),
             )
-            
+
             // Offer to share from cache as fallback
             val cacheShareIntent = createShareIntent(context, zipFile)
             return@withContext CollectionResult.PartialSuccess(cacheShareIntent, failures)
@@ -197,7 +197,7 @@ object DebugLogCollector {
         // Generate filename for notification (with _crash suffix if crash collection)
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date(recordingStartTime))
         val crashSuffix = if (isCrashCollection) "_crash" else ""
-        val fileName = "miclock_debug_logs_${timestamp}${crashSuffix}.zip"
+        val fileName = "miclock_debug_logs_${timestamp}$crashSuffix.zip"
 
         // Show notification with file location and share action
         if (savedUri != null) {
@@ -266,7 +266,6 @@ object DebugLogCollector {
             }
 
             return@withContext output.toString()
-
         } finally {
             process.destroy()
         }
@@ -349,7 +348,7 @@ object DebugLogCollector {
         deviceInfo: String,
         failures: List<CollectionFailure>,
         isCrashCollection: Boolean = false,
-        crashInfoFile: File? = null
+        crashInfoFile: File? = null,
     ): File? = withContext(Dispatchers.IO) {
         try {
             // Create log directory
@@ -404,7 +403,6 @@ object DebugLogCollector {
 
             Log.d(TAG, "Created zip file: ${zipFile.absolutePath} (${zipFile.length()} bytes)")
             return@withContext zipFile
-
         } catch (e: Exception) {
             Log.e(TAG, "Error creating zip file", e)
             return@withContext null
@@ -424,7 +422,7 @@ object DebugLogCollector {
         logFile: File?,
         dumpsysData: Map<String, String>,
         failures: List<CollectionFailure>,
-        isCrashCollection: Boolean = false
+        isCrashCollection: Boolean = false,
     ): String {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val timestamp = dateFormat.format(Date())
@@ -444,7 +442,7 @@ object DebugLogCollector {
                     val severity = if (failure.isCritical) "CRITICAL" else "WARNING"
                     appendLine("  ✗ [$severity] ${failure.component}")
                     appendLine("    Error: ${failure.error}")
-                    
+
                     // Add context information for dumpsys services
                     val serviceName = failure.component.removePrefix("dumpsys ")
                     val context = SERVICE_CONTEXT[serviceName]
@@ -502,12 +500,12 @@ object DebugLogCollector {
     private suspend fun saveToDownloads(
         context: Context,
         zipFile: File,
-        recordingStartTime: Long
+        recordingStartTime: Long,
     ): Uri? = withContext(Dispatchers.IO) {
         try {
             // Generate filename with timestamp from recording start time
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date(recordingStartTime))
-            val fileName = "miclock_debug_logs_${timestamp}.zip"
+            val fileName = "miclock_debug_logs_$timestamp.zip"
 
             Log.d(TAG, "Saving debug logs to Downloads/miclock_logs/$fileName")
 
@@ -537,7 +535,6 @@ object DebugLogCollector {
                 return@withContext null
             }
 
-
             contentValues.clear()
             contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
             resolver.update(uri, contentValues, null, null)
@@ -552,7 +549,6 @@ object DebugLogCollector {
             }
 
             return@withContext uri
-
         } catch (e: IOException) {
             Log.e(TAG, "IOException while saving to Downloads", e)
             return@withContext null
@@ -572,7 +568,7 @@ object DebugLogCollector {
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
-            zipFile
+            zipFile,
         )
 
         return createShareIntentFromUri(context, uri)
@@ -598,7 +594,7 @@ object DebugLogCollector {
             putExtra(
                 Intent.EXTRA_TEXT,
                 "Debug logs from Mic-Lock app. " +
-                    "This package contains application logs and system audio state information."
+                    "This package contains application logs and system audio state information.",
             )
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
@@ -624,7 +620,12 @@ object DebugLogCollector {
      * @param fileName Name of the saved file
      * @param isCrashCollection Whether this is a crash collection (shows high-priority notification)
      */
-    fun showDebugLogsSavedNotification(context: Context, savedUri: Uri, fileName: String, isCrashCollection: Boolean = false) {
+    fun showDebugLogsSavedNotification(
+        context: Context,
+        savedUri: Uri,
+        fileName: String,
+        isCrashCollection: Boolean = false,
+    ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // Create intent to open the file directly
@@ -638,7 +639,7 @@ object DebugLogCollector {
             context,
             101,
             openFileIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         // Create share intent with the saved file Uri and proper filename
@@ -650,7 +651,7 @@ object DebugLogCollector {
             putExtra(
                 Intent.EXTRA_TEXT,
                 "Debug logs from Mic-Lock app. " +
-                    "This package contains application logs and system audio state information."
+                    "This package contains application logs and system audio state information.",
             )
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             // Add clip data with label for better filename display
@@ -659,12 +660,12 @@ object DebugLogCollector {
 
         // Wrap in chooser and create PendingIntent for share action
         val chooserIntent = Intent.createChooser(shareIntent, context.getString(R.string.share_debug_logs))
-        
+
         val sharePendingIntent = PendingIntent.getActivity(
             context,
             100,
             chooserIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         // Build notification with BigTextStyle
@@ -673,38 +674,38 @@ object DebugLogCollector {
         } else {
             context.getString(R.string.debug_logs_saved_title)
         }
-        
+
         val text = if (isCrashCollection) {
             "App crashed during debug recording. Logs saved to Downloads/miclock_logs"
         } else {
             context.getString(R.string.logs_saved_to_downloads)
         }
-        
+
         val bigText = if (isCrashCollection) {
             "The app crashed during debug recording. Crash logs have been automatically saved to Downloads/miclock_logs folder.\nTap 'Share' to send them now, or find them in Downloads/miclock_logs later."
         } else {
             context.getString(R.string.debug_logs_saved_big_text)
         }
-        
+
         val actionText = if (isCrashCollection) {
             "Share Crash Logs"
         } else {
             context.getString(R.string.share)
         }
-        
+
         val notification = NotificationCompat.Builder(context, MicLockService.RESTART_CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(text)
             .setSmallIcon(R.drawable.ic_mic_tile)
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText(bigText)
+                    .bigText(bigText),
             )
             .setContentIntent(contentPendingIntent)
             .addAction(
                 0, // No icon for action
                 actionText,
-                sharePendingIntent
+                sharePendingIntent,
             )
             .setAutoCancel(true)
             .setPriority(if (isCrashCollection) NotificationCompat.PRIORITY_MAX else NotificationCompat.PRIORITY_HIGH)

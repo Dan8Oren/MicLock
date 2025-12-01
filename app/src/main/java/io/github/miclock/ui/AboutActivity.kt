@@ -40,12 +40,13 @@ class AboutActivity : AppCompatActivity() {
         val versionText = findViewById<TextView>(R.id.versionText)
         try {
             val packageInfo = packageManager.getPackageInfo(packageName, 0)
+
             @Suppress("DEPRECATION")
             val versionCode = packageInfo.versionCode
             versionText.text = getString(
                 R.string.about_version_format,
                 packageInfo.versionName,
-                versionCode
+                versionCode,
             )
         } catch (e: Exception) {
             versionText.text = getString(R.string.about_version_format, "Unknown", 0)
@@ -70,7 +71,7 @@ class AboutActivity : AppCompatActivity() {
             clickableSpan,
             0,
             githubUrl.length,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
         )
 
         githubLinkText.text = spannableString

@@ -23,28 +23,28 @@ object DebugLogRecorder {
     private const val LOG_DIR = "debug_logs"
     private const val AUTO_STOP_DELAY_MS = 30 * 60 * 1000L // 30 minutes
     private const val FILESYSTEM_SYNC_DELAY_MS = 100L
-    
+
     private val lock = ReentrantLock()
-    
+
     @Volatile
     private var logcatProcess: java.lang.Process? = null
-    
+
     @Volatile
     private var recordingThread: Thread? = null
-    
+
     @Volatile
     private var currentLogFile: File? = null
-    
+
     @Volatile
     private var recordingStartTime: Long = 0L
-    
+
     @Volatile
     private var writer: BufferedWriter? = null
-    
+
     private val autoStopHandler = Handler(Looper.getMainLooper())
     private var autoStopRunnable: Runnable? = null
     private var autoStopCallback: (() -> Unit)? = null
-    
+
     /**
      * Starts logcat recording process.
      * @param context Application context for file access
@@ -56,7 +56,7 @@ object DebugLogRecorder {
             Log.w(TAG, "Recording already active")
             return false
         }
-        
+
         try {
             // Create log directory
             val logDir = File(context.cacheDir, LOG_DIR)
@@ -64,29 +64,29 @@ object DebugLogRecorder {
                 Log.e(TAG, "Failed to create log directory")
                 return false
             }
-            
+
             // Create log file with timestamp
             val timestamp = System.currentTimeMillis()
             currentLogFile = File(logDir, "recording_$timestamp.log")
-            
+
             // Start logcat process with PID filter
             val pid = Process.myPid()
             val command = arrayOf("logcat", "-v", "threadtime", "--pid=$pid")
             logcatProcess = Runtime.getRuntime().exec(command)
-            
+
             recordingStartTime = timestamp
-            
+
             // Create background thread to pipe logcat output to file
             recordingThread = Thread {
                 try {
                     writer = BufferedWriter(FileWriter(currentLogFile, true))
                     val reader = BufferedReader(InputStreamReader(logcatProcess?.inputStream))
-                    
+
                     var line: String?
                     while (reader.readLine().also { line = it } != null) {
                         writer?.write(line)
                         writer?.newLine()
-                        
+
                         // Flush periodically to ensure data is written
                         writer?.flush()
                     }
@@ -107,10 +107,9 @@ object DebugLogRecorder {
                 isDaemon = true
                 start()
             }
-            
+
             Log.d(TAG, "Recording started successfully")
             return true
-            
         } catch (e: SecurityException) {
             Log.e(TAG, "SecurityException: Logcat access denied", e)
             cleanup(context)
@@ -125,7 +124,7 @@ object DebugLogRecorder {
             return false
         }
     }
-    
+
     /**
      * Stops logcat recording and returns the log file.
      * @return File containing captured logs, or null if no logs captured
@@ -135,13 +134,13 @@ object DebugLogRecorder {
             Log.w(TAG, "No active recording to stop")
             return null
         }
-        
+
         try {
             Log.d(TAG, "Stopping recording...")
-            
+
             // Destroy the logcat process
             logcatProcess?.destroy()
-            
+
             // Wait for process to terminate (with timeout)
             val terminated = try {
                 logcatProcess?.waitFor()
@@ -151,10 +150,10 @@ object DebugLogRecorder {
                 logcatProcess?.destroyForcibly()
                 false
             }
-            
+
             // Wait for recording thread to finish
             recordingThread?.join(2000) // 2 second timeout
-            
+
             // Explicit flush and close
             try {
                 writer?.flush()
@@ -162,12 +161,12 @@ object DebugLogRecorder {
             } catch (e: IOException) {
                 Log.e(TAG, "Error flushing/closing writer", e)
             }
-            
+
             // Filesystem sync delay
             Thread.sleep(FILESYSTEM_SYNC_DELAY_MS)
-            
+
             val logFile = currentLogFile
-            
+
             // Verify file exists and has content
             if (logFile?.exists() == true && logFile.length() > 0) {
                 Log.d(TAG, "Recording stopped successfully. Log file size: ${logFile.length()} bytes")
@@ -176,7 +175,6 @@ object DebugLogRecorder {
                 Log.w(TAG, "Log file is empty or doesn't exist")
                 return null
             }
-            
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping recording", e)
             return null
@@ -189,7 +187,7 @@ object DebugLogRecorder {
             recordingStartTime = 0L
         }
     }
-    
+
     /**
      * Checks if recording is currently active.
      * @return true if logcat process is running
@@ -197,7 +195,7 @@ object DebugLogRecorder {
     fun isRecording(): Boolean {
         return logcatProcess?.isAlive == true
     }
-    
+
     /**
      * Gets the duration of current recording session.
      * @return Duration in milliseconds, or 0 if not recording
@@ -208,7 +206,7 @@ object DebugLogRecorder {
         }
         return System.currentTimeMillis() - recordingStartTime
     }
-    
+
     /**
      * Cleans up all temporary log files.
      * Called on app destroy or after sharing.
@@ -228,7 +226,7 @@ object DebugLogRecorder {
             Log.e(TAG, "Error during cleanup", e)
         }
     }
-    
+
     /**
      * Schedules automatic stop after 30 minutes.
      * @param context Application context for notifications
@@ -236,9 +234,9 @@ object DebugLogRecorder {
      */
     fun scheduleAutoStop(context: Context, callback: () -> Unit) {
         cancelAutoStop() // Cancel any existing scheduled stop
-        
+
         autoStopCallback = callback
-        
+
         autoStopRunnable = Runnable {
             Log.d(TAG, "Auto-stop triggered after 30 minutes")
             // Invoke callback to let StateManager handle the stop and notification
@@ -246,10 +244,10 @@ object DebugLogRecorder {
         }.also {
             autoStopHandler.postDelayed(it, AUTO_STOP_DELAY_MS)
         }
-        
+
         Log.d(TAG, "Auto-stop scheduled for 30 minutes")
     }
-    
+
     /**
      * Cancels scheduled auto-stop.
      */
