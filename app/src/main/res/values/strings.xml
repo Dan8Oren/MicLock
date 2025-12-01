@@ -18,9 +18,17 @@
     <string name="debug_auto_stop_message">Recording stopped after 30 minutes to prevent excessive battery drain.</string>
 
     <!-- Menu items -->
+    <string name="menu_feedback">Send Feedback</string>
     <string name="menu_debug_tools">Debug Recording</string>
     <string name="menu_stop_debug_recording">Stop &amp; Share Debug Logs</string>
     <string name="menu_about">About</string>
+
+    <!-- Feedback bottom sheet -->
+    <string name="feedback_title">Send Feedback</string>
+    <string name="feedback_report_bug_title">Report a Bug</string>
+    <string name="feedback_report_bug_description">Something not working right? Let us know.</string>
+    <string name="feedback_request_feature_title">Request a Feature</string>
+    <string name="feedback_request_feature_description">Have an idea to make MicLock better?</string>
 
     <!-- Debug recording warning dialog -->
     <string name="debug_warning_title">Start Debug Recording?</string>

@@ -235,6 +235,10 @@ open class MainActivity : AppCompatActivity() {
 
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
+                R.id.menu_feedback -> {
+                    showFeedbackBottomSheet()
+                    true
+                }
                 R.id.menu_debug_tools -> {
                     handleDebugToolsClick()
                     true
@@ -256,6 +260,41 @@ open class MainActivity : AppCompatActivity() {
     private fun launchAboutActivity() {
         val intent = Intent(this, AboutActivity::class.java)
         startActivity(intent)
+    }
+
+    /**
+     * Shows a bottom sheet dialog with feedback options.
+     * Provides two options: Report a Bug and Request a Feature.
+     * Each option opens the GitHub issues page with appropriate labels.
+     */
+    private fun showFeedbackBottomSheet() {
+        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_feedback, null)
+        bottomSheetDialog.setContentView(view)
+
+        // Set peek height and rounded corners for modern appearance
+        bottomSheetDialog.behavior.peekHeight = 400
+        bottomSheetDialog.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+
+        // Report a Bug card click listener
+        val reportBugCard = view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.reportBugCard)
+        reportBugCard.setOnClickListener {
+            val bugReportUrl = "https://github.com/Dan8Oren/MicLock/issues/new?template=bug_report.md"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(bugReportUrl))
+            startActivity(intent)
+            bottomSheetDialog.dismiss()
+        }
+
+        // Request a Feature card click listener
+        val requestFeatureCard = view.findViewById<com.google.android.material.card.MaterialCardView>(R.id.requestFeatureCard)
+        requestFeatureCard.setOnClickListener {
+            val featureRequestUrl = "https://github.com/Dan8Oren/MicLock/issues/new?template=feature_request.md"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(featureRequestUrl))
+            startActivity(intent)
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.show()
     }
 
     /**
