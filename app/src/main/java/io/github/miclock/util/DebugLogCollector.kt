@@ -65,10 +65,18 @@ object DebugLogCollector {
      * @param context Application context
      * @param logFile Log file from DebugLogRecorder, or null
      * @param recordingStartTime Timestamp when recording started (for filename generation)
+     * @param isCrashCollection Whether this collection is triggered by a crash
+     * @param crashInfoFile Optional crash info file to include in the diagnostic package
      * @return CollectionResult indicating success, partial success, or failure
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    suspend fun collectAndShare(context: Context, logFile: File?, recordingStartTime: Long): CollectionResult = withContext(Dispatchers.IO) {
+    suspend fun collectAndShare(
+        context: Context,
+        logFile: File?,
+        recordingStartTime: Long,
+        isCrashCollection: Boolean = false,
+        crashInfoFile: File? = null
+    ): CollectionResult = withContext(Dispatchers.IO) {
         val failures = mutableListOf<CollectionFailure>()
         val dumpsysData = mutableMapOf<String, String>()
 
@@ -145,7 +153,7 @@ object DebugLogCollector {
 
         // Create zip file with all collected data
         val zipFile = try {
-            createZipFile(context, logFile, dumpsysData, deviceInfo, failures)
+            createZipFile(context, logFile, dumpsysData, deviceInfo, failures, isCrashCollection, crashInfoFile)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create zip file", e)
             return@withContext CollectionResult.Failure(
@@ -186,13 +194,14 @@ object DebugLogCollector {
             return@withContext CollectionResult.PartialSuccess(cacheShareIntent, failures)
         }
 
-        // Generate filename for notification
+        // Generate filename for notification (with _crash suffix if crash collection)
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date(recordingStartTime))
-        val fileName = "miclock_debug_logs_${timestamp}.zip"
+        val crashSuffix = if (isCrashCollection) "_crash" else ""
+        val fileName = "miclock_debug_logs_${timestamp}${crashSuffix}.zip"
 
         // Show notification with file location and share action
         if (savedUri != null) {
-            showDebugLogsSavedNotification(context, savedUri, fileName)
+            showDebugLogsSavedNotification(context, savedUri, fileName, isCrashCollection)
         }
 
         // Create share intent with Downloads Uri (or cache file for Android 9-)
@@ -329,6 +338,8 @@ object DebugLogCollector {
      * @param dumpsysData Map of service name to dumpsys output
      * @param deviceInfo Device metadata string
      * @param failures List of collection failures
+     * @param isCrashCollection Whether this is a crash collection
+     * @param crashInfoFile Optional crash info file to include
      * @return Zip file, or null on failure
      */
     private suspend fun createZipFile(
@@ -336,7 +347,9 @@ object DebugLogCollector {
         logFile: File?,
         dumpsysData: Map<String, String>,
         deviceInfo: String,
-        failures: List<CollectionFailure>
+        failures: List<CollectionFailure>,
+        isCrashCollection: Boolean = false,
+        crashInfoFile: File? = null
     ): File? = withContext(Dispatchers.IO) {
         try {
             // Create log directory
@@ -352,10 +365,19 @@ object DebugLogCollector {
 
             java.util.zip.ZipOutputStream(zipFile.outputStream().buffered()).use { zip ->
                 // Add collection report
-                val report = createCollectionReport(logFile, dumpsysData, failures)
+                val report = createCollectionReport(logFile, dumpsysData, failures, isCrashCollection)
                 zip.putNextEntry(java.util.zip.ZipEntry("collection_report.txt"))
                 zip.write(report.toByteArray())
                 zip.closeEntry()
+
+                // Add crash info if this is a crash collection
+                if (isCrashCollection && crashInfoFile?.exists() == true) {
+                    zip.putNextEntry(java.util.zip.ZipEntry("crash_info.txt"))
+                    crashInfoFile.inputStream().use { input ->
+                        input.copyTo(zip)
+                    }
+                    zip.closeEntry()
+                }
 
                 // Add app logs if available
                 if (logFile?.exists() == true) {
@@ -395,18 +417,23 @@ object DebugLogCollector {
      * @param logFile App log file (optional)
      * @param dumpsysData Map of service name to dumpsys output
      * @param failures List of collection failures
+     * @param isCrashCollection Whether this is a crash collection
      * @return Formatted report string
      */
     private fun createCollectionReport(
         logFile: File?,
         dumpsysData: Map<String, String>,
-        failures: List<CollectionFailure>
+        failures: List<CollectionFailure>,
+        isCrashCollection: Boolean = false
     ): String {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val timestamp = dateFormat.format(Date())
 
         return buildString {
             appendLine("=== Debug Log Collection Report ===")
+            if (isCrashCollection) {
+                appendLine("⚠️ CRASH DETECTED - Logs automatically collected during crash")
+            }
             appendLine("Timestamp: $timestamp")
             appendLine()
 
@@ -595,8 +622,9 @@ object DebugLogCollector {
      * @param context Application context
      * @param savedUri Uri of the saved file in Downloads
      * @param fileName Name of the saved file
+     * @param isCrashCollection Whether this is a crash collection (shows high-priority notification)
      */
-    fun showDebugLogsSavedNotification(context: Context, savedUri: Uri, fileName: String) {
+    fun showDebugLogsSavedNotification(context: Context, savedUri: Uri, fileName: String, isCrashCollection: Boolean = false) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // Create intent to open the file directly
@@ -640,22 +668,46 @@ object DebugLogCollector {
         )
 
         // Build notification with BigTextStyle
+        val title = if (isCrashCollection) {
+            "Crash Logs Saved"
+        } else {
+            context.getString(R.string.debug_logs_saved_title)
+        }
+        
+        val text = if (isCrashCollection) {
+            "App crashed during debug recording. Logs saved to Downloads/miclock_logs"
+        } else {
+            context.getString(R.string.logs_saved_to_downloads)
+        }
+        
+        val bigText = if (isCrashCollection) {
+            "The app crashed during debug recording. Crash logs have been automatically saved to Downloads/miclock_logs folder.\nTap 'Share' to send them now, or find them in Downloads/miclock_logs later."
+        } else {
+            context.getString(R.string.debug_logs_saved_big_text)
+        }
+        
+        val actionText = if (isCrashCollection) {
+            "Share Crash Logs"
+        } else {
+            context.getString(R.string.share)
+        }
+        
         val notification = NotificationCompat.Builder(context, MicLockService.RESTART_CHANNEL_ID)
-            .setContentTitle(context.getString(R.string.debug_logs_saved_title))
-            .setContentText(context.getString(R.string.logs_saved_to_downloads))
+            .setContentTitle(title)
+            .setContentText(text)
             .setSmallIcon(R.drawable.ic_mic_tile)
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText(context.getString(R.string.debug_logs_saved_big_text))
+                    .bigText(bigText)
             )
             .setContentIntent(contentPendingIntent)
             .addAction(
                 0, // No icon for action
-                context.getString(R.string.share),
+                actionText,
                 sharePendingIntent
             )
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(if (isCrashCollection) NotificationCompat.PRIORITY_MAX else NotificationCompat.PRIORITY_HIGH)
             .build()
 
         // Show notification with unique ID

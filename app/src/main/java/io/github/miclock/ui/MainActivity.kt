@@ -67,7 +67,7 @@ open class MainActivity : AppCompatActivity() {
 
     private lateinit var debugRecordingBanner: android.widget.LinearLayout
     private lateinit var debugRecordingTimer: TextView
-    
+
     private var timerJob: Job? = null
 
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
@@ -113,7 +113,7 @@ open class MainActivity : AppCompatActivity() {
         // Ensure clean state on app start
         DebugRecordingStateManager.reset(this)
         DebugLogRecorder.cleanup(this)
-        
+
         // Observe recording state
         observeDebugRecordingState()
 
@@ -179,6 +179,11 @@ open class MainActivity : AppCompatActivity() {
                 reqPerms.launch(audioPerms + notifPerms)
             }
         }
+
+        // Check for pending crash logs and show dialog
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            checkForPendingCrashLogs()
+        }
     }
 
     override fun onResume() {
@@ -200,14 +205,14 @@ open class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        
+
         // Clean up recording resources
         if (DebugRecordingStateManager.state.value.isRecording) {
             DebugRecordingStateManager.stopRecording()
         }
         DebugLogRecorder.cleanup(this)
         DebugLogRecorder.cancelAutoStop()
-        
+
         stopRecordingTimer()
     }
 
@@ -218,7 +223,7 @@ open class MainActivity : AppCompatActivity() {
     private fun showPopupMenu(view: android.view.View) {
         val popup = PopupMenu(this, view)
         popup.menuInflater.inflate(R.menu.main_menu, popup.menu)
-        
+
         // Update debug tools menu item text based on recording state
         val debugItem = popup.menu.findItem(R.id.menu_debug_tools)
         val isRecording = DebugRecordingStateManager.state.value.isRecording
@@ -227,7 +232,7 @@ open class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.menu_debug_tools)
         }
-        
+
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.menu_debug_tools -> {
@@ -241,7 +246,7 @@ open class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
-        
+
         popup.show()
     }
 
@@ -256,28 +261,28 @@ open class MainActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     /**
      * Updates the debug recording UI based on the current state.
      * Shows/hides the recording banner and manages the timer.
      * Note: Menu text is updated dynamically when the popup menu is shown.
-     * 
+     *
      * @param state Current debug recording state
      */
     private fun updateDebugRecordingUI(state: io.github.miclock.data.DebugRecordingState) {
         debugRecordingBanner.visibility = if (state.isRecording) android.view.View.VISIBLE else android.view.View.GONE
-        
+
         if (state.isRecording) {
             startRecordingTimer(state.startTime)
         } else {
             stopRecordingTimer()
         }
     }
-    
+
     /**
      * Starts the recording timer that updates every second.
      * Displays elapsed time in MM:SS format.
-     * 
+     *
      * @param startTime Unix timestamp (milliseconds) when recording started
      */
     private fun startRecordingTimer(startTime: Long) {
@@ -292,7 +297,7 @@ open class MainActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     /**
      * Stops the recording timer and cancels the timer job.
      */
@@ -351,7 +356,7 @@ open class MainActivity : AppCompatActivity() {
 
     /**
      * Shows an error dialog for debug recording failures.
-     * 
+     *
      * @param message Error message to display to the user
      */
     private fun showDebugRecordingError(message: String) {
@@ -364,14 +369,14 @@ open class MainActivity : AppCompatActivity() {
 
     /**
      * Stops the debug recording and shares the collected logs.
-     * 
+     *
      * This method performs the following steps:
      * 1. Stops the debug recording and retrieves the log file
      * 2. Collects system state via dumpsys commands
      * 3. Creates a diagnostic package (zip file)
      * 4. Handles the collection result (success, partial success, or failure)
      * 5. Resets the recording state
-     * 
+     *
      * All I/O operations are performed on the IO dispatcher to avoid blocking the UI thread.
      */
     private fun stopAndShareDebugLogs() {
@@ -379,33 +384,33 @@ open class MainActivity : AppCompatActivity() {
             try {
                 // Show loading state - stopping recording
                 statusText.text = getString(R.string.stopping_recording)
-                
+
                 // Get recording start time before stopping (needed for filename)
                 val recordingStartTime = DebugRecordingStateManager.state.value.startTime
-                
+
                 // Step 1: Stop recording on IO dispatcher
                 val logFile = withContext(Dispatchers.IO) {
                     DebugLogRecorder.stopRecording()
                 }
-                
+
                 // Show loading state - collecting system state
                 statusText.text = getString(R.string.collecting_system_state)
-                
+
                 // Step 2: Collect system state on IO dispatcher
                 val result = withContext(Dispatchers.IO) {
                     DebugLogCollector.collectAndShare(this@MainActivity, logFile, recordingStartTime)
                 }
-                
+
                 // Step 3: Handle result based on type
                 handleCollectionResult(result)
-                
+
                 // Step 4: Reset state
                 DebugRecordingStateManager.reset(this@MainActivity)
-                
+
             } catch (e: Exception) {
                 Log.e("MainActivity", "Failed to collect debug logs", e)
                 showDebugRecordingError(e.message ?: getString(R.string.unknown_error))
-                
+
                 // Reset state even on error
                 DebugRecordingStateManager.reset(this@MainActivity)
             } finally {
@@ -417,7 +422,7 @@ open class MainActivity : AppCompatActivity() {
 
     /**
      * Handles the collection result by routing to appropriate dialog or action.
-     * 
+     *
      * @param result CollectionResult from DebugLogCollector
      */
     private fun handleCollectionResult(result: CollectionResult) {
@@ -442,7 +447,7 @@ open class MainActivity : AppCompatActivity() {
      * Shows a dialog for partial success scenarios.
      * Allows the user to share the partial logs or start a new recording.
      * Includes context information to help users understand if missing data is relevant.
-     * 
+     *
      * @param result PartialSuccess result containing share intent and failure list
      */
     private fun showPartialSuccessDialog(result: CollectionResult.PartialSuccess) {
@@ -454,7 +459,7 @@ open class MainActivity : AppCompatActivity() {
                 "• ${failure.component}: ${failure.error}"
             }
         }
-        
+
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(R.string.logs_collected_with_warnings)
             .setMessage(getString(R.string.partial_collection_message, failureList))
@@ -472,14 +477,14 @@ open class MainActivity : AppCompatActivity() {
     /**
      * Shows a dialog for failure scenarios.
      * Offers the user the option to start a new recording.
-     * 
+     *
      * @param result Failure result containing error message and failure list
      */
     private fun showFailureDialog(result: CollectionResult.Failure) {
-        val failureList = result.failures.joinToString("\n") { 
-            "• ${it.component}: ${it.error}" 
+        val failureList = result.failures.joinToString("\n") {
+            "• ${it.component}: ${it.error}"
         }
-        
+
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(R.string.failed_to_collect_logs)
             .setMessage(getString(R.string.collection_failure_message, result.error, failureList))
@@ -489,6 +494,186 @@ open class MainActivity : AppCompatActivity() {
             .setNegativeButton(android.R.string.cancel, null)
             .setCancelable(true)
             .show()
+    }
+
+    /**
+     * Checks for pending crash logs from a previous crash and shows dialog if found.
+     * This is called on app startup to allow users to report crashes that occurred
+     * during debug recording.
+     */
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
+    private fun checkForPendingCrashLogs() {
+        if (!io.github.miclock.util.CrashHandler.hasPendingCrashLogs(this)) {
+            return
+        }
+
+        Log.d("MainActivity", "Found pending crash logs, showing dialog")
+
+        // Show dialog with crash report options
+        showCrashReportDialog()
+    }
+
+    /**
+     * Shows a dialog offering options to report or share crash logs.
+     * Provides three options:
+     * - Report on GitHub (opens pre-filled issue)
+     * - Share Logs (opens standard share sheet)
+     * - Dismiss (clears crash log reference)
+     */
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
+    private fun showCrashReportDialog() {
+        val exceptionType = io.github.miclock.util.CrashHandler.getCrashExceptionType(this) ?: "Unknown"
+        val exceptionMessage = io.github.miclock.util.CrashHandler.getCrashExceptionMessage(this) ?: "No message"
+        val filename = io.github.miclock.util.CrashHandler.getCrashFilename(this) ?: "crash logs"
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("App Crashed During Debug Recording")
+            .setMessage("Debug logs were automatically saved. Would you like to report this crash?\n\nException: $exceptionType\nMessage: $exceptionMessage")
+            .setPositiveButton("Report on GitHub") { _, _ ->
+                openGitHubIssue()
+            }
+            .setNeutralButton("Share Logs") { _, _ ->
+                shareCrashLogs()
+            }
+            .setNegativeButton("Dismiss") { _, _ ->
+                io.github.miclock.util.CrashHandler.clearPendingCrashLogs(this)
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    /**
+     * Opens GitHub issue page with pre-filled crash report.
+     * Generates a URL with crash details and instructions to attach the log file.
+     */
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
+    private fun openGitHubIssue() {
+        try {
+            val exceptionType = io.github.miclock.util.CrashHandler.getCrashExceptionType(this) ?: "Unknown"
+            val exceptionMessage = io.github.miclock.util.CrashHandler.getCrashExceptionMessage(this) ?: "No message"
+            val stackTrace = io.github.miclock.util.CrashHandler.getCrashStackTrace(this) ?: "No stack trace"
+            val timestamp = io.github.miclock.util.CrashHandler.getCrashTimestamp(this)
+            val filename = io.github.miclock.util.CrashHandler.getCrashFilename(this) ?: "miclock_debug_logs_crash.zip"
+
+            // Get device info
+            val manufacturer = Build.MANUFACTURER
+            val model = Build.MODEL
+            val androidVersion = Build.VERSION.RELEASE
+            val sdkInt = Build.VERSION.SDK_INT
+
+            // Get app version
+            val packageInfo = packageManager.getPackageInfo(packageName, 0)
+            val versionName = packageInfo.versionName ?: "Unknown"
+            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo.versionCode.toLong()
+            }
+
+            // Format timestamp
+            val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+            val timestampFormatted = dateFormat.format(java.util.Date(timestamp))
+
+            // Create issue title
+            val title = "[Crash] $exceptionType: ${exceptionMessage.take(50)}"
+
+            // Create issue body (keep it concise to avoid URL length limits)
+            val body = buildString {
+                appendLine("## Crash Report")
+                appendLine()
+                appendLine("The app crashed during debug log recording. Debug logs have been automatically collected.")
+                appendLine()
+                appendLine("**Exception:** $exceptionType: $exceptionMessage")
+                appendLine()
+                appendLine("**Device:** $manufacturer $model (Android $androidVersion, API $sdkInt)")
+                appendLine()
+                appendLine("**App Version:** $versionName ($versionCode)")
+                appendLine()
+                appendLine("**Timestamp:** $timestampFormatted")
+                appendLine()
+                appendLine("**Stack Trace (first 5 lines):**")
+                appendLine("```")
+                appendLine(stackTrace)
+                appendLine("```")
+                appendLine()
+                appendLine("## Steps to Reproduce")
+                appendLine()
+                appendLine("(Please describe what you were doing when the crash occurred)")
+                appendLine()
+                appendLine("## Debug Logs")
+                appendLine()
+                appendLine("**Important:** Please attach the crash log file from Downloads/miclock_logs/$filename")
+                appendLine()
+                appendLine("The file is located at: Downloads/miclock_logs/$filename")
+            }
+
+            // Limit body length to avoid URL length issues (max ~2000 chars)
+            val bodyTruncated = if (body.length > 2000) {
+                body.take(1900) + "\n\n[Content truncated - see attached log file for full details]"
+            } else {
+                body
+            }
+
+            // Build GitHub issue URL
+            val githubUrl = Uri.parse("https://github.com/Dan8Oren/MicLock/issues/new").buildUpon()
+                .appendQueryParameter("labels", "bug,crash")
+                .appendQueryParameter("title", title)
+                .appendQueryParameter("body", bodyTruncated)
+                .build()
+
+            // Open browser
+            val intent = Intent(Intent.ACTION_VIEW, githubUrl)
+            startActivity(intent)
+
+            // Clear crash logs after opening GitHub
+            io.github.miclock.util.CrashHandler.clearPendingCrashLogs(this)
+
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to open GitHub issue", e)
+            android.widget.Toast.makeText(this, "Failed to open GitHub: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /**
+     * Opens the share sheet with the crash log file.
+     * Allows users to share crash logs via email, Drive, etc.
+     */
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.O)
+    private fun shareCrashLogs() {
+        try {
+            val uriString = io.github.miclock.util.CrashHandler.getCrashLogUri(this)
+            if (uriString == null) {
+                android.widget.Toast.makeText(this, "Crash log file not found", android.widget.Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            val uri = Uri.parse(uriString)
+            val filename = io.github.miclock.util.CrashHandler.getCrashFilename(this) ?: "crash logs"
+
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/zip"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, "Mic-Lock Crash Logs")
+                putExtra(Intent.EXTRA_TITLE, filename)
+                putExtra(
+                    Intent.EXTRA_TEXT,
+                    "Crash logs from Mic-Lock app. " +
+                        "The app crashed during debug recording and logs were automatically collected."
+                )
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                clipData = android.content.ClipData.newRawUri(filename, uri)
+            }
+
+            startActivity(Intent.createChooser(shareIntent, "Share Crash Logs"))
+
+            // Clear crash logs after sharing
+            io.github.miclock.util.CrashHandler.clearPendingCrashLogs(this)
+
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to share crash logs", e)
+            android.widget.Toast.makeText(this, "Failed to share crash logs: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun requestBatteryOptimizationExemption() {
