@@ -57,4 +57,19 @@
     <string name="debug_logs_saved_big_text">Debug logs saved to Downloads/miclock_logs folder.\nTap \'Share\' to send them now, or find them in Downloads/miclock_logs later.</string>
     <string name="logs_saved_to_downloads">Logs saved to Downloads/miclock_logs</string>
     <string name="share">Share</string>
+
+    <!-- About screen -->
+    <string name="about_app_name">Mic-Lock</string>
+    <string name="about_version_format">Version %1$s (%2$d)</string>
+    <string name="about_what_is_title">What is MicLock?</string>
+    <string name="about_what_is_description">MicLock is a microphone protection app that prevents audio routing issues during phone calls. It ensures your microphone stays active and properly routed, even when other apps try to take control of the audio system. Perfect for users experiencing issues where their microphone only works on speakerphone.</string>
+    <string name="about_how_it_works_title">How It Works</string>
+    <string name="about_how_it_works_description">MicLock runs as a foreground service that continuously holds the microphone resource. By maintaining an active audio recording session, it prevents the Android system from routing your microphone incorrectly during calls. The app uses minimal resources and includes intelligent features like automatic pausing when the screen is off and polite yielding to other apps when needed.</string>
+    <string name="about_open_source_title">Open Source</string>
+    <string name="about_open_source_description">MicLock is free and open source software. This means the code is publicly available for anyone to inspect, modify, and contribute to. Open source ensures transparency, security, and community-driven development. You can trust that the app does exactly what it says—no hidden features, no data collection, no surprises.</string>
+    <string name="about_github_label">GitHub Repository:</string>
+    <string name="github_url">https://github.com/Dan8Oren/MicLock</string>
+    <string name="about_license_title">License</string>
+    <string name="about_license_description">MicLock is licensed under the MIT License.\n\nCopyright © 2024 Mic-Lock Contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.</string>
+    <string name="back_button">Back</string>
 </resources>

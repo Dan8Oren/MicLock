@@ -240,7 +240,7 @@ open class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.menu_about -> {
-                    // TODO: Handle about menu item (future implementation)
+                    launchAboutActivity()
                     true
                 }
                 else -> false
@@ -248,6 +248,14 @@ open class MainActivity : AppCompatActivity() {
         }
 
         popup.show()
+    }
+
+    /**
+     * Launches the About activity to display app information.
+     */
+    private fun launchAboutActivity() {
+        val intent = Intent(this, AboutActivity::class.java)
+        startActivity(intent)
     }
 
     /**

@@ -28,6 +28,16 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="io.github.miclock.ui.AboutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MicLock"
+            android:parentActivityName="io.github.miclock.ui.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="io.github.miclock.ui.MainActivity" />
+        </activity>
+
         <service
             android:name="io.github.miclock.service.MicLockService"
             android:exported="false"
