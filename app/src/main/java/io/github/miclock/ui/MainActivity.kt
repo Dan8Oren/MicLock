@@ -20,8 +20,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.appbar.MaterialToolbar
+import androidx.appcompat.widget.PopupMenu
 import com.google.android.material.button.MaterialButton
+import android.widget.ImageButton
 import com.google.android.material.slider.Slider
 import com.google.android.material.switchmaterial.SwitchMaterial
 import io.github.miclock.R
@@ -53,7 +54,7 @@ import kotlinx.coroutines.withContext
  */
 open class MainActivity : AppCompatActivity() {
 
-    private lateinit var toolbar: MaterialToolbar
+    private lateinit var menuButton: ImageButton
     private lateinit var statusText: TextView
     private lateinit var startBtn: MaterialButton
     private lateinit var stopBtn: MaterialButton
@@ -93,8 +94,8 @@ open class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
+        menuButton = findViewById(R.id.menuButton)
+        menuButton.setOnClickListener { showPopupMenu(it) }
 
         statusText = findViewById(R.id.statusText)
         startBtn = findViewById(R.id.startBtn)
@@ -185,9 +186,6 @@ open class MainActivity : AppCompatActivity() {
         // Re-check permissions every time activity becomes visible
         enforcePermsOrRequest()
         updateAllUi()
-        
-        // Refresh menu to show correct debug tools state
-        invalidateOptionsMenu()
 
         lifecycleScope.launch {
             MicLockService.state.collect { _ ->
@@ -213,34 +211,38 @@ open class MainActivity : AppCompatActivity() {
         stopRecordingTimer()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return true
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val debugItem = menu.findItem(R.id.menu_debug_tools)
+    /**
+     * Shows a popup menu when the menu button is clicked.
+     * Dynamically updates the debug tools menu item based on recording state.
+     */
+    private fun showPopupMenu(view: android.view.View) {
+        val popup = PopupMenu(this, view)
+        popup.menuInflater.inflate(R.menu.main_menu, popup.menu)
+        
+        // Update debug tools menu item text based on recording state
+        val debugItem = popup.menu.findItem(R.id.menu_debug_tools)
         val isRecording = DebugRecordingStateManager.state.value.isRecording
         debugItem.title = if (isRecording) {
             getString(R.string.menu_stop_debug_recording)
         } else {
             getString(R.string.menu_debug_tools)
         }
-        return super.onPrepareOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menu_debug_tools -> {
-                handleDebugToolsClick()
-                true
+        
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.menu_debug_tools -> {
+                    handleDebugToolsClick()
+                    true
+                }
+                R.id.menu_about -> {
+                    // TODO: Handle about menu item (future implementation)
+                    true
+                }
+                else -> false
             }
-            R.id.menu_about -> {
-                // TODO: Handle about menu item (future implementation)
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
         }
+        
+        popup.show()
     }
 
     /**
@@ -257,7 +259,8 @@ open class MainActivity : AppCompatActivity() {
     
     /**
      * Updates the debug recording UI based on the current state.
-     * Shows/hides the recording banner, updates the menu, and manages the timer.
+     * Shows/hides the recording banner and manages the timer.
+     * Note: Menu text is updated dynamically when the popup menu is shown.
      * 
      * @param state Current debug recording state
      */
@@ -269,9 +272,6 @@ open class MainActivity : AppCompatActivity() {
         } else {
             stopRecordingTimer()
         }
-        
-        // Update menu item text to reflect current state
-        invalidateOptionsMenu()
     }
     
     /**
@@ -394,7 +394,7 @@ open class MainActivity : AppCompatActivity() {
                 // Step 2: Collect system state on IO dispatcher
                 val result = withContext(Dispatchers.IO) {
                     DebugLogCollector.collectAndShare(this@MainActivity, logFile, recordingStartTime)
-               
+                }
                 
                 // Step 3: Handle result based on type
                 handleCollectionResult(result)

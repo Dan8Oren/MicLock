@@ -6,15 +6,25 @@
     android:orientation="vertical"
     android:background="@color/dark_background">
 
-    <!-- Toolbar -->
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
+    <!-- Custom Menu Button (replaces toolbar) -->
+    <FrameLayout
+        android:id="@+id/menuContainer"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/surface"
-        android:elevation="4dp"
-        app:title="@string/app_name"
-        app:titleTextColor="@color/on_surface" />
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:paddingTop="30dp"
+        >
+
+        <ImageButton
+            android:id="@+id/menuButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="end"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_more_vert"
+            android:contentDescription="Menu"
+            />
+    </FrameLayout>
 
     <!-- Debug Recording Banner -->
     <LinearLayout
@@ -58,12 +68,11 @@
             android:orientation="vertical"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:paddingTop="16dp"
             android:paddingBottom="16dp">
 
         <!-- Header Card -->
         <com.google.android.material.card.MaterialCardView
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="5dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
@@ -83,8 +92,7 @@
                     android:layout_height="64dp"
                     android:src="@mipmap/ic_launcher"
                     android:contentDescription="@string/app_name"
-                    android:layout_marginBottom="12dp"
-                    app:tint="@color/secondary_green" />
+                    android:layout_marginBottom="12dp" />
 
                 <TextView
                     android:id="@+id/appTitle"
