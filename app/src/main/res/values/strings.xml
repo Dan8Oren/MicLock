@@ -12,4 +12,72 @@
     <string name="screen_off_delay_label">Delayed Reactivation (0–5s)</string>
     <string name="screen_off_stays_off_label">Stays-Off</string>
     <string name="screen_off_always_on_label">Always-On</string>
+
+    <!-- Debug recording auto-stop notification -->
+    <string name="debug_auto_stop_title">Debug Recording Stopped</string>
+    <string name="debug_auto_stop_message">Recording stopped after 30 minutes to prevent excessive battery drain.</string>
+
+    <!-- Menu items -->
+    <string name="menu_feedback">Send Feedback</string>
+    <string name="menu_debug_tools">Debug Recording</string>
+    <string name="menu_stop_debug_recording">Stop &amp; Share Debug Logs</string>
+    <string name="menu_about">About</string>
+
+    <!-- Feedback bottom sheet -->
+    <string name="feedback_title">Send Feedback</string>
+    <string name="feedback_report_bug_title">Report a Bug</string>
+    <string name="feedback_report_bug_description">Something not working right? Let us know.</string>
+    <string name="feedback_request_feature_title">Request a Feature</string>
+    <string name="feedback_request_feature_description">Have an idea to make MicLock better?</string>
+
+    <!-- Debug recording warning dialog -->
+    <string name="debug_warning_title">Start Debug Recording?</string>
+    <string name="debug_warning_message">This will record app logs and system audio state to help diagnose issues.\n\n• Recording will stop automatically after 30 minutes\n• Logs are stored temporarily and cleaned up when you close the app\n• Battery usage will increase during recording\n\nYou can stop and share logs at any time from the menu.</string>
+    <string name="start_recording">Start Recording</string>
+
+    <!-- Debug recording UI -->
+    <string name="debug_recording_active">🔴 Debug Recording Active</string>
+    <string name="stopping_recording">Stopping recording…</string>
+    <string name="collecting_system_state">Collecting system state…</string>
+
+    <!-- Debug recording error messages -->
+    <string name="debug_start_failed">Failed to start debug recording. Please try again.</string>
+    <string name="debug_permission_denied">Cannot access app logs on this device. Debug recording is not available.</string>
+    <string name="unknown_error">An unknown error occurred</string>
+
+    <!-- Debug recording success -->
+    <string name="logs_ready_to_share">Logs saved to Downloads/miclock_logs</string>
+    <string name="share_debug_logs">Share Debug Logs</string>
+
+    <!-- Partial success dialog -->
+    <string name="logs_collected_with_warnings">Logs Collected with Warnings</string>
+    <string name="partial_collection_message">Some data could not be collected:\n\n%1$s\n\nLogs have been saved to Downloads/miclock_logs. You can share them now or find them later in your Downloads folder.\n\n </string>
+    <string name="share_anyway">Share Now</string>
+    <string name="retry_recording">Start New Recording</string>
+
+    <!-- Failure dialog -->
+    <string name="failed_to_collect_logs">Failed to Collect Logs</string>
+    <string name="collection_failure_message">Unable to collect debug logs:\n\n%1$s\n\nFailures:\n%2$s\n\nYou can start a new recording to try again.</string>
+
+    <!-- Debug logs saved notification -->
+    <string name="debug_logs_saved_title">Debug Logs Saved</string>
+    <string name="debug_logs_saved_text">Saved to Downloads/miclock_logs/%1$s</string>
+    <string name="debug_logs_saved_big_text">Debug logs saved to Downloads/miclock_logs folder.\nTap \'Share\' to send them now, or find them in Downloads/miclock_logs later.</string>
+    <string name="logs_saved_to_downloads">Logs saved to Downloads/miclock_logs</string>
+    <string name="share">Share</string>
+
+    <!-- About screen -->
+    <string name="about_app_name">Mic-Lock</string>
+    <string name="about_version_format">Version %1$s (%2$d)</string>
+    <string name="about_what_is_title">What is MicLock?</string>
+    <string name="about_what_is_description">MicLock is a microphone protection app that prevents audio routing issues during phone calls. It ensures your microphone stays active and properly routed, even when other apps try to take control of the audio system. Perfect for users experiencing issues where their microphone only works on speakerphone.</string>
+    <string name="about_how_it_works_title">How It Works</string>
+    <string name="about_how_it_works_description">MicLock runs as a foreground service that continuously holds the microphone resource. By maintaining an active audio recording session, it prevents the Android system from routing your microphone incorrectly during calls. The app uses minimal resources and includes intelligent features like automatic pausing when the screen is off and polite yielding to other apps when needed.</string>
+    <string name="about_open_source_title">Open Source</string>
+    <string name="about_open_source_description">MicLock is free and open source software. This means the code is publicly available for anyone to inspect, modify, and contribute to. Open source ensures transparency, security, and community-driven development. You can trust that the app does exactly what it says—no hidden features, no data collection, no surprises.</string>
+    <string name="about_github_label">GitHub Repository:</string>
+    <string name="github_url">https://github.com/Dan8Oren/MicLock</string>
+    <string name="about_license_title">License</string>
+    <string name="about_license_description">MicLock is licensed under the MIT License.\n\nCopyright © 2024 Mic-Lock Contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.</string>
+    <string name="back_button">Back</string>
 </resources>

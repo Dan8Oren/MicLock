@@ -2,25 +2,355 @@
 <issues format="6" by="lint 8.12.3" type="baseline" client="gradle" dependencies="false" name="AGP (8.12.3)" variant="all" version="8.12.3">
 
     <issue
-        id="NewApi"
-        message="Exception requires API level 31 (current min is 24): `android.app.ForegroundServiceStartNotAllowedException`"
-        errorLine1="                } catch (e: ForegroundServiceStartNotAllowedException) {"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;MethodName&quot;"
+        errorLine1="    &lt;issue id=&quot;MethodName&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/io/github/miclock/receiver/BootCompletedReceiver.kt"
-            line="37"
+            file="lint.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;MethodName&quot;"
+        errorLine1="    &lt;issue id=&quot;MethodName&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;MethodName&quot;"
+        errorLine1="    &lt;issue id=&quot;MethodName&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;ClassNameFormat&quot;"
+        errorLine1="    &lt;issue id=&quot;ClassNameFormat&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;ClassNameFormat&quot;"
+        errorLine1="    &lt;issue id=&quot;ClassNameFormat&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;ClassNameFormat&quot;"
+        errorLine1="    &lt;issue id=&quot;ClassNameFormat&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UnusedImport&quot;"
+        errorLine1="    &lt;issue id=&quot;UnusedImport&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="11"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UnusedImport&quot;"
+        errorLine1="    &lt;issue id=&quot;UnusedImport&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="11"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UnusedImport&quot;"
+        errorLine1="    &lt;issue id=&quot;UnusedImport&quot; severity=&quot;error&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="11"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;RedundantModifier&quot;"
+        errorLine1="    &lt;issue id=&quot;RedundantModifier&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="12"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;RedundantModifier&quot;"
+        errorLine1="    &lt;issue id=&quot;RedundantModifier&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="12"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;RedundantModifier&quot;"
+        errorLine1="    &lt;issue id=&quot;RedundantModifier&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="12"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UselessCallOnNotNull&quot;"
+        errorLine1="    &lt;issue id=&quot;UselessCallOnNotNull&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="15"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UselessCallOnNotNull&quot;"
+        errorLine1="    &lt;issue id=&quot;UselessCallOnNotNull&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="15"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UselessCallOnNotNull&quot;"
+        errorLine1="    &lt;issue id=&quot;UselessCallOnNotNull&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="15"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UnnecessaryApply&quot;"
+        errorLine1="    &lt;issue id=&quot;UnnecessaryApply&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="16"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UnnecessaryApply&quot;"
+        errorLine1="    &lt;issue id=&quot;UnnecessaryApply&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="16"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnknownIssueId"
+        message="Unknown issue id &quot;UnnecessaryApply&quot;"
+        errorLine1="    &lt;issue id=&quot;UnnecessaryApply&quot; severity=&quot;warning&quot; />"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="lint.xml"
+            line="16"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="        val durationFormatted = String.format(&quot;%02d:%02d:%02d&quot;, hours, minutes, seconds)"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/util/DebugLogCollector.kt"
+            line="288"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                debugRecordingTimer.text = String.format(&quot;%02d:%02d&quot;, minutes, seconds)"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/ui/MainActivity.kt"
+            line="342"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                debugRecordingTimer.text = String.format(&quot;%02d:%02d&quot;, minutes, seconds)"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/ui/MainActivity.kt"
+            line="342"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 30 (current min is 29): `android.content.pm.ServiceInfo#FOREGROUND_SERVICE_TYPE_MICROPHONE`"
+        errorLine1="                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/service/MicLockService.kt"
+            line="369"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 30 (current min is 29): `android.content.pm.ServiceInfo#FOREGROUND_SERVICE_TYPE_MICROPHONE`"
+        errorLine1="                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/service/MicLockService.kt"
+            line="410"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 30 (current min is 29): `android.content.pm.ServiceInfo#FOREGROUND_SERVICE_TYPE_MICROPHONE`"
+        errorLine1="                                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/service/MicLockService.kt"
+            line="452"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 30 (current min is 29): `android.content.pm.ServiceInfo#FOREGROUND_SERVICE_TYPE_MICROPHONE`"
+        errorLine1="                                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/service/MicLockService.kt"
+            line="510"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 30 (current min is 29): `android.content.pm.ServiceInfo#FOREGROUND_SERVICE_TYPE_MICROPHONE`"
+        errorLine1="                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/service/MicLockService.kt"
+            line="704"
             column="29"/>
     </issue>
 
     <issue
+        id="InlinedApi"
+        message="Field requires API level 30 (current min is 29): `android.content.pm.ServiceInfo#FOREGROUND_SERVICE_TYPE_MICROPHONE`"
+        errorLine1="                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/service/MicLockService.kt"
+            line="791"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 33 (current min is 26): `android.content.Context#RECEIVER_NOT_EXPORTED`"
+        errorLine1="            registerReceiver(failureReceiver, filter, Context.RECEIVER_NOT_EXPORTED)"
+        errorLine2="                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/tile/MicLockTileService.kt"
+            line="91"
+            column="55"/>
+    </issue>
+
+    <issue
         id="NewApi"
-        message="Call requires API level 28 (current min is 24): `enforcePermsOrRequest`"
-        errorLine1="        enforcePermsOrRequest()"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~">
+        message="Call requires API level 26 (current min is 24): `java.lang.Process#isAlive`"
+        errorLine1="                    if (logcatProcess?.isAlive == true) {"
+        errorLine2="                                       ~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/util/DebugLogRecorder.kt"
+            line="94"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 26 (current min is 24): `java.lang.Process#destroyForcibly`"
+        errorLine1="                logcatProcess?.destroyForcibly()"
+        errorLine2="                               ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/util/DebugLogRecorder.kt"
+            line="150"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 26 (current min is 24): `java.lang.Process#isAlive`"
+        errorLine1="        return logcatProcess?.isAlive == true"
+        errorLine2="                              ~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/util/DebugLogRecorder.kt"
+            line="196"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 26 (current min is 24): `collectAndShare`"
+        errorLine1="                    DebugLogCollector.collectAndShare(this@MainActivity, logFile, recordingStartTime)"
+        errorLine2="                                      ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="121"
-            column="9"/>
+            line="448"
+            column="39"/>
     </issue>
 
     <issue
@@ -30,8 +360,19 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="143"
+            line="733"
             column="46"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        val view = layoutInflater.inflate(R.layout.bottom_sheet_feedback, null)"
+        errorLine2="                                                                          ~~~~">
+        <location
+            file="src/main/java/io/github/miclock/ui/MainActivity.kt"
+            line="270"
+            column="75"/>
     </issue>
 
     <issue
@@ -47,134 +388,134 @@
 
     <issue
         id="AndroidGradlePluginVersion"
-        message="A newer version of com.android.application than 8.12.3 is available: 8.13.0"
+        message="A newer version of com.android.application than 8.12.3 is available: 8.13.1"
         errorLine1="agp = &quot;8.12.3&quot;"
         errorLine2="      ~~~~~~~~">
         <location
             file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
-            line="2"
+            line="3"
             column="7"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test:core than 1.5.0 is available: 1.7.0"
-        errorLine1="    testImplementation(&quot;androidx.test:core:1.5.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;androidx.test:core:1.5.0&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="60"
-            column="24"/>
+            line="75"
+            column="22"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test.ext:junit than 1.1.5 is available: 1.3.0"
-        errorLine1="    testImplementation(&quot;androidx.test.ext:junit:1.1.5&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;androidx.test.ext:junit:1.1.5&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="63"
-            column="24"/>
+            line="78"
+            column="22"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test:runner than 1.5.2 is available: 1.7.0"
-        errorLine1="    testImplementation(&quot;androidx.test:runner:1.5.2&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;androidx.test:runner:1.5.2&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="64"
-            column="24"/>
+            line="79"
+            column="22"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test:core than 1.5.0 is available: 1.7.0"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:core:1.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test:core:1.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="72"
-            column="31"/>
+            line="87"
+            column="29"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test:runner than 1.5.2 is available: 1.7.0"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:runner:1.5.2&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test:runner:1.5.2&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="73"
-            column="31"/>
+            line="88"
+            column="29"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test:rules than 1.5.0 is available: 1.7.0"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:rules:1.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test:rules:1.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="74"
-            column="31"/>
+            line="89"
+            column="29"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test.ext:junit-ktx than 1.1.5 is available: 1.3.0"
-        errorLine1="    androidTestImplementation(&quot;androidx.test.ext:junit-ktx:1.1.5&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test.ext:junit-ktx:1.1.5&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="75"
-            column="31"/>
+            line="90"
+            column="29"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test.espresso:espresso-core than 3.5.1 is available: 3.7.0"
-        errorLine1="    androidTestImplementation(&quot;androidx.test.espresso:espresso-core:3.5.1&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test.espresso:espresso-core:3.5.1&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="76"
-            column="31"/>
+            line="91"
+            column="29"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test.espresso:espresso-intents than 3.5.1 is available: 3.7.0"
-        errorLine1="    androidTestImplementation(&quot;androidx.test.espresso:espresso-intents:3.5.1&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test.espresso:espresso-intents:3.5.1&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="77"
-            column="31"/>
+            line="92"
+            column="29"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test:core than 1.5.0 is available: 1.7.0"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:core:1.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test:core:1.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="86"
-            column="31"/>
+            line="101"
+            column="29"/>
     </issue>
 
     <issue
         id="GradleDependency"
         message="A newer version of androidx.test:core-ktx than 1.5.0 is available: 1.7.0"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:core-ktx:1.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test:core-ktx:1.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="90"
-            column="31"/>
+            line="105"
+            column="29"/>
     </issue>
 
     <issue
@@ -184,7 +525,7 @@
         errorLine2="          ~~~~~~~~">
         <location
             file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
-            line="4"
+            line="5"
             column="11"/>
     </issue>
 
@@ -195,7 +536,7 @@
         errorLine2="               ~~~~~~~">
         <location
             file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
-            line="6"
+            line="7"
             column="16"/>
     </issue>
 
@@ -206,7 +547,7 @@
         errorLine2="               ~~~~~~~">
         <location
             file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
-            line="7"
+            line="8"
             column="16"/>
     </issue>
 
@@ -217,7 +558,7 @@
         errorLine2="            ~~~~~~~">
         <location
             file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
-            line="8"
+            line="9"
             column="13"/>
     </issue>
 
@@ -228,162 +569,206 @@
         errorLine2="           ~~~~~~~~">
         <location
             file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
-            line="9"
+            line="10"
             column="12"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.junit.jupiter:junit-jupiter than 5.9.2 is available: 5.13.4"
-        errorLine1="    testImplementation(&quot;org.junit.jupiter:junit-jupiter:5.9.2&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        message="A newer version of org.junit.jupiter:junit-jupiter than 5.9.2 is available: 6.0.1"
+        errorLine1="  testImplementation(&quot;org.junit.jupiter:junit-jupiter:5.9.2&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="49"
-            column="24"/>
+            line="64"
+            column="22"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.junit.jupiter:junit-jupiter-engine than 5.9.2 is available: 5.13.4"
-        errorLine1="    testImplementation(&quot;org.junit.jupiter:junit-jupiter-engine:5.9.2&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        message="A newer version of org.junit.jupiter:junit-jupiter-engine than 5.9.2 is available: 6.0.1"
+        errorLine1="  testImplementation(&quot;org.junit.jupiter:junit-jupiter-engine:5.9.2&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="50"
-            column="24"/>
+            line="65"
+            column="22"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of org.mockito:mockito-core than 5.5.0 is available: 5.20.0"
-        errorLine1="    testImplementation(&quot;org.mockito:mockito-core:5.5.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.mockito:mockito-core:5.5.0&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="52"
-            column="24"/>
+            line="67"
+            column="22"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.mockito.kotlin:mockito-kotlin than 5.1.0 is available: 6.0.0"
-        errorLine1="    testImplementation(&quot;org.mockito.kotlin:mockito-kotlin:5.1.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        message="A newer version of org.mockito.kotlin:mockito-kotlin than 5.1.0 is available: 6.1.0"
+        errorLine1="  testImplementation(&quot;org.mockito.kotlin:mockito-kotlin:5.1.0&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="53"
-            column="24"/>
+            line="68"
+            column="22"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-test than 1.6.4 is available: 1.10.2"
-        errorLine1="    testImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="54"
-            column="24"/>
+            line="69"
+            column="22"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of com.google.truth:truth than 1.1.3 is available: 1.4.5"
-        errorLine1="    testImplementation(&quot;com.google.truth:truth:1.1.3&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;com.google.truth:truth:1.1.3&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="56"
-            column="24"/>
+            line="71"
+            column="22"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of org.robolectric:robolectric than 4.11.1 is available: 4.16"
-        errorLine1="    testImplementation(&quot;org.robolectric:robolectric:4.11.1&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.robolectric:robolectric:4.11.1&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="59"
-            column="24"/>
+            line="74"
+            column="22"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-core than 1.6.4 is available: 1.10.2"
-        errorLine1="    androidTestImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="80"
-            column="31"/>
+            line="95"
+            column="29"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of org.jetbrains.kotlinx:kotlinx-coroutines-test than 1.6.4 is available: 1.10.2"
-        errorLine1="    androidTestImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="81"
-            column="31"/>
+            line="96"
+            column="29"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of org.mockito:mockito-core than 5.5.0 is available: 5.20.0"
-        errorLine1="    androidTestImplementation(&quot;org.mockito:mockito-core:5.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;org.mockito:mockito-core:5.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="84"
-            column="31"/>
+            line="99"
+            column="29"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of org.mockito:mockito-android than 5.5.0 is available: 5.20.0"
-        errorLine1="    androidTestImplementation(&quot;org.mockito:mockito-android:5.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;org.mockito:mockito-android:5.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="85"
-            column="31"/>
+            line="100"
+            column="29"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.mockito.kotlin:mockito-kotlin than 5.1.0 is available: 6.0.0"
-        errorLine1="    androidTestImplementation(&quot;org.mockito.kotlin:mockito-kotlin:5.1.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        message="A newer version of org.mockito.kotlin:mockito-kotlin than 5.1.0 is available: 6.1.0"
+        errorLine1="  androidTestImplementation(&quot;org.mockito.kotlin:mockito-kotlin:5.1.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="87"
-            column="31"/>
+            line="102"
+            column="29"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
         message="A newer version of com.google.truth:truth than 1.1.3 is available: 1.4.5"
-        errorLine1="    androidTestImplementation(&quot;com.google.truth:truth:1.1.3&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;com.google.truth:truth:1.1.3&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="92"
-            column="31"/>
+            line="107"
+            column="29"/>
     </issue>
 
     <issue
         id="NewerVersionAvailable"
-        message="A newer version of org.jetbrains.kotlin.android than 2.0.21 is available: 2.2.20"
+        message="A newer version of org.jlleitschuh.gradle.ktlint than 11.6.1 is available: 14.0.1"
+        errorLine1="ktlint = &quot;11.6.1&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
+            line="2"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.android than 2.0.21 is available: 2.2.21"
         errorLine1="kotlin = &quot;2.0.21&quot;"
         errorLine2="         ~~~~~~~~">
         <location
             file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
-            line="3"
+            line="4"
             column="10"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="            android:tint=&quot;@color/on_surface&quot; />"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_about.xml"
+            line="27"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="                android:tint=&quot;?attr/colorPrimary&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/bottom_sheet_feedback.xml"
+            line="44"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseAppTint"
+        message="Must use `app:tint` instead of `android:tint`"
+        errorLine1="                android:tint=&quot;?attr/colorPrimary&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/bottom_sheet_feedback.xml"
+            line="97"
+            column="17"/>
     </issue>
 
     <issue
@@ -404,8 +789,19 @@
         errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/audio/AudioSelector.kt"
-            line="108"
+            line="77"
             column="37"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 24"
+        errorLine1="            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/data/DebugRecordingState.kt"
+            line="191"
+            column="18"/>
     </issue>
 
     <issue
@@ -415,7 +811,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="140"
+            line="730"
             column="13"/>
     </issue>
 
@@ -426,7 +822,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="271"
+            line="943"
             column="13"/>
     </issue>
 
@@ -437,7 +833,18 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="349"
+            line="207"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 23"
+        errorLine1="    @RequiresApi(Build.VERSION_CODES.M)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/service/MicLockService.kt"
+            line="813"
             column="5"/>
     </issue>
 
@@ -448,7 +855,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="351"
+            line="815"
             column="13"/>
     </issue>
 
@@ -459,7 +866,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="381"
+            line="847"
             column="21"/>
     </issue>
 
@@ -470,7 +877,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="521"
+            line="998"
             column="21"/>
     </issue>
 
@@ -481,8 +888,19 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="528"
+            line="1005"
             column="33"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 24"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/service/MicLockService.kt"
+            line="1238"
+            column="13"/>
     </issue>
 
     <issue
@@ -492,13 +910,24 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="124"
+            line="277"
             column="14"/>
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="114"
+            line="265"
             column="25"
             message="This `Service` intent is launched from a notification; this is discouraged except as notification actions"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `@color/dark_background` with a theme that also paints a background (inferred theme is `@style/Theme_MicLock`)"
+        errorLine1="    android:background=&quot;@color/dark_background&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_about.xml"
+            line="7"
+            column="5"/>
     </issue>
 
     <issue
@@ -508,7 +937,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="6"
+            line="7"
             column="5"/>
     </issue>
 
@@ -525,12 +954,23 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.color.secondary_green_low_alpha` appears to be unused"
+        errorLine1="    &lt;color name=&quot;secondary_green_low_alpha&quot;>#585ADA9C&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="6"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.color.secondary` appears to be unused"
         errorLine1="    &lt;color name=&quot;secondary&quot;>#03DAC6&lt;/color>"
         errorLine2="           ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="10"
+            line="12"
             column="12"/>
     </issue>
 
@@ -541,7 +981,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="14"
+            line="16"
             column="12"/>
     </issue>
 
@@ -552,7 +992,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="15"
+            line="17"
             column="12"/>
     </issue>
 
@@ -563,7 +1003,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="28"
+            line="30"
             column="12"/>
     </issue>
 
@@ -574,7 +1014,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="29"
+            line="31"
             column="12"/>
     </issue>
 
@@ -585,7 +1025,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="30"
+            line="32"
             column="12"/>
     </issue>
 
@@ -596,7 +1036,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="31"
+            line="33"
             column="12"/>
     </issue>
 
@@ -607,7 +1047,7 @@
         errorLine2="           ~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="32"
+            line="34"
             column="12"/>
     </issue>
 
@@ -618,7 +1058,7 @@
         errorLine2="           ~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="33"
+            line="35"
             column="12"/>
     </issue>
 
@@ -629,7 +1069,7 @@
         errorLine2="           ~~~~~~~~~~~~">
         <location
             file="src/main/res/values/colors.xml"
-            line="34"
+            line="36"
             column="12"/>
     </issue>
 
@@ -664,6 +1104,17 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.drawable.slider_track_background` appears to be unused"
+        errorLine1="&lt;selector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/slider_track_background.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.string.tile_description` appears to be unused"
         errorLine1="    &lt;string name=&quot;tile_description&quot;>Quick toggle for microphone protection&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
@@ -671,6 +1122,39 @@
             file="src/main/res/values/strings.xml"
             line="4"
             column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.debug_recording_active` appears to be unused"
+        errorLine1="    &lt;string name=&quot;debug_recording_active&quot;>🔴 Debug Recording Active&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="39"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.debug_logs_saved_text` appears to be unused"
+        errorLine1="    &lt;string name=&quot;debug_logs_saved_text&quot;>Saved to Downloads/miclock_logs/%1$s&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="64"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="TooDeepLayout"
+        message="`activity_main.xml` has more than 10 levels, bad for performance"
+        errorLine1="                                    &lt;View"
+        errorLine2="                                     ~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="302"
+            column="38"/>
     </issue>
 
     <issue
@@ -685,13 +1169,112 @@
     </issue>
 
     <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `9sp`"
+        errorLine1="                                    android:textSize=&quot;9sp&quot;"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="254"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `9sp`"
+        errorLine1="                                    android:textSize=&quot;9sp&quot;"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="265"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `9sp`"
+        errorLine1="                                    android:textSize=&quot;9sp&quot;"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="276"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))"
+        errorLine2="                                                    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/ui/AboutActivity.kt"
+            line="86"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs.edit().clear().apply()"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/util/CrashHandler.kt"
+            line="116"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(bugReportUrl))"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/ui/MainActivity.kt"
+            line="281"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(featureRequestUrl))"
+        errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/ui/MainActivity.kt"
+            line="292"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            val githubUrl = Uri.parse(&quot;https://github.com/Dan8Oren/MicLock/issues/new&quot;).buildUpon()"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/ui/MainActivity.kt"
+            line="667"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            val uri = Uri.parse(uriString)"
+        errorLine2="                      ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/github/miclock/ui/MainActivity.kt"
+            line="698"
+            column="23"/>
+    </issue>
+
+    <issue
         id="UseKtx"
         message="Use the KTX extension function `String.toUri` instead?"
         errorLine1="                    data = Uri.parse(&quot;package:$packageName&quot;)"
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="144"
+            line="734"
             column="28"/>
     </issue>
 
@@ -702,305 +1285,305 @@
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="144"
+            line="734"
             column="28"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;org.junit.jupiter:junit-jupiter:5.9.2&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.junit.jupiter:junit-jupiter:5.9.2&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="49"
-            column="24"/>
+            line="64"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;org.junit.jupiter:junit-jupiter-engine:5.9.2&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.junit.jupiter:junit-jupiter-engine:5.9.2&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="50"
-            column="24"/>
+            line="65"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use the existing version catalog reference (`libs.junit`) instead"
-        errorLine1="    testImplementation(&quot;junit:junit:4.13.2&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;junit:junit:4.13.2&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="51"
-            column="24"/>
+            line="66"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;org.mockito:mockito-core:5.5.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.mockito:mockito-core:5.5.0&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="52"
-            column="24"/>
+            line="67"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;org.mockito.kotlin:mockito-kotlin:5.1.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.mockito.kotlin:mockito-kotlin:5.1.0&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="53"
-            column="24"/>
+            line="68"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="54"
-            column="24"/>
+            line="69"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;androidx.arch.core:core-testing:2.2.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;androidx.arch.core:core-testing:2.2.0&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="55"
-            column="24"/>
+            line="70"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;com.google.truth:truth:1.1.3&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;com.google.truth:truth:1.1.3&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="56"
-            column="24"/>
+            line="71"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;org.robolectric:robolectric:4.11.1&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;org.robolectric:robolectric:4.11.1&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="59"
-            column="24"/>
+            line="74"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;androidx.test:core:1.5.0&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;androidx.test:core:1.5.0&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="60"
-            column="24"/>
+            line="75"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use the existing version catalog reference (`libs.androidx.junit`) instead"
-        errorLine1="    testImplementation(&quot;androidx.test.ext:junit:1.1.5&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;androidx.test.ext:junit:1.1.5&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="63"
-            column="24"/>
+            line="78"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    testImplementation(&quot;androidx.test:runner:1.5.2&quot;)"
-        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  testImplementation(&quot;androidx.test:runner:1.5.2&quot;)"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="64"
-            column="24"/>
+            line="79"
+            column="22"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:core:1.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test:core:1.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="72"
-            column="31"/>
+            line="87"
+            column="29"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:runner:1.5.2&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test:runner:1.5.2&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="73"
-            column="31"/>
+            line="88"
+            column="29"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead (androidx.test:rules is already available as `androidx-rules`, but using version 1.7.0 instead)"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:rules:1.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test:rules:1.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="74"
-            column="31"/>
+            line="89"
+            column="29"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;androidx.test.ext:junit-ktx:1.1.5&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test.ext:junit-ktx:1.1.5&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="75"
-            column="31"/>
+            line="90"
+            column="29"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use the existing version catalog reference (`libs.androidx.espresso.core`) instead"
-        errorLine1="    androidTestImplementation(&quot;androidx.test.espresso:espresso-core:3.5.1&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="76"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;androidx.test.espresso:espresso-intents:3.5.1&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="77"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="80"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="81"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;org.mockito:mockito-core:5.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="84"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;org.mockito:mockito-android:5.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="85"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:core:1.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="86"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;org.mockito.kotlin:mockito-kotlin:5.1.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="87"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;androidx.test:core-ktx:1.5.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="build.gradle.kts"
-            line="90"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;androidx.arch.core:core-testing:2.2.0&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test.espresso:espresso-core:3.5.1&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
             line="91"
-            column="31"/>
+            column="29"/>
     </issue>
 
     <issue
         id="UseTomlInstead"
         message="Use version catalog instead"
-        errorLine1="    androidTestImplementation(&quot;com.google.truth:truth:1.1.3&quot;)"
-        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="  androidTestImplementation(&quot;androidx.test.espresso:espresso-intents:3.5.1&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
             line="92"
-            column="31"/>
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="95"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="96"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;org.mockito:mockito-core:5.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="99"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;org.mockito:mockito-android:5.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="100"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;androidx.test:core:1.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="101"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;org.mockito.kotlin:mockito-kotlin:5.1.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="102"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;androidx.test:core-ktx:1.5.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="105"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;androidx.arch.core:core-testing:2.2.0&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="106"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="  androidTestImplementation(&quot;com.google.truth:truth:1.1.3&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="107"
+            column="29"/>
     </issue>
 
     <issue
@@ -1010,7 +1593,7 @@
         errorLine2="                                   ~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="226"
+            line="893"
             column="36"/>
     </issue>
 
@@ -1021,7 +1604,7 @@
         errorLine2="                                   ~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="231"
+            line="898"
             column="36"/>
     </issue>
 
@@ -1032,7 +1615,7 @@
         errorLine2="                                   ~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="238"
+            line="905"
             column="36"/>
     </issue>
 
@@ -1043,7 +1626,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="258"
+            line="925"
             column="53"/>
     </issue>
 
@@ -1054,7 +1637,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="260"
+            line="927"
             column="53"/>
     </issue>
 
@@ -1065,29 +1648,62 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="262"
+            line="929"
             column="53"/>
     </issue>
 
     <issue
         id="HardcodedText"
-        message="Hardcoded string &quot;Mic-Lock&quot;, should use `@string` resource"
-        errorLine1="                    android:text=&quot;Mic-Lock&quot;"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~">
+        message="Hardcoded string &quot;🔴 Debug Recording Active&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;🔴 Debug Recording Active&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="46"
-            column="21"/>
+            line="27"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;00:00&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;00:00&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="36"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Mic-Lock&quot;, should use `@string` resource"
+        errorLine1="                        android:text=&quot;Mic-Lock&quot;"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="89"
+            column="25"/>
     </issue>
 
     <issue
         id="HardcodedText"
         message="Hardcoded string &quot;Microphone Route Protection&quot;, should use `@string` resource"
-        errorLine1="                    android:text=&quot;Microphone Route Protection&quot;"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="                        android:text=&quot;Microphone Route Protection&quot;"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="54"
+            line="97"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Menu&quot;, should use `@string` resource"
+        errorLine1="                    android:contentDescription=&quot;Menu&quot; />"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_main.xml"
+            line="113"
             column="21"/>
     </issue>
 
@@ -1098,7 +1714,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="83"
+            line="138"
             column="21"/>
     </issue>
 
@@ -1109,7 +1725,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="93"
+            line="148"
             column="21"/>
     </issue>
 
@@ -1120,7 +1736,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="103"
+            line="158"
             column="25"/>
     </issue>
 
@@ -1131,7 +1747,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="122"
+            line="177"
             column="33"/>
     </issue>
 
@@ -1142,7 +1758,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="131"
+            line="186"
             column="33"/>
     </issue>
 
@@ -1153,7 +1769,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="162"
+            line="372"
             column="17"/>
     </issue>
 
@@ -1164,7 +1780,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/layout/activity_main.xml"
-            line="176"
+            line="386"
             column="17"/>
     </issue>
 
