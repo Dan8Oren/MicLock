@@ -68,6 +68,11 @@ open class MainActivity : AppCompatActivity() {
 
     private var timerJob: Job? = null
 
+    // Track if we're showing permission dialog to prevent loops
+    private var isShowingPermissionDialog = false
+    private var hasRequestedNotificationPermission = false
+    private var isWaitingForPermissionFromSettings = false
+
     private val audioPerms = arrayOf(Manifest.permission.RECORD_AUDIO)
     private val notifPerms = if (Build.VERSION.SDK_INT >= 33) {
         arrayOf(Manifest.permission.POST_NOTIFICATIONS)
@@ -77,10 +82,85 @@ open class MainActivity : AppCompatActivity() {
 
     private val reqPerms = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
-    ) { _ ->
-        updateAllUi()
-        // Request tile update after permission changes
-        requestTileUpdate()
+    ) { results ->
+        isShowingPermissionDialog = false
+
+        // Check if microphone permission was denied
+        val micPermissionGranted = results[Manifest.permission.RECORD_AUDIO] ?: hasMicPermission()
+
+        if (!micPermissionGranted) {
+            // Microphone permission is required - show dialog and exit
+            showMicPermissionDeniedDialog()
+        } else {
+            // Microphone permission granted - update UI
+            updateAllUi()
+            // Request tile update after permission changes
+            requestTileUpdate()
+
+            // Show info if notification permission was denied (optional) - but only once
+            val notifPermissionGranted = if (Build.VERSION.SDK_INT >= 33) {
+                results[Manifest.permission.POST_NOTIFICATIONS] ?: hasNotificationPermission()
+            } else {
+                true
+            }
+
+            if (!notifPermissionGranted && Build.VERSION.SDK_INT >= 33 && !hasRequestedNotificationPermission) {
+                hasRequestedNotificationPermission = true
+                android.widget.Toast.makeText(
+                    this,
+                    "Notification permission denied. You won't see service status notifications.",
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+    }
+
+    private fun showMicPermissionDeniedDialog() {
+        if (isShowingPermissionDialog) return
+        isShowingPermissionDialog = true
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Permission Required")
+            .setMessage(getString(R.string.mic_permission_denied_message))
+            .setPositiveButton("Open Settings") { dialog, _ ->
+                dialog.dismiss()
+                isShowingPermissionDialog = false
+                isWaitingForPermissionFromSettings = true
+                // Open app settings so user can grant permission manually
+                openAppSettings()
+            }
+            .setNegativeButton("Exit") { _, _ ->
+                isShowingPermissionDialog = false
+                isWaitingForPermissionFromSettings = false
+                finish()
+            }
+            .setOnDismissListener {
+                // Don't auto-exit when dialog is dismissed
+                // Only exit if user explicitly clicked "Exit"
+                isShowingPermissionDialog = false
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    /**
+     * Opens the app settings page where the user can manually grant permissions.
+     */
+    private fun openAppSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to open app settings: ${e.message}", e)
+            android.widget.Toast.makeText(
+                this,
+                "Unable to open settings. Please grant microphone permission manually in Settings > Apps > Mic-Lock > Permissions",
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+        }
     }
 
     /**
@@ -152,8 +232,9 @@ open class MainActivity : AppCompatActivity() {
         }
 
         startBtn.setOnClickListener {
-            if (!hasAllPerms()) {
-                reqPerms.launch(audioPerms + notifPerms)
+            if (!hasMicPermission()) {
+                // Microphone permission is required
+                showMicrophonePermissionRequiredDialog()
             } else {
                 handleStartButtonClick()
             }
@@ -163,18 +244,18 @@ open class MainActivity : AppCompatActivity() {
         // Request battery optimization exemption
         requestBatteryOptimizationExemption()
 
-        // Always enforce permissions on every app start
-        enforcePermsOrRequest()
+        // Check permissions on app start (only in onCreate, not onResume to avoid loops)
+        checkPermissionsOnStart()
         updateAllUi()
 
         // Handle tile-initiated start
         if (intent.getBooleanExtra(EXTRA_START_SERVICE_FROM_TILE, false)) {
             Log.d("MainActivity", "Starting service from tile fallback request")
-            if (hasAllPerms()) {
+            if (hasMicPermission()) {
                 startMicLockFromTileFallback()
             } else {
-                Log.w("MainActivity", "Permissions missing for tile fallback - requesting permissions")
-                reqPerms.launch(audioPerms + notifPerms)
+                Log.w("MainActivity", "Microphone permission missing for tile fallback")
+                showMicrophonePermissionRequiredDialog()
             }
         }
 
@@ -186,8 +267,22 @@ open class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Re-check permissions every time activity becomes visible
-        enforcePermsOrRequest()
+
+        // Check if we're returning from settings with permission granted
+        if (isWaitingForPermissionFromSettings) {
+            if (hasMicPermission()) {
+                // Permission granted! Reset flag and continue
+                isWaitingForPermissionFromSettings = false
+                android.widget.Toast.makeText(
+                    this,
+                    "Microphone permission granted. You can now use Mic-Lock.",
+                    android.widget.Toast.LENGTH_SHORT,
+                ).show()
+            }
+            // If permission still not granted, keep waiting (don't exit)
+        }
+
+        // Only update UI, don't re-request permissions to avoid loops
         updateAllUi()
 
         lifecycleScope.launch {
@@ -738,61 +833,90 @@ open class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun hasAllPerms(): Boolean {
-        val micGranted = ContextCompat.checkSelfPermission(
+    private fun hasMicPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.RECORD_AUDIO,
         ) == PackageManager.PERMISSION_GRANTED
+    }
 
-        var notifGranted = true
+    private fun hasNotificationPermission(): Boolean {
         if (ApiGuard.isApi33_Tiramisu_OrAbove()) {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val postNotificationsGranted = ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
-            notifGranted = notificationManager.areNotificationsEnabled() && postNotificationsGranted
+            return notificationManager.areNotificationsEnabled() && postNotificationsGranted
         } else {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notifGranted = notificationManager.areNotificationsEnabled()
+            return notificationManager.areNotificationsEnabled()
         }
-
-        return micGranted && notifGranted
     }
 
-    private fun enforcePermsOrRequest() {
-        if (ApiGuard.isApi28_P_OrAbove()) {
-            if (!hasAllPerms()) {
-                val permissionsToRequest = mutableListOf<String>()
+    private fun hasAllPerms(): Boolean {
+        // Only microphone permission is required
+        // Notification permission is optional (nice to have)
+        return hasMicPermission()
+    }
 
-                if (ContextCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.RECORD_AUDIO,
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
-                }
-
-                if (ApiGuard.isApi33_Tiramisu_OrAbove()) {
-                    val notificationManager =
-                        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                    if (ContextCompat.checkSelfPermission(
-                            this,
-                            Manifest.permission.POST_NOTIFICATIONS,
-                        ) != PackageManager.PERMISSION_GRANTED ||
-                        !notificationManager.areNotificationsEnabled()
-                    ) {
-                        permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                }
-
-                if (permissionsToRequest.isNotEmpty()) {
-                    reqPerms.launch(permissionsToRequest.toTypedArray())
-                }
-            }
-        } else {
-            Log.d("MainActivity", "Skipping enforcePermsOrRequest on pre-P device, standard checks apply.")
+    private fun checkPermissionsOnStart() {
+        if (!ApiGuard.isApi28_P_OrAbove()) {
+            Log.d("MainActivity", "Skipping permission check on pre-P device")
+            return
         }
+
+        // Check if microphone permission is missing (required)
+        if (!hasMicPermission()) {
+            showMicrophonePermissionRequiredDialog()
+            return
+        }
+
+        // Optionally request notification permission if not granted (nice to have)
+        // Only request once per app session
+        if (!hasRequestedNotificationPermission && !hasNotificationPermission() && ApiGuard.isApi33_Tiramisu_OrAbove()) {
+            hasRequestedNotificationPermission = true
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) != PackageManager.PERMISSION_GRANTED ||
+                !notificationManager.areNotificationsEnabled()
+            ) {
+                // Request notification permission, but don't block app usage if denied
+                isShowingPermissionDialog = true
+                reqPerms.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+            }
+        }
+    }
+
+    private fun showMicrophonePermissionRequiredDialog() {
+        if (isShowingPermissionDialog) return
+        isShowingPermissionDialog = true
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Microphone Permission Required")
+            .setMessage(getString(R.string.mic_permission_required_message))
+            .setPositiveButton("Grant Permission") { dialog, _ ->
+                dialog.dismiss()
+                isShowingPermissionDialog = false
+                isWaitingForPermissionFromSettings = true
+                // Don't reset flag here - let the permission callback handle it
+                reqPerms.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+            }
+            .setNegativeButton("Exit") { _, _ ->
+                isShowingPermissionDialog = false
+                isWaitingForPermissionFromSettings = false
+                finish()
+            }
+            .setOnDismissListener {
+                // Don't auto-exit when dialog is dismissed
+                // Only exit if user explicitly clicked "Exit"
+                isShowingPermissionDialog = false
+            }
+            .setCancelable(false)
+            .show()
     }
 
     /**

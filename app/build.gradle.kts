@@ -16,7 +16,7 @@ android {
     applicationId = "io.github.miclock"
     minSdk = 24
     targetSdk = 36
-    versionCode = 6
+    versionCode = 8
     versionName = "1.1.2"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -59,6 +59,7 @@ dependencies {
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.appcompat)
   implementation(libs.material)
+  implementation(libs.androidx.work.runtime.ktx)
 
   // Unit testing dependencies
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")

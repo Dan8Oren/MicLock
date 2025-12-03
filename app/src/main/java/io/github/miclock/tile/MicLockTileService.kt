@@ -131,6 +131,8 @@ class MicLockTileService : TileService() {
     }
 
     private fun hasAllPerms(): Boolean {
+        // Only microphone permission is required
+        // Notification permission is optional
         val micGranted =
             try {
                 checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
@@ -140,6 +142,7 @@ class MicLockTileService : TileService() {
                 false
             }
 
+        // Check notification status but don't require it
         val notifs =
             try {
                 val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -155,9 +158,12 @@ class MicLockTileService : TileService() {
                 false
             }
 
-        val hasPerms = micGranted && notifs
-        Log.d(TAG, "Permission check: mic=$micGranted, notifs=$notifs, hasAll=$hasPerms")
-        return hasPerms
+        if (!notifs) {
+            Log.d(TAG, "Notifications disabled - tile will work but user won't see service notifications")
+        }
+
+        Log.d(TAG, "Permission check: mic=$micGranted, notifs=$notifs (optional)")
+        return micGranted
     }
 
     override fun onClick() {
@@ -347,12 +353,12 @@ class MicLockTileService : TileService() {
 
         when {
             !hasPerms -> {
-                // Permissions missing - show unavailable state
+                // Microphone permission missing - show unavailable state
                 tile.state = Tile.STATE_UNAVAILABLE
-                tile.label = "No Permission"
-                tile.contentDescription = "Tap to grant microphone and notification permissions"
+                tile.label = "No Mic Permission"
+                tile.contentDescription = "Tap to grant microphone permission"
                 tile.icon = Icon.createWithResource(this, R.drawable.ic_mic_off)
-                Log.d(TAG, "Tile set to 'No Permission' state")
+                Log.d(TAG, "Tile set to 'No Mic Permission' state")
             }
             state.isDelayedActivationPending -> {
                 // Delayed activation is pending - show activating state
