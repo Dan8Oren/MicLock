@@ -82,6 +82,6 @@
     <string name="back_button">Back</string>
 
     <!-- Permission dialogs -->
-    <string name="mic_permission_required_message">Mic-Lock requires microphone permission to function.\n\nThe app will stay open while you grant permission. If you need to grant it manually:\n\n1. Tap \"Grant Permission\"\n2. Select \"Allow\" in the permission dialog\n\nOr go to Settings > Apps > Mic-Lock > Permissions > Microphone > Allow</string>
-    <string name="mic_permission_denied_message">Microphone permission was denied. Mic-Lock cannot function without this permission.\n\nTo grant permission manually:\n\n1. Tap \"Open Settings\" below\n2. Select \"Permissions\"\n3. Tap \"Microphone\"\n4. Select \"Allow\"\n5. Return to Mic-Lock\n\nThe app will stay open while you grant permission.</string>
+    <string name="mic_permission_required_message">Mic-Lock requires microphone permission to function.\n\n To grant it manually:\n\n1. Tap \"Grant Permission\"\n2. Select \"Allow\" in the permission dialog\n\nOr go to Settings > Apps > Mic-Lock > Permissions > Microphone > Allow</string>
+    <string name="mic_permission_denied_message">Microphone permission was denied. Mic-Lock cannot function without this permission.\n\nTo grant permission manually:\n\n1. Tap \"Open Settings\" below\n2. Select \"Permissions\"\n3. Tap \"Microphone\"\n4. Select \"Allow\"\n5. Return to Mic-Lock\n\n</string>
 </resources>
