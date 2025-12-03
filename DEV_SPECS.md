@@ -107,7 +107,44 @@ Mic-Lock must implement configurable delayed activation to optimize battery usag
 * **Battery Usage Awareness:** Clearly communicate to users that MediaRecorder mode uses more battery but provides better compatibility.
 * **Battery Optimization Exemption:** Upon first launch, the app prompts the user to grant an exemption from battery optimizations. This is critical to prevent the Android system from terminating the service during long periods of device inactivity, ensuring continuous background operation.
 
-### 2.9 Service Resilience and User Experience
+### 2.9 Debug Logging and Diagnostics
+
+To facilitate troubleshooting of audio routing issues, Mic-Lock provides comprehensive debug logging capabilities:
+
+* **On-Demand Recording:** Users can start debug log recording through the overflow menu (⋮) → "Debug Tools"
+* **Automatic Safety Mechanisms:**
+  - 30-minute auto-stop to prevent battery drain and storage exhaustion
+  - Automatic cleanup of temporary files when app closes
+  - Visual recording indicator with elapsed time counter
+* **Comprehensive Data Collection:**
+  - Application logs (logcat filtered to Mic-Lock process only)
+  - System audio state (dumpsys audio, telecom, media.session, media.audio_policy, media.audio_flinger)
+  - Device metadata (manufacturer, model, Android version, app version)
+  - Service state at time of collection
+* **Privacy-Conscious Design:**
+  - Only captures Mic-Lock app logs (no other app data)
+  - No call audio content, contacts, phone numbers, or location data
+  - Explicit user action required to share logs
+* **Persistent Storage:**
+  - Logs saved to Downloads/miclock_logs folder with timestamped filenames
+  - Files persist after app uninstall for later reference
+  - Notification with "Share" action for easy log distribution
+* **Graceful Error Handling:**
+  - Continues collection even if some components fail
+  - Provides context about which failures are relevant to specific issues
+  - Clear error messages guide users on next steps
+* **Crash Detection and Recovery:**
+  - Automatically saves debug logs if app crashes during recording
+  - Shows notification with crash log location
+  - On next launch, offers to report crash on GitHub with pre-filled issue template
+  - Crash logs include exception details and stack traces
+* **User-Friendly Sharing:**
+  - Standard Android share sheet integration
+  - Direct GitHub issue creation with pre-filled crash reports
+  - Feedback mechanism for bug reports and feature requests
+  - About screen with app information and repository link
+
+### 2.10 Service Resilience and User Experience
 
 To ensure the service remains active and is easy to manage, Mic-Lock implements several resilience features:
 
