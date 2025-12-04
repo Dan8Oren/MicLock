@@ -217,7 +217,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="342"
+            line="374"
             column="44"/>
     </issue>
 
@@ -228,7 +228,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="342"
+            line="374"
             column="44"/>
     </issue>
 
@@ -283,7 +283,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="704"
+            line="716"
             column="29"/>
     </issue>
 
@@ -294,7 +294,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="791"
+            line="803"
             column="29"/>
     </issue>
 
@@ -349,7 +349,7 @@
         errorLine2="                                      ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="448"
+            line="480"
             column="39"/>
     </issue>
 
@@ -360,7 +360,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="733"
+            line="765"
             column="46"/>
     </issue>
 
@@ -371,7 +371,7 @@
         errorLine2="                                                                          ~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="270"
+            line="302"
             column="75"/>
     </issue>
 
@@ -404,7 +404,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="75"
+            line="76"
             column="22"/>
     </issue>
 
@@ -415,7 +415,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="78"
+            line="79"
             column="22"/>
     </issue>
 
@@ -426,7 +426,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="79"
+            line="80"
             column="22"/>
     </issue>
 
@@ -437,7 +437,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="87"
+            line="88"
             column="29"/>
     </issue>
 
@@ -448,7 +448,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="88"
+            line="89"
             column="29"/>
     </issue>
 
@@ -459,7 +459,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="89"
+            line="90"
             column="29"/>
     </issue>
 
@@ -470,7 +470,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="90"
+            line="91"
             column="29"/>
     </issue>
 
@@ -481,7 +481,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="91"
+            line="92"
             column="29"/>
     </issue>
 
@@ -492,7 +492,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="92"
+            line="93"
             column="29"/>
     </issue>
 
@@ -503,7 +503,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="101"
+            line="102"
             column="29"/>
     </issue>
 
@@ -514,7 +514,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="105"
+            line="106"
             column="29"/>
     </issue>
 
@@ -574,13 +574,24 @@
     </issue>
 
     <issue
+        id="GradleDependency"
+        message="A newer version of androidx.work:work-runtime-ktx than 2.9.0 is available: 2.11.0"
+        errorLine1="workManager = &quot;2.9.0&quot;"
+        errorLine2="              ~~~~~~~">
+        <location
+            file="$HOME/AndroidStudioProjects/miclock/gradle/libs.versions.toml"
+            line="12"
+            column="15"/>
+    </issue>
+
+    <issue
         id="NewerVersionAvailable"
         message="A newer version of org.junit.jupiter:junit-jupiter than 5.9.2 is available: 6.0.1"
         errorLine1="  testImplementation(&quot;org.junit.jupiter:junit-jupiter:5.9.2&quot;)"
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="64"
+            line="65"
             column="22"/>
     </issue>
 
@@ -591,7 +602,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="65"
+            line="66"
             column="22"/>
     </issue>
 
@@ -602,7 +613,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="67"
+            line="68"
             column="22"/>
     </issue>
 
@@ -613,7 +624,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="68"
+            line="69"
             column="22"/>
     </issue>
 
@@ -624,7 +635,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="69"
+            line="70"
             column="22"/>
     </issue>
 
@@ -635,7 +646,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="71"
+            line="72"
             column="22"/>
     </issue>
 
@@ -646,7 +657,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="74"
+            line="75"
             column="22"/>
     </issue>
 
@@ -657,7 +668,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="95"
+            line="96"
             column="29"/>
     </issue>
 
@@ -668,7 +679,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="96"
+            line="97"
             column="29"/>
     </issue>
 
@@ -679,7 +690,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="99"
+            line="100"
             column="29"/>
     </issue>
 
@@ -690,7 +701,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="100"
+            line="101"
             column="29"/>
     </issue>
 
@@ -701,7 +712,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="102"
+            line="103"
             column="29"/>
     </issue>
 
@@ -712,7 +723,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="107"
+            line="108"
             column="29"/>
     </issue>
 
@@ -811,7 +822,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="730"
+            line="762"
             column="13"/>
     </issue>
 
@@ -822,7 +833,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="943"
+            line="986"
             column="13"/>
     </issue>
 
@@ -844,7 +855,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="813"
+            line="825"
             column="5"/>
     </issue>
 
@@ -855,7 +866,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="815"
+            line="827"
             column="13"/>
     </issue>
 
@@ -866,7 +877,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="847"
+            line="859"
             column="21"/>
     </issue>
 
@@ -877,7 +888,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="998"
+            line="1010"
             column="21"/>
     </issue>
 
@@ -888,7 +899,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="1005"
+            line="1017"
             column="33"/>
     </issue>
 
@@ -899,7 +910,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/service/MicLockService.kt"
-            line="1238"
+            line="1250"
             column="13"/>
     </issue>
 
@@ -1230,7 +1241,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="281"
+            line="313"
             column="53"/>
     </issue>
 
@@ -1241,7 +1252,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="292"
+            line="324"
             column="53"/>
     </issue>
 
@@ -1252,7 +1263,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="667"
+            line="699"
             column="29"/>
     </issue>
 
@@ -1263,7 +1274,7 @@
         errorLine2="                      ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="698"
+            line="730"
             column="23"/>
     </issue>
 
@@ -1274,7 +1285,7 @@
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="734"
+            line="766"
             column="28"/>
     </issue>
 
@@ -1285,7 +1296,7 @@
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="734"
+            line="766"
             column="28"/>
     </issue>
 
@@ -1296,7 +1307,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="64"
+            line="65"
             column="22"/>
     </issue>
 
@@ -1307,7 +1318,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="65"
+            line="66"
             column="22"/>
     </issue>
 
@@ -1318,7 +1329,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="66"
+            line="67"
             column="22"/>
     </issue>
 
@@ -1329,7 +1340,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="67"
+            line="68"
             column="22"/>
     </issue>
 
@@ -1340,7 +1351,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="68"
+            line="69"
             column="22"/>
     </issue>
 
@@ -1351,7 +1362,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="69"
+            line="70"
             column="22"/>
     </issue>
 
@@ -1362,7 +1373,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="70"
+            line="71"
             column="22"/>
     </issue>
 
@@ -1373,7 +1384,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="71"
+            line="72"
             column="22"/>
     </issue>
 
@@ -1384,7 +1395,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="74"
+            line="75"
             column="22"/>
     </issue>
 
@@ -1395,7 +1406,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="75"
+            line="76"
             column="22"/>
     </issue>
 
@@ -1406,7 +1417,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="78"
+            line="79"
             column="22"/>
     </issue>
 
@@ -1417,7 +1428,7 @@
         errorLine2="                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="79"
+            line="80"
             column="22"/>
     </issue>
 
@@ -1428,7 +1439,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="87"
+            line="88"
             column="29"/>
     </issue>
 
@@ -1439,7 +1450,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="88"
+            line="89"
             column="29"/>
     </issue>
 
@@ -1450,7 +1461,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="89"
+            line="90"
             column="29"/>
     </issue>
 
@@ -1461,7 +1472,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="90"
+            line="91"
             column="29"/>
     </issue>
 
@@ -1472,7 +1483,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="91"
+            line="92"
             column="29"/>
     </issue>
 
@@ -1483,7 +1494,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="92"
+            line="93"
             column="29"/>
     </issue>
 
@@ -1494,7 +1505,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="95"
+            line="96"
             column="29"/>
     </issue>
 
@@ -1505,7 +1516,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="96"
+            line="97"
             column="29"/>
     </issue>
 
@@ -1516,7 +1527,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="99"
+            line="100"
             column="29"/>
     </issue>
 
@@ -1527,7 +1538,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="100"
+            line="101"
             column="29"/>
     </issue>
 
@@ -1538,7 +1549,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="101"
+            line="102"
             column="29"/>
     </issue>
 
@@ -1549,7 +1560,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="102"
+            line="103"
             column="29"/>
     </issue>
 
@@ -1560,7 +1571,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="105"
+            line="106"
             column="29"/>
     </issue>
 
@@ -1571,7 +1582,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="106"
+            line="107"
             column="29"/>
     </issue>
 
@@ -1582,7 +1593,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="107"
+            line="108"
             column="29"/>
     </issue>
 
@@ -1593,7 +1604,7 @@
         errorLine2="                                   ~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="893"
+            line="936"
             column="36"/>
     </issue>
 
@@ -1604,7 +1615,7 @@
         errorLine2="                                   ~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="898"
+            line="941"
             column="36"/>
     </issue>
 
@@ -1615,7 +1626,7 @@
         errorLine2="                                   ~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="905"
+            line="948"
             column="36"/>
     </issue>
 
@@ -1626,7 +1637,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="925"
+            line="968"
             column="53"/>
     </issue>
 
@@ -1637,7 +1648,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="927"
+            line="970"
             column="53"/>
     </issue>
 
@@ -1648,7 +1659,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/github/miclock/ui/MainActivity.kt"
-            line="929"
+            line="972"
             column="53"/>
     </issue>
 

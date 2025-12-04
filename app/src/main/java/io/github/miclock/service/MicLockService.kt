@@ -606,9 +606,9 @@ class MicLockService : Service(), MicActivationService {
 
     private fun handleBootStart() {
         if (!state.value.isRunning) {
-            isStartedFromBoot = true
+            isStartedFromBoot = false // Changed: WorkManager handles the delay, so we can treat this as normal start
             updateServiceState(running = true)
-            Log.i(TAG, "Service started from boot - waiting for screen state events")
+            Log.i(TAG, "Service started from boot via WorkManager - waiting for screen state events")
         }
     }
 
@@ -657,12 +657,24 @@ class MicLockService : Service(), MicActivationService {
     }
 
     private fun hasAllRequirements(): Boolean {
+        // Only microphone permission is required
+        // Notifications are optional - service can run without them
         val mic = ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.RECORD_AUDIO,
         ) == PackageManager.PERMISSION_GRANTED
+
+        if (!mic) {
+            Log.w(TAG, "Microphone permission not granted")
+        }
+
+        // Log notification status but don't require it
         val notifs = notifManager.areNotificationsEnabled()
-        return mic && notifs
+        if (!notifs) {
+            Log.w(TAG, "Notifications disabled - service will run without notification updates")
+        }
+
+        return mic
     }
 
     private fun registerRecordingCallback(cb: AudioManager.AudioRecordingCallback) {
