@@ -16,7 +16,7 @@ android {
     applicationId = "io.github.miclock"
     minSdk = 24
     targetSdk = 36
-    versionCode = 8
+    versionCode = 9
     versionName = "1.1.2"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
