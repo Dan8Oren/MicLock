@@ -1056,11 +1056,23 @@ open class MainActivity : AppCompatActivity() {
 
     private fun startMicLockFromTileFallback() {
         Log.d("MainActivity", "Starting MicLock service as tile fallback")
+
+        // Check if service is already running before starting
+        val wasRunning = MicLockService.state.value.isRunning
+
         val intent = Intent(this, MicLockService::class.java).apply {
             action = MicLockService.ACTION_START_USER_INITIATED
         }
         ContextCompat.startForegroundService(this, intent)
-        finish()
+
+        // Only finish if service wasn't already running (initial tile click)
+        // If service was already running, user likely reopened from recents - stay open
+        if (!wasRunning) {
+            Log.d("MainActivity", "Service started from tile - closing activity")
+            finish()
+        } else {
+            Log.d("MainActivity", "Service already running - keeping activity open (likely reopened from recents)")
+        }
     }
 
     private fun requestTileUpdate() {
