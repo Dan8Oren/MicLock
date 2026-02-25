@@ -16,33 +16,21 @@ This app was specifically **invented to fix this issue** by running discreetly i
 
 ## 🔧 Installation
 
-### Option 1: Google Play (Closed Alpha)
-Join the **closed testing program** on Google Play to download and receive updates automatically:
-- Send me your email to `dan8oren@gmail.com` and request to join the testing 🙏
-This will help deploy MicLock in the Google Play Store for everyone!
-- **Quick email links:** [open native OS email](mailto:dan8oren@gmail.com?subject=MicLock%20Alpha%20Testing%20Request&body=Hi%20Dan,%0A%0AI'd%20like%20to%20join%20the%20MicLock%20closed%20alpha%20test%20group.%0A%0AMy%20email%20for%20the%20Google%20Play%20testing%20list%20is:%20[YOUR_EMAIL_HERE]%0A%0AThanks!) | [open Gmail on web](https://mail.google.com/mail/?view=cm&fs=1&to=dan8oren@gmail.com&su=MicLock+Alpha+Testing+Request&body=Hi+Dan,%0A%0AI'd+like+to+join+the+MicLock+closed+alpha+test+group.%0A%0AMy+email+for+the+Google+Play+testing+list+is:+[YOUR_EMAIL_HERE]%0A%0AThanks!)
-- After that, you can download the app from here:
-<a href="https://play.google.com/store/apps/details?id=io.github.miclock" target="_blank">
-  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200"/>
+### Google Play (Recommended)
+Download MicLock directly from the Google Play Store for the easiest setup and automatic updates:
+
+<a href=”https://play.google.com/store/apps/details?id=io.github.miclock” target=”_blank”>
+  <img src=”https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png” alt=”Get it on Google Play” width=”200”/>
 </a>
 
 ---
 
-### Option 2: Download APK
+### Alternative: Download APK
+If you prefer to sideload the app, you can download the APK directly:
 1. Download the latest stable APK from the [**Releases**](https://github.com/Dan8Oren/MicLock/releases/) page.
-2. Enable *“Install from Unknown Sources”* in your device settings if prompted (standard for sideloaded apps).
+2. Enable *”Install from Unknown Sources”* in your device settings if prompted (standard for sideloaded apps).
 3. Install the downloaded APK file.
 4. Grant **microphone** and **notification** permissions when the app first launches.
-
----
-
-### Option 3: Build from Source (For developers and advanced users)
-
-```bash
-git clone https://github.com/Dan8Oren/MicLock.git
-cd MicLock
-./gradlew assembleRelease
-```
 
 ## 🎯 Quick Start
 
