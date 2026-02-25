@@ -19,9 +19,7 @@ This app was specifically **invented to fix this issue** by running discreetly i
 ### Google Play (Recommended)
 Download MicLock directly from the Google Play Store for the easiest setup and automatic updates:
 
-<a href=”https://play.google.com/store/apps/details?id=io.github.miclock” target=”_blank”>
-  <img src=”https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png” alt=”Get it on Google Play” width=”200”/>
-</a>
+[![Get it on Google Play](https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png)](https://play.google.com/store/apps/details?id=io.github.miclock)
 
 ---
 
