@@ -285,6 +285,10 @@ open class MainActivity : AppCompatActivity() {
         // Only update UI, don't re-request permissions to avoid loops
         updateAllUi()
 
+        if (MicLockService.needsMicrophoneForegroundUpgrade()) {
+            MicLockService.requestMicrophoneForegroundFromVisibleContext(this)
+        }
+
         lifecycleScope.launch {
             MicLockService.state.collect { _ ->
                 updateAllUi()
