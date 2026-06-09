@@ -51,13 +51,12 @@
             android:exported="true"
             android:directBootAware="true">
             <!-- LOCKED_BOOT_COMPLETED is intentionally omitted: CE storage / prefs may be unavailable. -->
+            <!-- MY_PACKAGE_REPLACED is delivered to our own app with NO data URI, so it must live
+                 in a data-less filter; a <data android:scheme="package"/> filter would never match it. -->
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.USER_UNLOCKED" />
-            </intent-filter>
-            <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <data android:scheme="package" />
             </intent-filter>
         </receiver>
 
