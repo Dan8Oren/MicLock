@@ -3,7 +3,7 @@
 
 <!-- Badges -->
 <div align="center">
-  <img src="https://img.shields.io/endpoint?color=3DDC84&label=Downloads&logo=google-play&logoColor=white&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dio.github.miclock%26m%3D%24installs" alt="Total Downloads">
+  <img src="https://img.shields.io/endpoint?color=3DDC84&label=Downloads&logo=google-play&logoColor=white&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dio.github.miclock%26m%3D%24totalinstalls" alt="Total Downloads">
   <img src="https://img.shields.io/github/v/release/Dan8Oren/MicLock" alt="Latest Release">
   <img src="https://img.shields.io/github/license/Dan8Oren/MicLock" alt="License">
 </div>
