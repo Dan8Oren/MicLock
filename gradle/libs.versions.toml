@@ -1,7 +1,7 @@
 [versions]
 ktlint = "11.6.1"
-agp = "8.12.3"
-kotlin = "2.0.21"
+agp = "9.1.0"
+kotlin = "2.2.10"
 coreKtx = "1.10.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -9,7 +9,6 @@ espressoCore = "3.5.1"
 appcompat = "1.6.1"
 material = "1.10.0"
 rules = "1.7.0"
-workManager = "2.9.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -19,7 +18,6 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules" }
-androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

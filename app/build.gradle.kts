@@ -59,7 +59,6 @@ dependencies {
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.appcompat)
   implementation(libs.material)
-  implementation(libs.androidx.work.runtime.ktx)
 
   // Unit testing dependencies
   testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")

@@ -1,74 +1,119 @@
-// app/src/main/java/com/example/miclock/BootCompletedReceiver.kt
 package io.github.miclock.receiver
 
 import android.Manifest
-import android.app.NotificationManager
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.content.ContextCompat
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import io.github.miclock.worker.BootServiceWorker
-import java.util.concurrent.TimeUnit
+import io.github.miclock.service.MicLockService
 
 /**
- * Receives BOOT_COMPLETED broadcast and schedules a WorkManager task to start the service.
- * This approach is required for Android 15+ to avoid ForegroundServiceStartNotAllowedException
- * when starting foreground services directly from BOOT_COMPLETED.
+ * After boot / unlock / package replaced, schedules **MicLockService** via
+ * [PendingIntent.getForegroundService] + [AlarmManager]. Unlike [Context.startForegroundService]
+ * from app code or [android.app.Activity] launched from a worker, alarm delivery is a
+ * **system-sent PendingIntent** — not blocked by goo.gle/android-bal the way `BootResumeActivity` was.
+ *
+ * Delay lets CE storage and audio stack settle after reboot.
  */
 class BootCompletedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
-            Log.d(TAG, "Received ${intent.action}")
+        val action = intent.action ?: return
+        val shouldSchedule =
+            when (action) {
+                Intent.ACTION_BOOT_COMPLETED,
+                Intent.ACTION_USER_UNLOCKED,
+                Intent.ACTION_MY_PACKAGE_REPLACED -> true
+                else -> false
+            }
+        if (!shouldSchedule) {
+            Log.d(TAG, "Ignoring action: $action")
+            return
+        }
 
-            val micGranted = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO,
-            ) == PackageManager.PERMISSION_GRANTED
+        Log.d(TAG, "Received $action")
 
-            // Check notification status but don't require it
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val notifsGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 33+
-                nm.areNotificationsEnabled() && ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.POST_NOTIFICATIONS,
-                ) == PackageManager.PERMISSION_GRANTED
-            } else {
-                nm.areNotificationsEnabled()
+        val appCtx = context.applicationContext
+        val micGranted =
+            ContextCompat.checkSelfPermission(appCtx, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED
+
+        if (!micGranted) {
+            Log.d(
+                TAG,
+                "Microphone permission not granted. MicLockService will not start automatically.",
+            )
+            return
+        }
+
+        scheduleAlarmMicStart(appCtx)
+    }
+
+    private fun scheduleAlarmMicStart(appCtx: Context) {
+        val svcIntent =
+            Intent(appCtx, MicLockService::class.java).apply {
+                action = MicLockService.ACTION_START_USER_INITIATED
             }
 
-            if (!notifsGranted) {
-                Log.w(TAG, "Notifications not enabled - service will run without notification updates")
-            }
+        val piFlags =
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    0
+                })
 
-            // Only require microphone permission
-            if (micGranted) {
-                Log.d(TAG, "Microphone permission granted, scheduling service start via WorkManager")
-
-                // Use WorkManager to start the service with a delay
-                // This avoids Android 15+ restrictions on starting foreground services from BOOT_COMPLETED
-                val workRequest = OneTimeWorkRequestBuilder<BootServiceWorker>()
-                    .setInitialDelay(5, TimeUnit.SECONDS)
-                    .build()
-
-                WorkManager.getInstance(context)
-                    .enqueue(workRequest)
-
-                Log.d(TAG, "WorkManager task scheduled to start MicLockService")
-            } else {
-                Log.d(
-                    TAG,
-                    "Microphone permission not granted. MicLockService will not start automatically.",
+        val pi: PendingIntent =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PendingIntent.getForegroundService(
+                    appCtx,
+                    ALARM_REQUEST_CODE,
+                    svcIntent,
+                    piFlags,
                 )
+            } else {
+                PendingIntent.getService(appCtx, ALARM_REQUEST_CODE, svcIntent, piFlags)
+            }
+
+        val am = appCtx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerElapsed = SystemClock.elapsedRealtime() + DELAY_MILLIS
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                am.setAndAllowWhileIdle(
+                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    triggerElapsed,
+                    pi,
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed, pi)
+            }
+            Log.d(TAG, "Scheduled mic FGS via alarm + getForegroundService in ${DELAY_MILLIS}ms")
+        } catch (e: Exception) {
+            Log.e(TAG, "Alarm schedule failed; trying direct startForegroundService", e)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ContextCompat.startForegroundService(appCtx, svcIntent)
+                } else {
+                    appCtx.startService(svcIntent)
+                }
+            } catch (e2: Exception) {
+                Log.e(TAG, "Direct startForegroundService also failed", e2)
             }
         }
     }
 
     companion object {
         private const val TAG = "BootCompletedReceiver"
+        private const val ALARM_REQUEST_CODE = 0x4D434C42 // 'MCB'
+
+        /** Elapsed realtime delay so boot / unlock / audio stack are ready. */
+        private const val DELAY_MILLIS = 15_000L
     }
 }

@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -123,6 +124,25 @@ class MicLockService : Service(), MicActivationService {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             registerGlobalCallback()
         }
+    }
+
+    /**
+     * [FOREGROUND_SERVICE_TYPE_SHORT_SERVICE] is time-limited (~3 min). If we never upgraded to
+     * microphone FGS (user did not open the app), stop cleanly to avoid ANR — see
+     * [Android FGS troubleshooting](https://developer.android.com/develop/background-work/services/fgs/troubleshooting).
+     */
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    override fun onTimeout(foregroundServiceType: Int, startId: Int) {
+        if (foregroundServiceType == ServiceInfo.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE &&
+            needsMicrophoneForegroundUpgradePending.get()
+        ) {
+            Log.w(TAG, "shortService FGS timed out before mic FGS upgrade; stopping service")
+            needsMicrophoneForegroundUpgradePending.set(false)
+            createRestartNotification()
+            stopSelf()
+            return
+        }
+        super.onTimeout(foregroundServiceType, startId)
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -262,13 +282,15 @@ class MicLockService : Service(), MicActivationService {
         val restartIntent = Intent(this, MicLockService::class.java).apply {
             action = ACTION_START_USER_INITIATED
         }
-        val restartPI = PendingIntent.getService(
-            this,
-            4,
-            restartIntent,
+        val flags =
             PendingIntent.FLAG_UPDATE_CURRENT or
-                (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0),
-        )
+                (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_IMMUTABLE else 0)
+        val restartPI =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PendingIntent.getForegroundService(this, 4, restartIntent, flags)
+            } else {
+                PendingIntent.getService(this, 4, restartIntent, flags)
+            }
 
         val notification = NotificationCompat.Builder(this, RESTART_CHANNEL_ID)
             .setContentTitle("Mic-Lock Stopped")
@@ -292,6 +314,7 @@ class MicLockService : Service(), MicActivationService {
 
     override fun onDestroy() {
         super.onDestroy()
+        needsMicrophoneForegroundUpgradePending.set(false)
         val wasRunning = state.value.isRunning
         stopFlag.set(true)
 
@@ -330,7 +353,7 @@ class MicLockService : Service(), MicActivationService {
         if (wasRunning && !suppressRestartNotification) {
             createRestartNotification()
         } else if (suppressRestartNotification) {
-            Log.d(TAG, "Restart notification suppressed due to tile fallback scenario")
+            Log.d(TAG, "Restart notification suppressed (tile FGS fallback / explicit)")
         }
     }
 
@@ -362,34 +385,69 @@ class MicLockService : Service(), MicActivationService {
             Log.i(TAG, "Starting service from user action - immediate foreground activation")
 
             try {
+                var usedShortServiceFallback = false
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(
-                        NOTIF_ID,
-                        buildNotification("Starting…"),
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
-                    )
+                    try {
+                        startForeground(
+                            NOTIF_ID,
+                            buildNotification("Starting…"),
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                        )
+                    } catch (e: Exception) {
+                        val msg = e.message ?: ""
+                        val isFgsPolicyFailure =
+                            msg.contains("FOREGROUND_SERVICE_MICROPHONE") ||
+                                msg.contains("requires permissions") ||
+                                msg.contains("eligible state")
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && isFgsPolicyFailure) {
+                            Log.w(
+                                TAG,
+                                "Mic FGS not eligible in this context; using shortService until UI is visible: ${e.message}",
+                            )
+                            startForeground(
+                                NOTIF_ID,
+                                buildNotification(getString(R.string.notification_starting_open_app)),
+                                ServiceInfo.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE,
+                            )
+                            usedShortServiceFallback = true
+                            needsMicrophoneForegroundUpgradePending.set(true)
+                        } else {
+                            throw e
+                        }
+                    }
                 } else {
                     startForeground(NOTIF_ID, buildNotification("Starting…"))
                 }
                 serviceHealthy = true
-                Log.d(TAG, "Foreground service started successfully")
+                Log.d(
+                    TAG,
+                    if (usedShortServiceFallback) {
+                        "Foreground service started (shortService; mic FGS upgrade may be pending)"
+                    } else {
+                        "Foreground service started successfully"
+                    },
+                )
 
                 startFailureReason = null
                 suppressRestartNotification = false
 
-                startMicHolding(fromDelayCompletion = false)
+                // Foreground already promoted above; avoid second startForeground(MICROPHONE) here —
+                // it fails after boot/alarm (not in eligible state for mic FGS on API 34+).
+                startMicHolding(fromDelayCompletion = true)
                 updateServiceState(running = true)
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service: ${e.message}")
                 serviceHealthy = false
 
                 val errorMessage = e.message ?: ""
-                if (errorMessage.contains("FOREGROUND_SERVICE_MICROPHONE") ||
-                    errorMessage.contains("requires permissions") ||
-                    errorMessage.contains("eligible state")
-                ) {
+                val isFgsPolicyFailure =
+                    errorMessage.contains("FOREGROUND_SERVICE_MICROPHONE") ||
+                        errorMessage.contains("requires permissions") ||
+                        errorMessage.contains("eligible state")
+                if (isFgsPolicyFailure) {
                     startFailureReason = FAILURE_REASON_FOREGROUND_RESTRICTION
-                    suppressRestartNotification = true
+                    // Only suppress tap-to-restart for tile (tile gets failure broadcast). Boot / main need the notification.
+                    suppressRestartNotification = isFromTile
 
                     if (isFromTile) {
                         broadcastTileStartFailure(FAILURE_REASON_FOREGROUND_RESTRICTION)
@@ -397,6 +455,10 @@ class MicLockService : Service(), MicActivationService {
                 }
 
                 updateServiceState(running = false)
+                // onDestroy only notifies if wasRunning; cold start failure leaves wasRunning false — notify here.
+                if (isFgsPolicyFailure && !suppressRestartNotification) {
+                    createRestartNotification()
+                }
                 stopSelf()
                 return
             }
@@ -418,7 +480,7 @@ class MicLockService : Service(), MicActivationService {
                 // If service is paused (e.g., by screen-off), resume mic holding
                 if (state.value.isPausedByScreenOff) {
                     Log.i(TAG, "Service was paused - resuming mic holding logic")
-                    startMicHolding(fromDelayCompletion = false)
+                    startMicHolding(fromDelayCompletion = true)
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Could not start foreground service: ${e.message}")
@@ -548,8 +610,30 @@ class MicLockService : Service(), MicActivationService {
                     startMicHolding(fromDelayCompletion = false)
                     return
                 }
-                // Always on Or Never
-                Log.d(TAG, "Always-On or Never configured, skipping reactivation - Delay configured = ${delayMs}ms")
+                if (
+                    !shouldStartMicOnSpecialScreenOnDelay(
+                        delayMs,
+                        state.value.isPausedByScreenOff,
+                        isMicActivelyHeld(),
+                        state.value.isPausedBySilence,
+                    )
+                ) {
+                    if (delayMs == Prefs.NEVER_REACTIVATE_VALUE && state.value.isPausedByScreenOff) {
+                        Log.d(TAG, "Never-reactivate mode: skipping reactivation after screen-off")
+                    } else {
+                        Log.d(
+                            TAG,
+                            "Special delay mode ($delayMs): skipping — mic held or paused by silence",
+                        )
+                    }
+                } else {
+                    Log.d(
+                        TAG,
+                        "Special delay mode ($delayMs): mic not held — starting mic holding " +
+                            "(cold boot / initial activation)",
+                    )
+                    startMicHolding(fromDelayCompletion = false)
+                }
             }
         } else {
             Log.w(TAG, "Service not running, ignoring START_HOLDING action. (Consider starting service first)")
@@ -604,11 +688,26 @@ class MicLockService : Service(), MicActivationService {
         }
     }
 
-    private fun handleBootStart() {
+    /**
+     * Re-applies [FOREGROUND_SERVICE_TYPE_MICROPHONE] after a [FOREGROUND_SERVICE_TYPE_SHORT_SERVICE]
+     * cold start. Must run from an eligible context (e.g. visible activity) on API 34+.
+     */
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun handleEnsureMicrophoneForeground() {
         if (!state.value.isRunning) {
-            isStartedFromBoot = false // Changed: WorkManager handles the delay, so we can treat this as normal start
-            updateServiceState(running = true)
-            Log.i(TAG, "Service started from boot via WorkManager - waiting for screen state events")
+            needsMicrophoneForegroundUpgradePending.set(false)
+            return
+        }
+        try {
+            startForeground(
+                NOTIF_ID,
+                buildNotification("Recording active"),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+            )
+            needsMicrophoneForegroundUpgradePending.set(false)
+            Log.i(TAG, "Upgraded to microphone foreground service type from visible context")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not upgrade to microphone FGS: ${e.message}")
         }
     }
 
@@ -625,7 +724,7 @@ class MicLockService : Service(), MicActivationService {
         Log.i(TAG, "onStartCommand called with action: ${intent?.action}, isRunning: ${state.value.isRunning}")
 
         if (!hasAllRequirements()) {
-            Log.w(TAG, "Missing permission or notifications disabled. Stopping.")
+            Log.w(TAG, "Missing requirements (RECORD_AUDIO required). Stopping.")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -636,7 +735,8 @@ class MicLockService : Service(), MicActivationService {
             ACTION_STOP_HOLDING -> handleStopHolding(intent)
             ACTION_STOP -> return handleStop()
             ACTION_RECONFIGURE -> handleReconfigure()
-            null -> handleBootStart()
+            ACTION_ENSURE_MICROPHONE_FG -> handleEnsureMicrophoneForeground()
+            null -> Log.w(TAG, "onStartCommand with null action — ignoring (no implicit start)")
             else -> Log.w(TAG, "Unknown action received: ${intent.action}")
         }
 
@@ -797,11 +897,35 @@ class MicLockService : Service(), MicActivationService {
             if (state.value.isRunning && !stopFlag.get()) {
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        startForeground(
-                            NOTIF_ID,
-                            buildNotification("Recording active"),
-                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
-                        )
+                        try {
+                            startForeground(
+                                NOTIF_ID,
+                                buildNotification("Recording active"),
+                                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                            )
+                        } catch (e: Exception) {
+                            val msg = e.message ?: ""
+                            val isFgsPolicyFailure =
+                                msg.contains("FOREGROUND_SERVICE_MICROPHONE") ||
+                                    msg.contains("requires permissions") ||
+                                    msg.contains("eligible state")
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+                                isFgsPolicyFailure
+                            ) {
+                                Log.w(
+                                    TAG,
+                                    "Delayed mic FGS not eligible; shortService until UI visible: ${e.message}",
+                                )
+                                startForeground(
+                                    NOTIF_ID,
+                                    buildNotification(getString(R.string.notification_starting_open_app)),
+                                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE,
+                                )
+                                needsMicrophoneForegroundUpgradePending.set(true)
+                            } else {
+                                throw e
+                            }
+                        }
                     } else {
                         startForeground(NOTIF_ID, buildNotification("Recording active"))
                     }
@@ -1292,6 +1416,19 @@ class MicLockService : Service(), MicActivationService {
     companion object {
         private val _state = MutableStateFlow(ServiceState())
         val state: StateFlow<ServiceState> = _state.asStateFlow()
+
+        /** True after cold start used shortService FGS; cleared after mic FGS succeeds from UI. */
+        private val needsMicrophoneForegroundUpgradePending = AtomicBoolean(false)
+
+        fun needsMicrophoneForegroundUpgrade(): Boolean = needsMicrophoneForegroundUpgradePending.get()
+
+        fun requestMicrophoneForegroundFromVisibleContext(context: Context) {
+            val i = Intent(context, MicLockService::class.java).apply {
+                action = ACTION_ENSURE_MICROPHONE_FG
+            }
+            ContextCompat.startForegroundService(context, i)
+        }
+
         private const val TAG = "MicLockService"
 
         /**
@@ -1313,9 +1450,28 @@ class MicLockService : Service(), MicActivationService {
         const val ACTION_START_HOLDING = "io.github.miclock.ACTION_START_HOLDING"
         const val ACTION_STOP_HOLDING = "io.github.miclock.ACTION_STOP_HOLDING"
         const val ACTION_START_USER_INITIATED = "io.github.miclock.ACTION_START_USER_INITIATED"
+        const val ACTION_ENSURE_MICROPHONE_FG = "io.github.miclock.ACTION_ENSURE_MICROPHONE_FG"
 
         const val ACTION_TILE_START_FAILED = "io.github.miclock.TILE_START_FAILED"
         const val EXTRA_FAILURE_REASON = "failure_reason"
         const val FAILURE_REASON_FOREGROUND_RESTRICTION = "foreground_restriction"
+
+        /**
+         * Extracted predicate for the non-positive screen-on delay branch (always-on / never / etc.).
+         * When this returns true, [startMicHolding] should run; when false, screen-on should no-op
+         * (see branch logs in [MicLockService.handleStartHolding]).
+         */
+        @androidx.annotation.VisibleForTesting
+        internal fun shouldStartMicOnSpecialScreenOnDelay(
+            delayMs: Long,
+            isPausedByScreenOff: Boolean,
+            micActivelyHeld: Boolean,
+            isPausedBySilence: Boolean,
+        ): Boolean =
+            when {
+                delayMs == Prefs.NEVER_REACTIVATE_VALUE && isPausedByScreenOff -> false
+                micActivelyHeld || isPausedBySilence -> false
+                else -> true
+            }
     }
 }

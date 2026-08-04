@@ -10,6 +10,8 @@
     <!-- Foreground services (microphone type required on Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <!-- Used when API 34+ blocks mic FGS until a visible window (MainActivity) exists -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SHORT_SERVICE" />
 
     <application
         android:name="io.github.miclock.MicLockApplication"
@@ -41,16 +43,21 @@
         <service
             android:name="io.github.miclock.service.MicLockService"
             android:exported="false"
-            android:foregroundServiceType="microphone" />
+            android:foregroundServiceType="microphone|shortService" />
 
         <receiver
             android:name="io.github.miclock.receiver.BootCompletedReceiver"
             android:enabled="true"
             android:exported="true"
             android:directBootAware="true">
+            <!-- LOCKED_BOOT_COMPLETED is intentionally omitted: CE storage / prefs may be unavailable. -->
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.USER_UNLOCKED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <data android:scheme="package" />
             </intent-filter>
         </receiver>
 
